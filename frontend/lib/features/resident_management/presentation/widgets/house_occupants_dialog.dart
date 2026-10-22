@@ -91,7 +91,7 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Keluarkan ${occupant.name} dari ${widget.house.label}?',
+              'Keluarkan ${occupant.displayName} dari ${widget.house.label}?',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -341,7 +341,7 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                                             Row(
                                               children: [
                                                 Text(
-                                                  occ.name,
+                                                  occ.displayName,
                                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                                 ),
                                                 const SizedBox(width: 8),
@@ -585,7 +585,7 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
                                     hint: const Text('Pilih dari daftar warga belum terpetakan'),
                                     decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
                                     items: _unassignedResidents.map((u) {
-                                      return DropdownMenuItem(value: u, child: Text('${u.name} (${u.phone})'));
+                                      return DropdownMenuItem(value: u, child: Text('${u.displayName} (${u.phone})'));
                                     }).toList(),
                                     onChanged: (val) => setState(() => _selectedUnassigned = val),
                                   ),
@@ -632,7 +632,7 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
                               hint: Text(_selectedSourceHouse == null ? 'Pilih rumah asal dulu' : 'Pilih warga'),
                               decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
                               items: _sourceOccupants.map((o) {
-                                return DropdownMenuItem(value: o, child: Text('${o.name} (${o.phone})'));
+                                return DropdownMenuItem(value: o, child: Text('${o.displayName} (${o.phone})'));
                               }).toList(),
                               onChanged: (val) => setState(() => _selectedSourceOccupant = val),
                             ),

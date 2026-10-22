@@ -6,9 +6,11 @@ import 'core/network/dio_client.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/secure_storage_service.dart';
 import 'core/theme/app_theme.dart';
+import 'features/announcements/data/announcements_repository.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/billing/data/billing_repository.dart';
+import 'features/cashbook/data/cashbook_repository.dart';
 import 'features/home/data/dashboard_repository.dart';
 import 'features/profile/data/profile_repository.dart';
 import 'features/resident_management/data/resident_repository.dart';
@@ -29,6 +31,8 @@ void main() async {
   final profileRepository = ProfileRepository(dio: dioClient.dio);
   final billingRepository = BillingRepository(dioClient);
   final dashboardRepository = DashboardRepository(dio: dioClient.dio);
+  final cashbookRepository = CashbookRepository(dioClient);
+  final announcementsRepository = AnnouncementsRepository(dioClient);
 
   final authBloc = AuthBloc(authRepository: authRepository);
 
@@ -39,6 +43,8 @@ void main() async {
     profileRepository: profileRepository,
     billingRepository: billingRepository,
     dashboardRepository: dashboardRepository,
+    cashbookRepository: cashbookRepository,
+    announcementsRepository: announcementsRepository,
   ));
 }
 
@@ -49,6 +55,8 @@ class TetangGoApp extends StatefulWidget {
   final ProfileRepository profileRepository;
   final BillingRepository billingRepository;
   final DashboardRepository dashboardRepository;
+  final CashbookRepository cashbookRepository;
+  final AnnouncementsRepository announcementsRepository;
 
   const TetangGoApp({
     super.key,
@@ -58,6 +66,8 @@ class TetangGoApp extends StatefulWidget {
     required this.profileRepository,
     required this.billingRepository,
     required this.dashboardRepository,
+    required this.cashbookRepository,
+    required this.announcementsRepository,
   });
 
   @override
@@ -82,6 +92,8 @@ class _TetangGoAppState extends State<TetangGoApp> {
         RepositoryProvider<ProfileRepository>.value(value: widget.profileRepository),
         RepositoryProvider<BillingRepository>.value(value: widget.billingRepository),
         RepositoryProvider<DashboardRepository>.value(value: widget.dashboardRepository),
+        RepositoryProvider<CashbookRepository>.value(value: widget.cashbookRepository),
+        RepositoryProvider<AnnouncementsRepository>.value(value: widget.announcementsRepository),
       ],
       child: BlocProvider<AuthBloc>.value(
         value: widget.authBloc,

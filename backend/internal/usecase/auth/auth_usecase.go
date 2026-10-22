@@ -25,6 +25,7 @@ type LoginInput struct {
 }
 
 type RegisterInput struct {
+	Salutation      string `json:"salutation"` // 'Pak' or 'Ibu'
 	Name            string `json:"name"`
 	Phone           string `json:"phone"`
 	Email           string `json:"email"`
@@ -44,6 +45,7 @@ type RejectInput struct {
 }
 
 type AdminCreateUserInput struct {
+	Salutation      string `json:"salutation"` // default: 'Pak'
 	Name            string `json:"name"`
 	Phone           string `json:"phone"`
 	Email           string `json:"email"`
@@ -55,6 +57,7 @@ type AdminCreateUserInput struct {
 }
 
 type AdminUpdateUserInput struct {
+	Salutation      string `json:"salutation"`
 	Name            string `json:"name"`
 	Phone           string `json:"phone"`
 	Email           string `json:"email"`
@@ -176,13 +179,13 @@ func (uc *AuthUseCase) Register(ctx context.Context, input RegisterInput) (*enti
 		return nil, ErrHouseNotFound
 	}
 
-	// Dapatkan role warga
-	role, err := uc.roleRepo.GetByName(ctx, string(entity.RoleWarga))
+	// Dapatkan role resident (Warga)
+	role, err := uc.roleRepo.GetByName(ctx, string(entity.RoleResident))
 	if err != nil {
 		return nil, err
 	}
 	if role == nil {
-		return nil, errors.New("role warga tidak ditemukan di sistem")
+		return nil, errors.New("role RESIDENT tidak ditemukan di sistem")
 	}
 
 	hashedPassword, err := HashPassword(password)
@@ -190,7 +193,10 @@ func (uc *AuthUseCase) Register(ctx context.Context, input RegisterInput) (*enti
 		return nil, err
 	}
 
+	salutation := entity.NormalizeSalutation(input.Salutation)
+
 	newUser := &entity.User{
+		Salutation:      salutation,
 		Name:            name,
 		Phone:           phone,
 		Email:           email,
@@ -276,7 +282,7 @@ func (uc *AuthUseCase) AdminGetAllUsers(ctx context.Context, search, status, rol
 	return uc.userRepo.GetAllUsers(ctx, strings.TrimSpace(search), strings.TrimSpace(status), strings.TrimSpace(role), houseID)
 }
 
-func (uc *AuthUseCase) AdminCreateUser(ctx context.Context, input AdminCreateUserInput) (*entity.User, error) {
+func (uc *AuthUseCase) AdminCreateUser(ctx context.Context, callerRole string, input AdminCreateUserInput) (*entity.User, error) {
 	name := strings.TrimSpace(input.Name)
 	phone := strings.TrimSpace(input.Phone)
 	email := strings.ToLower(strings.TrimSpace(input.Email))
@@ -295,13 +301,19 @@ func (uc *AuthUseCase) AdminCreateUser(ctx context.Context, input AdminCreateUse
 		return nil, errors.New("nomor HP sudah terdaftar di sistem")
 	}
 
-	roleName := strings.ToLower(strings.TrimSpace(input.Role))
+	roleName := strings.ToUpper(strings.TrimSpace(input.Role))
 	if roleName == "" {
-		roleName = "warga"
+		roleName = string(entity.RoleResident)
 	}
+
+	// Security: Non-ADMIN cannot create ADMIN user
+	if roleName == string(entity.RoleAdmin) && callerRole != string(entity.RoleAdmin) {
+		return nil, errors.New("hanya Administrator yang berwenang membuat akun dengan role Administrator")
+	}
+
 	role, err := uc.roleRepo.GetByName(ctx, roleName)
 	if err != nil || role == nil {
-		role, _ = uc.roleRepo.GetByName(ctx, "warga")
+		role, _ = uc.roleRepo.GetByName(ctx, string(entity.RoleResident))
 	}
 
 	status := strings.ToLower(strings.TrimSpace(input.Status))
@@ -319,7 +331,10 @@ func (uc *AuthUseCase) AdminCreateUser(ctx context.Context, input AdminCreateUse
 		ownershipStatus = "pemilik"
 	}
 
+	salutation := entity.NormalizeSalutation(input.Salutation)
+
 	newUser := &entity.User{
+		Salutation:      salutation,
 		Name:            name,
 		Phone:           phone,
 		Email:           email,
@@ -352,7 +367,7 @@ func (uc *AuthUseCase) AdminCreateUser(ctx context.Context, input AdminCreateUse
 	return newUser, nil
 }
 
-func (uc *AuthUseCase) AdminUpdateUser(ctx context.Context, userID int64, input AdminUpdateUserInput) (*entity.User, error) {
+func (uc *AuthUseCase) AdminUpdateUser(ctx context.Context, callerID int64, callerRole string, userID int64, input AdminUpdateUserInput) (*entity.User, error) {
 	user, err := uc.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -361,10 +376,21 @@ func (uc *AuthUseCase) AdminUpdateUser(ctx context.Context, userID int64, input 
 		return nil, ErrUserNotFound
 	}
 
+	// Security: Non-ADMIN cannot modify an ADMIN account
+	if user.RoleName == string(entity.RoleAdmin) && callerRole != string(entity.RoleAdmin) {
+		return nil, errors.New("tidak memiliki izin untuk mengubah akun Administrator")
+	}
+
 	name := strings.TrimSpace(input.Name)
 	phone := strings.TrimSpace(input.Phone)
 	email := strings.ToLower(strings.TrimSpace(input.Email))
+	salutationInput := strings.TrimSpace(input.Salutation)
 
+	if salutationInput != "" {
+		user.Salutation = entity.NormalizeSalutation(salutationInput)
+	} else {
+		user.Salutation = entity.NormalizeSalutation(user.Salutation)
+	}
 	if name != "" {
 		user.Name = name
 	}
@@ -376,7 +402,17 @@ func (uc *AuthUseCase) AdminUpdateUser(ctx context.Context, userID int64, input 
 	}
 
 	if input.Role != "" {
-		role, err := uc.roleRepo.GetByName(ctx, strings.ToLower(strings.TrimSpace(input.Role)))
+		targetRole := strings.ToUpper(strings.TrimSpace(input.Role))
+		// Security: Non-ADMIN cannot elevate self or anyone to ADMIN
+		if targetRole == string(entity.RoleAdmin) && callerRole != string(entity.RoleAdmin) {
+			return nil, errors.New("tidak memiliki izin untuk menetapkan role Administrator")
+		}
+		// Security: Prevent self role alteration to avoid privilege lock/escalation
+		if callerID == userID && targetRole != user.RoleName {
+			return nil, errors.New("tidak dapat mengubah role akun sendiri")
+		}
+
+		role, err := uc.roleRepo.GetByName(ctx, targetRole)
 		if err == nil && role != nil {
 			user.RoleID = role.ID
 			user.RoleName = role.Name
@@ -425,13 +461,23 @@ func (uc *AuthUseCase) AdminUpdateUser(ctx context.Context, userID int64, input 
 	return uc.userRepo.GetByID(ctx, userID)
 }
 
-func (uc *AuthUseCase) AdminDeleteUser(ctx context.Context, userID int64) error {
+func (uc *AuthUseCase) AdminDeleteUser(ctx context.Context, callerID int64, callerRole string, userID int64) error {
 	user, err := uc.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return err
 	}
 	if user == nil {
 		return ErrUserNotFound
+	}
+
+	// Security: Cannot delete own account
+	if callerID == userID {
+		return errors.New("tidak dapat menghapus akun sendiri")
+	}
+
+	// Security: Non-ADMIN cannot delete ADMIN user
+	if user.RoleName == string(entity.RoleAdmin) && callerRole != string(entity.RoleAdmin) {
+		return errors.New("tidak memiliki izin untuk menghapus akun Administrator")
 	}
 
 	houseID := user.HouseID
@@ -455,7 +501,20 @@ func (uc *AuthUseCase) AdminDeleteUser(ctx context.Context, userID int64) error 
 	return nil
 }
 
-func (uc *AuthUseCase) AdminResetPassword(ctx context.Context, userID int64, newPassword string) error {
+func (uc *AuthUseCase) AdminResetPassword(ctx context.Context, callerRole string, userID int64, newPassword string) error {
+	user, err := uc.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return ErrUserNotFound
+	}
+
+	// Security: Non-ADMIN cannot reset ADMIN password
+	if user.RoleName == string(entity.RoleAdmin) && callerRole != string(entity.RoleAdmin) {
+		return errors.New("tidak memiliki izin untuk mereset kata sandi akun Administrator")
+	}
+
 	cleanPass := strings.TrimSpace(newPassword)
 	if cleanPass == "" {
 		return errors.New("password baru wajib diisi")
@@ -470,4 +529,58 @@ func (uc *AuthUseCase) AdminResetPassword(ctx context.Context, userID int64, new
 	}
 
 	return uc.userRepo.UpdatePassword(ctx, userID, string(hashed))
+}
+
+// AdminAssignRole assigns an organizational role or revokes back to RESIDENT
+func (uc *AuthUseCase) AdminAssignRole(ctx context.Context, callerID int64, callerRole string, targetUserID int64, newRole string) (*entity.User, error) {
+	// Only ADMIN, CHAIRPERSON, and VICE_CHAIRPERSON can manage organizational roles
+	if callerRole != string(entity.RoleAdmin) &&
+		callerRole != string(entity.RoleChairperson) &&
+		callerRole != string(entity.RoleViceChairperson) {
+		return nil, errors.New("akses ditolak: hanya Administrator, Ketua, dan Wakil Ketua yang dapat mengelola peran organisasi")
+	}
+
+	// Prevent self-role modification
+	if callerID == targetUserID {
+		return nil, errors.New("tidak dapat mengubah role akun sendiri")
+	}
+
+	targetUser, err := uc.userRepo.GetByID(ctx, targetUserID)
+	if err != nil {
+		return nil, err
+	}
+	if targetUser == nil {
+		return nil, ErrUserNotFound
+	}
+
+	// Protected: Cannot modify ADMIN account
+	if targetUser.RoleName == string(entity.RoleAdmin) {
+		return nil, errors.New("akun Administrator tidak dapat diubah melalui penugasan peran organisasi")
+	}
+
+	formattedRole := strings.ToUpper(strings.TrimSpace(newRole))
+
+	// Protected: ADMIN role is NEVER assignable through organizational role management
+	if formattedRole == string(entity.RoleAdmin) {
+		return nil, errors.New("peran Administrator tidak dapat ditetapkan melalui penugasan peran organisasi")
+	}
+
+	if !entity.IsValidOrganizationalRole(formattedRole) {
+		return nil, errors.New("peran organisasi tidak valid. Pilihan yang tersedia: CHAIRPERSON (Ketua), VICE_CHAIRPERSON (Wakil Ketua), TREASURER (Bendahara), SECRETARY (Sekretaris), atau RESIDENT (Warga)")
+	}
+
+	role, err := uc.roleRepo.GetByName(ctx, formattedRole)
+	if err != nil || role == nil {
+		return nil, fmt.Errorf("role '%s' tidak ditemukan dalam sistem", formattedRole)
+	}
+
+	// Update user's role while preserving all resident identity and attributes
+	targetUser.RoleID = role.ID
+	targetUser.RoleName = role.Name
+
+	if err := uc.userRepo.Update(ctx, targetUser); err != nil {
+		return nil, fmt.Errorf("gagal menyimpan perubahan peran warga: %w", err)
+	}
+
+	return uc.userRepo.GetByID(ctx, targetUserID)
 }

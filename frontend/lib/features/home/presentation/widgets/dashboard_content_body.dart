@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../announcements/data/announcements_repository.dart';
+import '../../../announcements/domain/models/announcement_model.dart';
+import '../../../announcements/presentation/widgets/announcement_detail_dialog.dart';
 import '../../../auth/domain/models/user_model.dart';
+import '../../../cashbook/data/cashbook_repository.dart';
+import '../../../cashbook/domain/models/cashbook_models.dart';
 import '../../data/dashboard_repository.dart';
 import '../../domain/models/dashboard_stats_model.dart';
 import 'stat_card.dart';
@@ -25,6 +30,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
   bool _isLoading = false;
   String? _errorMessage;
   DashboardStatsModel? _statsData;
+  CashbookSummaryModel? _cashbookSummary;
+  List<AnnouncementModel> _announcements = [];
 
   @override
   void initState() {
@@ -33,21 +40,49 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
   }
 
   Future<void> _fetchDashboardStats() async {
-    // Hanya Admin RT yang memiliki akses ke endpoint /api/v1/admin/dashboard/stats
-    final isAdmin = widget.user?.role == 'admin_rt';
-    if (!isAdmin) return;
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final repository = context.read<DashboardRepository>();
-      final data = await repository.getAdminDashboardStats();
+      final canAccessStats = widget.user?.canAccessLeadership ?? false;
+      DashboardStatsModel? data;
+      if (canAccessStats) {
+        try {
+          final repository = context.read<DashboardRepository>();
+          data = await repository.getAdminDashboardStats();
+        } catch (_) {}
+      }
+
+      CashbookRepository? cashbookRepo;
+      AnnouncementsRepository? announcementsRepo;
+      try {
+        cashbookRepo = context.read<CashbookRepository>();
+      } catch (_) {}
+      try {
+        announcementsRepo = context.read<AnnouncementsRepository>();
+      } catch (_) {}
+
+      CashbookSummaryModel? cashSummary;
+      List<AnnouncementModel> announcementsList = [];
+
+      if (cashbookRepo != null) {
+        try {
+          cashSummary = await cashbookRepo.getCashbookSummary();
+        } catch (_) {}
+      }
+      if (announcementsRepo != null) {
+        try {
+          announcementsList = await announcementsRepo.getAnnouncements();
+        } catch (_) {}
+      }
+
       if (mounted) {
         setState(() {
           _statsData = data;
+          _cashbookSummary = cashSummary;
+          _announcements = announcementsList;
           _isLoading = false;
         });
       }
@@ -105,14 +140,18 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
         trend: data.pendingResidents > 0 ? '${data.pendingResidents} Pending' : 'Terverifikasi',
         isPositive: data.pendingResidents == 0,
       ),
-      // Kartu 3: Iuran Terkumpul Bulan Ini
+      // Kartu 3: Saldo Kas Transparan RT
       StatCardData(
-        title: 'Iuran Terkumpul (${data.currentPeriod})',
-        value: _formatCurrency(data.collectedAmount),
-        subtitle: 'Target: ${_formatCurrency(data.targetAmount)}',
-        icon: Icons.payments_outlined,
+        title: 'Saldo Kas Transparan RT',
+        value: _cashbookSummary != null
+            ? _formatCurrency(_cashbookSummary!.currentBalance)
+            : _formatCurrency(data.collectedAmount),
+        subtitle: _cashbookSummary != null
+            ? 'Masuk: ${_formatCurrency(_cashbookSummary!.totalIncome)} | Keluar: ${_formatCurrency(_cashbookSummary!.totalExpense)}'
+            : 'Target: ${_formatCurrency(data.targetAmount)}',
+        icon: Icons.account_balance_wallet_outlined,
         color: AppTheme.primary,
-        trend: '$pctCollected%',
+        trend: _cashbookSummary != null ? 'Kas RT' : '$pctCollected%',
         isPositive: true,
       ),
       // Kartu 4: Verifikasi Pembayaran
@@ -130,8 +169,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
 
   @override
   Widget build(BuildContext context) {
-    final userName = widget.user?.name ?? 'Pengurus RT';
-    final userRole = widget.user?.roleDisplay ?? 'Admin RT';
+    final userName = widget.user?.displayName ?? 'Pengguna';
+    final userRole = widget.user?.roleDisplay ?? 'Warga';
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(widget.isDesktop ? 24 : 16),
@@ -204,7 +243,7 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 ),
 
               // Loading State vs Grid Stat Cards
-              if (_isLoading && _statsData == null)
+              if (_isLoading && _statsData == null && _cashbookSummary == null && _announcements.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
                   child: Center(
@@ -212,7 +251,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                   ),
                 )
               else if (_statsData != null)
-                _buildStatCardsGrid(_statsData!),
+                _buildStatCardsGrid(_statsData!)
+              else
+                _buildResidentStatCardsGrid(),
 
               const SizedBox(height: 28),
 
@@ -243,6 +284,86 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
 
   Widget _buildStatCardsGrid(DashboardStatsModel data) {
     final cardList = _buildStatCards(data);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        int crossAxisCount = 1;
+        double childAspectRatio = 2.4;
+
+        if (width >= 1100) {
+          crossAxisCount = 4;
+          childAspectRatio = 1.35;
+        } else if (width >= 700) {
+          crossAxisCount = 2;
+          childAspectRatio = 1.8;
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: cardList.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemBuilder: (context, i) => StatCard(data: cardList[i]),
+        );
+      },
+    );
+  }
+
+  List<StatCardData> _buildResidentStatCards() {
+    return [
+      StatCardData(
+        title: 'Saldo Kas Transparan RT',
+        value: _cashbookSummary != null
+            ? _formatCurrency(_cashbookSummary!.currentBalance)
+            : 'Tersedia',
+        subtitle: _cashbookSummary != null
+            ? 'Masuk: ${_formatCurrency(_cashbookSummary!.totalIncome)}'
+            : 'Transparansi kas terbuka untuk seluruh warga',
+        icon: Icons.account_balance_wallet_outlined,
+        color: AppTheme.primary,
+        trend: 'Kas Warga',
+        isPositive: true,
+      ),
+      StatCardData(
+        title: 'Pengumuman RT',
+        value: '${_announcements.length} Informasi',
+        subtitle: _announcements.isNotEmpty ? _announcements.first.title : 'Belum ada pengumuman baru',
+        icon: Icons.campaign_outlined,
+        color: const Color(0xFF0F766E),
+        trend: 'Terkini',
+        isPositive: true,
+      ),
+      StatCardData(
+        title: 'Unit Hunian Saya',
+        value: widget.user?.houseDisplay ?? 'Belum Terdaftar',
+        subtitle: widget.user?.canAccessResidentIuran ?? false
+            ? 'Terdaftar & Siap Bayar Iuran'
+            : 'Belum ditautkan ke unit rumah',
+        icon: Icons.home_work_outlined,
+        color: Colors.blue,
+        trend: widget.user?.canAccessResidentIuran ?? false ? 'Terverifikasi' : 'Belum Terdaftar',
+        isPositive: widget.user?.canAccessResidentIuran ?? false,
+      ),
+      const StatCardData(
+        title: 'Siaga Keamanan',
+        value: 'Pos Satpam & Panic',
+        subtitle: 'Siaga 24 jam dalam kondisi darurat',
+        icon: Icons.shield_outlined,
+        color: Color(0xFFF59E0B),
+        trend: 'Siaga 24/7',
+        isPositive: true,
+      ),
+    ];
+  }
+
+  Widget _buildResidentStatCardsGrid() {
+    final cardList = _buildResidentStatCards();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -533,6 +654,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
   }
 
   Widget _buildAnnouncementsCard() {
+    final topAnnouncements = _announcements.take(3).toList();
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -543,10 +666,10 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
+              const Expanded(
                 child: Text(
                   'Papan Pengumuman Warga',
                   style: TextStyle(
@@ -556,40 +679,154 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                   ),
                 ),
               ),
-              SizedBox(width: 8),
-              Icon(Icons.campaign_rounded, color: AppTheme.primary, size: 20),
+              if (topAnnouncements.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${topAnnouncements.length} Pengumuman',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                  ),
+                )
+              else
+                const Icon(Icons.campaign_rounded, color: AppTheme.primary, size: 20),
             ],
           ),
           const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.campaign_outlined,
-                  size: 36,
-                  color: AppTheme.textSecondary,
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Belum ada pengumuman resmi yang dipublikasikan (Modul Pengumuman Aktif di Sprint 3).',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
+          if (topAnnouncements.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.campaign_outlined,
+                    size: 36,
                     color: AppTheme.textSecondary,
-                    height: 1.5,
                   ),
-                ),
-              ],
+                  SizedBox(height: 12),
+                  Text(
+                    'Belum ada pengumuman resmi yang dipublikasikan.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: topAnnouncements.length,
+              separatorBuilder: (_, __) => const Divider(height: 16, color: Color(0xFFF1F5F9)),
+              itemBuilder: (context, idx) {
+                final a = topAnnouncements[idx];
+                Color badgeColor;
+                if (a.isUrgent) {
+                  badgeColor = AppTheme.danger;
+                } else if (a.isImportant) {
+                  badgeColor = const Color(0xFFF59E0B);
+                } else {
+                  badgeColor = AppTheme.primary;
+                }
+
+                return InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AnnouncementDetailDialog(announcement: a),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: a.isPinned ? AppTheme.danger.withOpacity(0.3) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            if (a.isPinned) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.danger.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.push_pin_rounded, size: 10, color: AppTheme.danger),
+                                    SizedBox(width: 2),
+                                    Text('PIN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.danger)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: badgeColor.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                a.categoryDisplay,
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: badgeColor),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              _formatDateTime(a.createdAt),
+                              style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          a.title,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          a.content,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-          ),
         ],
       ),
     );

@@ -47,8 +47,8 @@ func (r *PostgresDashboardRepository) GetAdminDashboardStats(ctx context.Context
 	}
 
 	// 2. Statistik Warga
-	// total_residents: SELECT COUNT(*) FROM users WHERE status = 'active' AND role_id = (SELECT id FROM roles WHERE name = 'warga');
-	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users WHERE status = 'active' AND role_id = (SELECT id FROM roles WHERE name = 'warga');`).Scan(&stats.TotalResidents)
+	// total_residents: all active residents (including those with organizational roles, excluding ADMIN)
+	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users WHERE status = 'active' AND role_id IN (SELECT id FROM roles WHERE name != 'ADMIN');`).Scan(&stats.TotalResidents)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (r *PostgresDashboardRepository) GetAdminDashboardStats(ctx context.Context
 	queryActivities := `
 		SELECT 
 			p.id,
-			u.name AS resident_name,
+			CASE WHEN u.salutation IS NOT NULL AND u.salutation != '' THEN u.salutation || ' ' || u.name ELSE u.name END AS resident_name,
 			h.block,
 			h.house_number,
 			p.amount_paid,

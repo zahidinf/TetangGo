@@ -248,7 +248,7 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                                             Row(
                                               children: [
                                                 Text(
-                                                  resident.name,
+                                                  resident.displayName,
                                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                                 ),
                                                 const SizedBox(width: 8),

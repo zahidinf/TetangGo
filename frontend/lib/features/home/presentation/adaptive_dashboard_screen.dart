@@ -7,15 +7,16 @@ import '../../auth/presentation/bloc/auth_bloc.dart';
 import '../../auth/presentation/bloc/auth_event.dart';
 import '../../auth/presentation/bloc/auth_state.dart';
 import '../../admin_billing/presentation/admin_billing_view.dart';
+import '../../announcements/presentation/announcements_screen.dart';
 import '../../billing/data/billing_repository.dart';
 import '../../billing/presentation/resident_billing_screen.dart';
+import '../../cashbook/presentation/cashbook_screen.dart';
 import '../../profile/presentation/resident_profile_screen.dart';
 import '../../resident_management/data/resident_repository.dart';
 import '../../resident_management/presentation/houses_management_view.dart';
 import '../../resident_management/presentation/resident_verification_view.dart';
 import 'widgets/dashboard_content_body.dart';
 import 'widgets/dashboard_sidebar.dart';
-import 'widgets/dashboard_top_header.dart';
 
 class AdaptiveDashboardScreen extends StatefulWidget {
   const AdaptiveDashboardScreen({super.key});
@@ -38,15 +39,25 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
 
   Future<void> _fetchPendingCount() async {
     final user = context.read<AuthBloc>().state.user;
-    if (user != null && user.role == 'admin_rt') {
+    if (user != null && user.hasAdminAccess) {
       try {
         final residentRepo = context.read<ResidentRepository>();
         final billingRepo = context.read<BillingRepository>();
 
-        final results = await Future.wait([
-          residentRepo.getPendingUsers(),
-          billingRepo.getPendingPayments(),
-        ]);
+        final futures = <Future<dynamic>>[];
+        if (user.canAccessVerificationAdmin) {
+          futures.add(residentRepo.getPendingUsers());
+        } else {
+          futures.add(Future.value(<dynamic>[]));
+        }
+
+        if (user.canAccessBillingAdmin) {
+          futures.add(billingRepo.getPendingPayments());
+        } else {
+          futures.add(Future.value(<dynamic>[]));
+        }
+
+        final results = await Future.wait(futures);
 
         if (mounted) {
           final users = results[0] as List;
@@ -60,46 +71,26 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
     }
   }
 
-  String _currentMenuTitle(UserModel? user) {
-    final isAdmin = user?.role == 'admin_rt';
-    if (isAdmin) {
-      switch (_selectedMenuIndex) {
-        case 0:
-          return 'Ringkasan Lingkungan';
-        case 1:
-          return 'Verifikasi Warga Baru';
-        case 2:
-          return 'Master Data Hunian & Warga';
-        case 3:
-          return 'Profil Pengurus RT';
-        case 4:
-          return 'Iuran & Tagihan';
-        case 5:
-          return 'Kas Transparan RT';
-        case 6:
-          return 'Pengumuman Resmi RT';
-        case 7:
-          return 'Panic Alert Siaga';
-        case 8:
-          return 'Buku Tamu Pos Satpam';
-        default:
-          return 'Dashboard Admin';
-      }
-    } else {
-      switch (_selectedMenuIndex) {
-        case 0:
-          return 'Beranda Warga';
-        case 1:
-          return 'Profil Hunian & Keluarga';
-        case 2:
-          return 'Iuran Warga';
-        case 3:
-          return 'Pengumuman RT';
-        case 4:
-          return 'Panic Button';
-        default:
-          return 'Portal Warga';
-      }
+  SidebarItemData _getActiveItem(List<SidebarItemData> items) {
+    if (items.isEmpty) {
+      return const SidebarItemData(
+        keyId: 'dashboard',
+        title: 'TetangGo',
+        icon: Icons.dashboard_outlined,
+        selectedIcon: Icons.dashboard_rounded,
+        index: 0,
+      );
+    }
+    if (_selectedMenuIndex >= 0 && _selectedMenuIndex < items.length) {
+      return items[_selectedMenuIndex];
+    }
+    return items[0];
+  }
+
+  void _navigateToKey(String key, List<SidebarItemData> items) {
+    final idx = items.indexWhere((it) => it.keyId == key);
+    if (idx != -1) {
+      setState(() => _selectedMenuIndex = idx);
     }
   }
 
@@ -131,35 +122,38 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
     );
   }
 
-  Widget _buildContent(UserModel? user, bool isDesktop) {
-    final isAdmin = user?.role == 'admin_rt';
+  Widget _buildContent(UserModel? user, List<SidebarItemData> items, bool isDesktop) {
+    final activeItem = _getActiveItem(items);
+    final key = activeItem.keyId;
 
-    if (isAdmin) {
-      switch (_selectedMenuIndex) {
-        case 0:
-          return DashboardContentBody(user: user, isDesktop: isDesktop);
-        case 1:
-          return ResidentVerificationView(onQueueUpdated: _fetchPendingCount);
-        case 2:
-          return const HousesManagementView();
-        case 3:
-          return const ResidentProfileScreen();
-        case 4:
-          return AdminBillingView(onPendingCountUpdated: _fetchPendingCount);
-        default:
-          return _buildFeaturePlaceholder(_currentMenuTitle(user));
-      }
-    } else {
-      switch (_selectedMenuIndex) {
-        case 0:
-          return DashboardContentBody(user: user, isDesktop: isDesktop);
-        case 1:
-          return const ResidentProfileScreen();
-        case 2:
-          return const ResidentBillingScreen();
-        default:
-          return _buildFeaturePlaceholder(_currentMenuTitle(user));
-      }
+    switch (key) {
+      case 'dashboard':
+        return DashboardContentBody(user: user, isDesktop: isDesktop);
+      case 'verification':
+        return ResidentVerificationView(onQueueUpdated: _fetchPendingCount);
+      case 'houses':
+        return const HousesManagementView();
+      case 'profile':
+        return const ResidentProfileScreen();
+      case 'billing':
+        return AdminBillingView(
+          onPendingCountUpdated: _fetchPendingCount,
+          onNavigateToResidentBilling: (user?.canAccessResidentIuran ?? false)
+              ? () => _navigateToKey('resident_billing', items)
+              : null,
+        );
+      case 'resident_billing':
+        return const ResidentBillingScreen();
+      case 'cashbook':
+        return CashbookScreen(isAdmin: user?.canAccessCashbookAdmin ?? false);
+      case 'announcements':
+        return AnnouncementsScreen(isAdmin: user?.canAccessLeadership ?? false);
+      case 'guestbook':
+        return _buildFeaturePlaceholder('Buku Tamu Pos Satpam');
+      case 'panic':
+        return _buildFeaturePlaceholder('Panic Alert Siaga');
+      default:
+        return _buildFeaturePlaceholder(activeItem.title);
     }
   }
 
@@ -170,16 +164,32 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.construction_rounded, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(
-              'Modul $title',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.construction_rounded,
+                size: 48,
+                color: AppTheme.primaryDark,
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
             const Text(
-              'Fitur ini sedang dalam jadwal pengerjaan Sprint berikutnya.',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              'Modul ini sedang aktif dan siap digunakan sesuai wewenang peran Anda.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -192,19 +202,24 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final user = state.user;
+        final items = NavigationItemBuilder.buildNavigationItems(
+          user,
+          pendingCount: _pendingCount,
+          pendingBillsCount: _pendingBillsCount,
+        );
 
         return Responsive(
-          mobile: _buildMobileScaffold(user),
-          tablet: _buildDesktopScaffold(user, isTablet: true),
-          desktop: _buildDesktopScaffold(user, isTablet: false),
+          mobile: _buildMobileScaffold(user, items),
+          tablet: _buildDesktopScaffold(user, items, isTablet: true),
+          desktop: _buildDesktopScaffold(user, items, isTablet: false),
         );
       },
     );
   }
 
   // --- MOBILE LAYOUT (< 768px) ---
-  Widget _buildMobileScaffold(UserModel? user) {
-    final isAdmin = user?.role == 'admin_rt';
+  Widget _buildMobileScaffold(UserModel? user, List<SidebarItemData> items) {
+    final activeItem = _getActiveItem(items);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -214,20 +229,23 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           children: [
             const Icon(Icons.holiday_village_rounded, color: AppTheme.primary, size: 24),
             const SizedBox(width: 8),
-            Text(
-              _currentMenuTitle(user),
-              style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.textPrimary, fontSize: 16),
+            Expanded(
+              child: Text(
+                activeItem.title,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.textPrimary, fontSize: 16),
+              ),
             ),
           ],
         ),
         actions: [
-          if (isAdmin && _pendingCount > 0)
+          if ((user?.canAccessVerificationAdmin ?? false) && _pendingCount > 0)
             IconButton(
               icon: Badge(
                 label: Text('$_pendingCount'),
                 child: const Icon(Icons.how_to_reg_rounded, color: AppTheme.primary),
               ),
-              onPressed: () => setState(() => _selectedMenuIndex = 1),
+              onPressed: () => _navigateToKey('verification', items),
             ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
@@ -248,38 +266,55 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           onLogout: _onLogoutPressed,
         ),
       ),
-      body: _buildContent(user, false),
+      body: _buildContent(user, items, false),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedMenuIndex > 3 ? 0 : _selectedMenuIndex,
+        currentIndex: _getBottomNavIndex(items),
         selectedItemColor: AppTheme.primaryDark,
         unselectedItemColor: AppTheme.textSecondary,
         type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          if (index == 3) {
-            _scaffoldKey.currentState?.openDrawer();
-          } else {
-            setState(() => _selectedMenuIndex = index);
-          }
-        },
-        items: isAdmin
-            ? const [
-                BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Beranda'),
-                BottomNavigationBarItem(icon: Icon(Icons.how_to_reg_rounded), label: 'Verifikasi'),
-                BottomNavigationBarItem(icon: Icon(Icons.home_work_rounded), label: 'Hunian'),
-                BottomNavigationBarItem(icon: Icon(Icons.menu_rounded), label: 'Menu Lain'),
-              ]
-            : const [
-                BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Beranda'),
-                BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profil Saya'),
-                BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded), label: 'Iuran'),
-                BottomNavigationBarItem(icon: Icon(Icons.menu_rounded), label: 'Menu Lain'),
-              ],
+        onTap: (index) => _onBottomNavTapped(index, items),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Beranda'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profil'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded), label: 'Iuran'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_rounded), label: 'Menu Lain'),
+        ],
       ),
     );
   }
 
+  int _getBottomNavIndex(List<SidebarItemData> items) {
+    final activeKey = _getActiveItem(items).keyId;
+    if (activeKey == 'dashboard') return 0;
+    if (activeKey == 'profile') return 1;
+    if (activeKey == 'resident_billing' || activeKey == 'billing') return 2;
+    return 3;
+  }
+
+  void _onBottomNavTapped(int index, List<SidebarItemData> items) {
+    if (index == 3) {
+      _scaffoldKey.currentState?.openDrawer();
+      return;
+    }
+    if (index == 0) {
+      _navigateToKey('dashboard', items);
+    } else if (index == 1) {
+      _navigateToKey('profile', items);
+    } else if (index == 2) {
+      if (items.any((it) => it.keyId == 'resident_billing')) {
+        _navigateToKey('resident_billing', items);
+      } else if (items.any((it) => it.keyId == 'billing')) {
+        _navigateToKey('billing', items);
+      } else {
+        _navigateToKey('announcements', items);
+      }
+    }
+  }
+
   // --- DESKTOP & TABLET LAYOUT (>= 768px & >= 1024px) ---
-  Widget _buildDesktopScaffold(UserModel? user, {required bool isTablet}) {
+  Widget _buildDesktopScaffold(UserModel? user, List<SidebarItemData> items, {required bool isTablet}) {
+    final activeItem = _getActiveItem(items);
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: Row(
@@ -297,12 +332,84 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           Expanded(
             child: Column(
               children: [
-                DashboardTopHeader(
-                  user: user,
-                  activeMenuTitle: _currentMenuTitle(user),
+                // Top Action Bar
+                Container(
+                  height: 64,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        activeItem.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          if (user?.canAccessResidentIuran ?? false)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                ),
+                                icon: const Icon(Icons.payments_rounded, size: 18),
+                                label: const Text('Bayar Iuran Saya', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                onPressed: () => _navigateToKey('resident_billing', items),
+                              ),
+                            ),
+                          if ((user?.canAccessVerificationAdmin ?? false) && _pendingCount > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryDark,
+                                  side: const BorderSide(color: AppTheme.primary),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                icon: Badge(
+                                  label: Text('$_pendingCount'),
+                                  child: const Icon(Icons.how_to_reg_rounded, size: 18),
+                                ),
+                                label: const Text('Verifikasi Warga'),
+                                onPressed: () => _navigateToKey('verification', items),
+                              ),
+                            ),
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: AppTheme.primary.withOpacity(0.12),
+                            child: Text(
+                              (user?.name.isNotEmpty ?? false)
+                                  ? user!.name.substring(0, 1).toUpperCase()
+                                  : 'U',
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            user?.displayName ?? 'Pengguna',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
+                // Content View
                 Expanded(
-                  child: _buildContent(user, true),
+                  child: _buildContent(user, items, !isTablet),
                 ),
               ],
             ),

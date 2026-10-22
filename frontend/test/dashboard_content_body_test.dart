@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tetanggo_frontend/core/network/dio_client.dart';
+import 'package:tetanggo_frontend/core/storage/secure_storage_service.dart';
+import 'package:tetanggo_frontend/features/announcements/data/announcements_repository.dart';
+import 'package:tetanggo_frontend/features/announcements/domain/models/announcement_model.dart';
 import 'package:tetanggo_frontend/features/auth/domain/models/user_model.dart';
+import 'package:tetanggo_frontend/features/cashbook/data/cashbook_repository.dart';
+import 'package:tetanggo_frontend/features/cashbook/domain/models/cashbook_models.dart';
 import 'package:tetanggo_frontend/features/home/data/dashboard_repository.dart';
 import 'package:tetanggo_frontend/features/home/domain/models/dashboard_stats_model.dart';
 import 'package:tetanggo_frontend/features/home/presentation/widgets/dashboard_content_body.dart';
@@ -37,14 +43,51 @@ class FakeDashboardRepository extends DashboardRepository {
   }
 }
 
+class FakeCashbookRepository extends CashbookRepository {
+  FakeCashbookRepository() : super(DioClient(storageService: SecureStorageService()));
+
+  @override
+  Future<CashbookSummaryModel> getCashbookSummary() async {
+    return CashbookSummaryModel(
+      currentBalance: 70000,
+      totalIncome: 105000,
+      totalExpense: 35000,
+      monthlySummary: [],
+    );
+  }
+}
+
+class FakeAnnouncementsRepository extends AnnouncementsRepository {
+  FakeAnnouncementsRepository() : super(DioClient(storageService: SecureStorageService()));
+
+  @override
+  Future<List<AnnouncementModel>> getAnnouncements({String? category, String? search}) async {
+    return [
+      AnnouncementModel(
+        id: 1,
+        title: 'Kerja Bakti Akbar Lingkungan',
+        content: 'Pembersihan saluran air menyambut musim hujan.',
+        category: 'penting',
+        isPinned: true,
+        authorName: 'Admin RT TetangGo',
+        createdAt: DateTime.parse('2026-09-29T10:00:00.000Z'),
+        updatedAt: DateTime.parse('2026-09-29T10:00:00.000Z'),
+      ),
+    ];
+  }
+}
+
 void main() {
-  testWidgets('DashboardContentBody displays real DB data and zero dummy text', (tester) async {
+  testWidgets('DashboardContentBody displays real DB data, cashbook balance, and announcements', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
     final fakeRepo = FakeDashboardRepository();
-    final testUser = const UserModel(
+    final fakeCashbookRepo = FakeCashbookRepository();
+    final fakeAnnouncementsRepo = FakeAnnouncementsRepository();
+
+    const testUser = UserModel(
       id: 1,
       name: 'Admin RT TetangGo',
       phone: '081234567890',
@@ -55,10 +98,14 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: RepositoryProvider<DashboardRepository>.value(
-          value: fakeRepo,
-          child: Scaffold(
+      MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider<DashboardRepository>.value(value: fakeRepo),
+          RepositoryProvider<CashbookRepository>.value(value: fakeCashbookRepo),
+          RepositoryProvider<AnnouncementsRepository>.value(value: fakeAnnouncementsRepo),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
             body: DashboardContentBody(
               user: testUser,
               isDesktop: true,
@@ -78,8 +125,11 @@ void main() {
     expect(find.text('7 Terisi, 6 Kosong'), findsOneWidget);
     expect(find.text('1 Warga Aktif'), findsOneWidget);
     expect(find.text('Semua Terverifikasi'), findsOneWidget);
-    expect(find.text('Rp 35.000'), findsNWidgets(2)); // Card 3 value and table row amount
-    expect(find.text('Target: Rp 245.000'), findsOneWidget);
+
+    // Sprint 3: Real Cashbook Balance Card 3
+    expect(find.text('Saldo Kas Transparan RT'), findsOneWidget);
+    expect(find.text('Rp 70.000'), findsOneWidget); // Real cashbook balance
+    expect(find.textContaining('Masuk: Rp 105.000'), findsOneWidget);
     expect(find.text('0 Transaksi'), findsOneWidget);
 
     // Verify Real Activity Table
@@ -87,8 +137,9 @@ void main() {
     expect(find.textContaining('Blok B1 No. 36'), findsOneWidget);
     expect(find.text('Lunas'), findsOneWidget);
 
-    // Verify Sprint 3 Placeholder for announcements
-    expect(find.textContaining('Modul Pengumuman Aktif di Sprint 3'), findsOneWidget);
+    // Sprint 3: Real Announcements displayed
+    expect(find.text('Kerja Bakti Akbar Lingkungan'), findsOneWidget);
+    expect(find.textContaining('Pembersihan saluran air'), findsOneWidget);
 
     // Verify ZERO dummy hardcoded data
     expect(find.text('124 Rumah'), findsNothing);
@@ -99,6 +150,5 @@ void main() {
     expect(find.text('Ibu Siti Rahma'), findsNothing);
     expect(find.text('Bpk. Ahmad Fauzi'), findsNothing);
     expect(find.text('Bpk. Eko Prasetyo'), findsNothing);
-    expect(find.textContaining('Kerja Bakti Bersama'), findsNothing);
   });
 }

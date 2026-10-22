@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/honorific_helper.dart';
 import '../../data/resident_repository.dart';
 import '../../domain/models/house_model.dart';
 import '../../domain/models/resident_user_model.dart';
+import 'house_detail_dialog.dart';
 
 class UserFormDialog extends StatefulWidget {
   final ResidentUserModel? userToEdit;
@@ -29,8 +31,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
   late final TextEditingController _passwordController;
 
   int? _selectedHouseId;
+  String _selectedSalutation = HonorificHelper.bapak;
   String _selectedStatus = 'active';
-  String _selectedRole = 'warga';
+  String _selectedRole = 'RESIDENT';
   String _selectedOwnership = 'pemilik';
 
   bool _isPasswordVisible = false;
@@ -42,6 +45,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
   void initState() {
     super.initState();
     final u = widget.userToEdit;
+    _selectedSalutation = HonorificHelper.normalize(u?.salutation);
     _nameController = TextEditingController(text: u?.name ?? '');
     _phoneController = TextEditingController(text: u?.phone ?? '');
     _emailController = TextEditingController(text: u?.email ?? '');
@@ -69,11 +73,14 @@ class _UserFormDialogState extends State<UserFormDialog> {
 
     setState(() => _isLoading = true);
 
+    final salutationToSend = HonorificHelper.normalize(_selectedSalutation);
+
     try {
       final repo = context.read<ResidentRepository>();
       if (isEdit) {
         await repo.adminUpdateUser(
           userId: widget.userToEdit!.id,
+          salutation: salutationToSend,
           name: _nameController.text.trim(),
           phone: _phoneController.text.trim(),
           email: _emailController.text.trim(),
@@ -84,6 +91,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
         );
       } else {
         await repo.adminCreateUser(
+          salutation: salutationToSend,
           name: _nameController.text.trim(),
           phone: _phoneController.text.trim(),
           email: _emailController.text.trim(),
@@ -183,21 +191,59 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   ),
                   const Divider(height: 28),
 
-                  // Nama Lengkap
-                  const Text('Nama Lengkap *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: Budi Santoso',
-                      prefixIcon: const Icon(Icons.person_outline, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) return 'Nama lengkap wajib diisi';
-                      return null;
-                    },
+                  // Sapaan / Salutation & Nama Lengkap
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 130,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Sapaan *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            const SizedBox(height: 6),
+                            DropdownButtonFormField<String>(
+                              key: const ValueKey('salutation_dropdown'),
+                              isExpanded: true,
+                              value: _selectedSalutation,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                              ),
+                              items: HonorificHelper.canonicalOptions.map((opt) {
+                                return DropdownMenuItem(value: opt, child: Text(opt));
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) setState(() => _selectedSalutation = HonorificHelper.normalize(val));
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Nama Lengkap *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                hintText: 'Contoh: Budi Santoso',
+                                prefixIcon: const Icon(Icons.person_outline, size: 20),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) return 'Nama lengkap wajib diisi';
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 14),
 
@@ -282,6 +328,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     final selectedVal = list.any((h) => h.id == _selectedHouseId) ? _selectedHouseId : null;
 
                     return DropdownButtonFormField<int?>(
+                      isExpanded: true,
                       value: selectedVal,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.home_outlined, size: 20),
@@ -313,6 +360,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     const Text('Status Kepemilikan Hunian', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       value: _selectedOwnership,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -333,6 +381,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   const Text('Status Akun Warga', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: _selectedStatus,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -347,6 +396,78 @@ class _UserFormDialogState extends State<UserFormDialog> {
                       if (val != null) setState(() => _selectedStatus = val);
                     },
                   ),
+                  const SizedBox(height: 14),
+
+                  // Peran Organisasi / Role
+                  const Text('Peran Organisasi / Role', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    value: const ['ADMIN', 'CHAIRPERSON', 'VICE_CHAIRPERSON', 'TREASURER', 'SECRETARY', 'RESIDENT'].contains(_selectedRole.toUpperCase())
+                        ? _selectedRole.toUpperCase()
+                        : 'RESIDENT',
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'RESIDENT', child: Text('Warga (RESIDENT)')),
+                      DropdownMenuItem(value: 'CHAIRPERSON', child: Text('Ketua (CHAIRPERSON)')),
+                      DropdownMenuItem(value: 'VICE_CHAIRPERSON', child: Text('Wakil Ketua (VICE_CHAIRPERSON)')),
+                      DropdownMenuItem(value: 'TREASURER', child: Text('Bendahara (TREASURER)')),
+                      DropdownMenuItem(value: 'SECRETARY', child: Text('Sekretaris (SECRETARY)')),
+                      DropdownMenuItem(value: 'ADMIN', child: Text('Administrator (ADMIN)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedRole = val);
+                    },
+                  ),
+                  if (widget.userToEdit?.house != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFC7D2FE)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.family_restroom_rounded, color: Color(0xFF4F46E5), size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Keluarga & Kendaraan Terdaftar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF312E81))),
+                                Text('Unit ${widget.userToEdit!.houseDisplay}', style: const TextStyle(fontSize: 11, color: Color(0xFF4338CA))),
+                              ],
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4F46E5),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => HouseDetailDialog(
+                                  initialHouse: widget.userToEdit!.house!,
+                                  onDataChanged: widget.onSaved,
+                                ),
+                              );
+                            },
+                            child: const Text('Kelola'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // Action Buttons

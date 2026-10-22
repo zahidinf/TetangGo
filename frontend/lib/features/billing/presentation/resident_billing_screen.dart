@@ -59,6 +59,61 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
     }
   }
 
+  Future<void> _initiateBillForPeriod(String targetPeriod) async {
+    final period = targetPeriod.trim();
+    if (period.isEmpty) return;
+
+    // Frontend pre-check: prevent attempting to pay already paid or pending period
+    final existingBill = _bills.cast<BillModel?>().firstWhere(
+          (b) => b?.billingPeriod == period,
+          orElse: () => null,
+        );
+
+    if (existingBill != null) {
+      if (existingBill.isPaid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Iuran untuk periode ini sudah dibayar dan diverifikasi.'),
+            backgroundColor: AppTheme.success,
+          ),
+        );
+        setState(() => _selectedPeriodFilter = period);
+        return;
+      }
+      if (existingBill.isPending) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pembayaran untuk periode ini sedang menunggu verifikasi pengurus.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        setState(() => _selectedPeriodFilter = period);
+        return;
+      }
+    }
+
+    try {
+      final repo = context.read<BillingRepository>();
+      final bill = await repo.initiateResidentBill(period);
+      await _fetchData();
+      if (mounted) {
+        setState(() {
+          _selectedPeriodFilter = period;
+        });
+        _openPaymentDialog(bill);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppTheme.danger,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _openInitiatePeriodDialog() async {
     final now = DateTime.now();
     final defaultNextMonth = DateTime(now.year, now.month + 1, 1);
@@ -122,30 +177,7 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
     );
 
     if (confirm != true) return;
-
-    final targetPeriod = periodCtrl.text.trim();
-    if (targetPeriod.isEmpty) return;
-
-    try {
-      final repo = context.read<BillingRepository>();
-      final bill = await repo.initiateResidentBill(targetPeriod);
-      await _fetchData();
-      if (mounted) {
-        setState(() {
-          _selectedPeriodFilter = targetPeriod;
-        });
-        _openPaymentDialog(bill);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: AppTheme.danger,
-          ),
-        );
-      }
-    }
+    await _initiateBillForPeriod(periodCtrl.text);
   }
 
   String _formatCurrency(double amount) {
@@ -185,7 +217,7 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
       context: context,
       builder: (_) => DigitalReceiptDialog(
         bill: bill,
-        residentName: user?.name ?? 'Warga TetangGo',
+        residentName: user?.displayName ?? 'Warga TetangGo',
         residentPhone: user?.phone,
       ),
     );
@@ -393,6 +425,9 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
   }
 
   Widget _buildEmptyBillCard() {
+    final now = DateTime.now();
+    final currentPeriod = DateFormat('yyyy-MM').format(now);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -402,17 +437,29 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
       ),
       child: Column(
         children: [
-          Icon(Icons.check_circle_outline_rounded, size: 54, color: Colors.green.shade400),
+          Icon(Icons.receipt_long_outlined, size: 54, color: AppTheme.primary.withOpacity(0.6)),
           const SizedBox(height: 12),
           const Text(
-            'Tidak Ada Tagihan Aktif',
+            'Belum Ada Tagihan untuk Periode Ini',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 6),
           Text(
-            'Belum ada tagihan iuran yang diterbitkan untuk hunian Anda.',
+            'Tagihan rutin belum digenerate oleh pengurus. Anda dapat langsung menginisiasi dan membayar iuran untuk bulan ini ($currentPeriod) atau bulan lainnya.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => _initiateBillForPeriod(currentPeriod),
+            icon: const Icon(Icons.payment_rounded, size: 18),
+            label: Text('Bayar Iuran Bulan Ini ($currentPeriod)', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

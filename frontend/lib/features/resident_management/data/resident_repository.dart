@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/utils/honorific_helper.dart';
 import '../../profile/domain/models/family_member_model.dart';
 import '../../profile/domain/models/vehicle_model.dart';
 import '../domain/models/house_detail_full_model.dart';
@@ -347,12 +348,13 @@ class ResidentRepository {
   }
 
   Future<ResidentUserModel> adminCreateUser({
+    String salutation = HonorificHelper.bapak,
     required String name,
     required String phone,
     required String email,
     required String password,
     int? houseId,
-    String role = 'warga',
+    String role = 'RESIDENT',
     String status = 'active',
     String ownershipStatus = 'pemilik',
   }) async {
@@ -360,6 +362,7 @@ class ResidentRepository {
       final res = await _dio.post(
         ApiConstants.adminUsers,
         data: {
+          'salutation': HonorificHelper.normalize(salutation),
           'name': name.trim(),
           'phone': phone.trim(),
           'email': email.trim().toLowerCase(),
@@ -380,11 +383,12 @@ class ResidentRepository {
 
   Future<ResidentUserModel> adminUpdateUser({
     required int userId,
+    String salutation = HonorificHelper.bapak,
     required String name,
     required String phone,
     required String email,
     int? houseId,
-    String role = 'warga',
+    String role = 'RESIDENT',
     String status = 'active',
     String ownershipStatus = 'pemilik',
   }) async {
@@ -392,6 +396,7 @@ class ResidentRepository {
       final res = await _dio.put(
         ApiConstants.adminUserDetail(userId),
         data: {
+          'salutation': HonorificHelper.normalize(salutation),
           'name': name.trim(),
           'phone': phone.trim(),
           'email': email.trim().toLowerCase(),
@@ -430,6 +435,21 @@ class ResidentRepository {
     } on DioException catch (e) {
       final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal mereset kata sandi');
+    }
+  }
+
+  Future<void> adminAssignRole({
+    required int userId,
+    required String role,
+  }) async {
+    try {
+      await _dio.put(
+        ApiConstants.adminAssignRole(userId),
+        data: {'role': role.trim().toUpperCase()},
+      );
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      throw Exception(msg ?? 'Gagal memperbarui peran organisasi');
     }
   }
 }

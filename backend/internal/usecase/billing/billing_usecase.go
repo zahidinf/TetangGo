@@ -87,7 +87,7 @@ func (uc *BillingUseCase) GetResidentBills(ctx context.Context, userID int64, pe
 		return nil, errors.New("user tidak ditemukan")
 	}
 	if user.HouseID == nil {
-		return nil, errors.New("warga belum ditautkan ke unit rumah manapun")
+		return nil, errors.New("akses ditolak: akun belum terdaftar pada hunian manapun")
 	}
 
 	if period != "" {
@@ -113,7 +113,7 @@ func (uc *BillingUseCase) InitiateResidentBill(ctx context.Context, userID int64
 		return nil, errors.New("user tidak ditemukan")
 	}
 	if user.HouseID == nil {
-		return nil, errors.New("warga belum ditautkan ke unit rumah manapun")
+		return nil, errors.New("akses ditolak: akun belum terdaftar pada hunian manapun")
 	}
 
 	existingBill, err := uc.billingRepo.GetBillByHouseAndPeriod(ctx, *user.HouseID, period)
@@ -177,6 +177,9 @@ func (uc *BillingUseCase) SubmitPayment(
 	if bill.Status == string(entity.BillStatusPaid) {
 		return errors.New("tagihan ini sudah lunas")
 	}
+	if bill.Status == string(entity.BillStatusPendingVerification) {
+		return errors.New("Pembayaran untuk periode ini sedang menunggu verifikasi pengurus")
+	}
 
 	// Verify user is resident of this house
 	user, err := uc.userRepo.GetByID(ctx, userID)
@@ -236,6 +239,9 @@ func (uc *BillingUseCase) VerifyPayment(ctx context.Context, billID int64, actio
 
 	if bill.Status == string(entity.BillStatusPaid) && action == "approve" {
 		return errors.New("tagihan sudah dalam status lunas")
+	}
+	if bill.Status != string(entity.BillStatusPendingVerification) {
+		return fmt.Errorf("tagihan tidak dalam antrean verifikasi (status saat ini: %s)", bill.Status)
 	}
 
 	return uc.billingRepo.VerifyPayment(ctx, billID, action, rejectionReason, verifiedBy)

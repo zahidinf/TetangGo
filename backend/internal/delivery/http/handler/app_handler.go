@@ -10,8 +10,10 @@ import (
 	"strings"
 	"time"
 	"tetanggo-backend/internal/domain/entity"
+	"tetanggo-backend/internal/usecase/announcement"
 	"tetanggo-backend/internal/usecase/auth"
 	"tetanggo-backend/internal/usecase/billing"
+	"tetanggo-backend/internal/usecase/cashbook"
 	"tetanggo-backend/internal/usecase/dashboard"
 	"tetanggo-backend/internal/usecase/house"
 	"tetanggo-backend/internal/usecase/profile"
@@ -21,12 +23,14 @@ import (
 )
 
 type AppHandler struct {
-	db               *sql.DB
-	authUseCase      *auth.AuthUseCase
-	houseUseCase     *house.HouseUseCase
-	profileUseCase   *profile.ProfileUseCase
-	billingUseCase   *billing.BillingUseCase
-	dashboardUseCase *dashboard.DashboardUseCase
+	db                  *sql.DB
+	authUseCase         *auth.AuthUseCase
+	houseUseCase        *house.HouseUseCase
+	profileUseCase      *profile.ProfileUseCase
+	billingUseCase      *billing.BillingUseCase
+	dashboardUseCase    *dashboard.DashboardUseCase
+	cashbookUseCase     *cashbook.CashbookUseCase
+	announcementUseCase *announcement.AnnouncementUseCase
 }
 
 func NewAppHandler(
@@ -36,14 +40,18 @@ func NewAppHandler(
 	profileUseCase *profile.ProfileUseCase,
 	billingUseCase *billing.BillingUseCase,
 	dashboardUseCase *dashboard.DashboardUseCase,
+	cashbookUseCase *cashbook.CashbookUseCase,
+	announcementUseCase *announcement.AnnouncementUseCase,
 ) *AppHandler {
 	return &AppHandler{
-		db:               db,
-		authUseCase:      authUseCase,
-		houseUseCase:     houseUseCase,
-		profileUseCase:   profileUseCase,
-		billingUseCase:   billingUseCase,
-		dashboardUseCase: dashboardUseCase,
+		db:                  db,
+		authUseCase:         authUseCase,
+		houseUseCase:        houseUseCase,
+		profileUseCase:      profileUseCase,
+		billingUseCase:      billingUseCase,
+		dashboardUseCase:    dashboardUseCase,
+		cashbookUseCase:     cashbookUseCase,
+		announcementUseCase: announcementUseCase,
 	}
 }
 
@@ -244,6 +252,7 @@ func (h *AppHandler) AdminGetAllUsers(c *fiber.Ctx) error {
 
 // POST /api/v1/admin/users
 func (h *AppHandler) AdminCreateUser(c *fiber.Ctx) error {
+	callerRole := getUserRoleFromLocals(c)
 	var input auth.AdminCreateUserInput
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -252,7 +261,7 @@ func (h *AppHandler) AdminCreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.authUseCase.AdminCreateUser(c.Context(), input)
+	user, err := h.authUseCase.AdminCreateUser(c.Context(), callerRole, input)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -269,6 +278,9 @@ func (h *AppHandler) AdminCreateUser(c *fiber.Ctx) error {
 
 // PUT /api/v1/admin/users/:id
 func (h *AppHandler) AdminUpdateUser(c *fiber.Ctx) error {
+	callerID, _ := getUserIDFromLocals(c)
+	callerRole := getUserRoleFromLocals(c)
+
 	idParam := c.Params("id")
 	userID, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
@@ -286,7 +298,7 @@ func (h *AppHandler) AdminUpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.authUseCase.AdminUpdateUser(c.Context(), userID, input)
+	user, err := h.authUseCase.AdminUpdateUser(c.Context(), callerID, callerRole, userID, input)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -303,6 +315,9 @@ func (h *AppHandler) AdminUpdateUser(c *fiber.Ctx) error {
 
 // DELETE /api/v1/admin/users/:id
 func (h *AppHandler) AdminDeleteUser(c *fiber.Ctx) error {
+	callerID, _ := getUserIDFromLocals(c)
+	callerRole := getUserRoleFromLocals(c)
+
 	idParam := c.Params("id")
 	userID, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
@@ -312,7 +327,7 @@ func (h *AppHandler) AdminDeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.authUseCase.AdminDeleteUser(c.Context(), userID); err != nil {
+	if err := h.authUseCase.AdminDeleteUser(c.Context(), callerID, callerRole, userID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"message": err.Error(),
@@ -327,6 +342,8 @@ func (h *AppHandler) AdminDeleteUser(c *fiber.Ctx) error {
 
 // POST /api/v1/admin/users/:id/reset-password
 func (h *AppHandler) AdminResetPassword(c *fiber.Ctx) error {
+	callerRole := getUserRoleFromLocals(c)
+
 	idParam := c.Params("id")
 	userID, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
@@ -344,7 +361,7 @@ func (h *AppHandler) AdminResetPassword(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.authUseCase.AdminResetPassword(c.Context(), userID, input.NewPassword); err != nil {
+	if err := h.authUseCase.AdminResetPassword(c.Context(), callerRole, userID, input.NewPassword); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"message": err.Error(),
@@ -354,6 +371,54 @@ func (h *AppHandler) AdminResetPassword(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Kata sandi warga berhasil direset",
+	})
+}
+
+type AssignRoleInput struct {
+	Role string `json:"role"`
+}
+
+// PUT /api/v1/admin/users/:id/role
+func (h *AppHandler) AdminAssignRole(c *fiber.Ctx) error {
+	callerID, ok := getUserIDFromLocals(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Sesi tidak valid",
+		})
+	}
+	callerRole := getUserRoleFromLocals(c)
+
+	idParam := c.Params("id")
+	targetUserID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengguna tidak valid",
+		})
+	}
+
+	var input AssignRoleInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload penugasan peran tidak valid",
+		})
+	}
+
+	updatedUser, err := h.authUseCase.AdminAssignRole(c.Context(), callerID, callerRole, targetUserID, input.Role)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	displayRole := entity.RoleDisplayName(updatedUser.RoleName)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": fmt.Sprintf("Peran warga berhasil diperbarui menjadi %s", displayRole),
+		"data":    updatedUser,
 	})
 }
 
@@ -822,6 +887,11 @@ func getUserIDFromLocals(c *fiber.Ctx) (int64, bool) {
 	}
 }
 
+func getUserRoleFromLocals(c *fiber.Ctx) string {
+	r, _ := c.Locals("role").(string)
+	return strings.ToUpper(strings.TrimSpace(r))
+}
+
 // GET /api/v1/profile
 func (h *AppHandler) GetProfile(c *fiber.Ctx) error {
 	userID, ok := getUserIDFromLocals(c)
@@ -1119,7 +1189,11 @@ func (h *AppHandler) GetResidentBills(c *fiber.Ctx) error {
 
 	bills, err := h.billingUseCase.GetResidentBills(c.Context(), userID, period)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		status := fiber.StatusBadRequest
+		if strings.Contains(err.Error(), "akses ditolak") || strings.Contains(err.Error(), "belum") {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -1156,7 +1230,11 @@ func (h *AppHandler) InitiateResidentBill(c *fiber.Ctx) error {
 
 	bill, err := h.billingUseCase.InitiateResidentBill(c.Context(), userID, input.Period)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		status := fiber.StatusBadRequest
+		if strings.Contains(err.Error(), "akses ditolak") || strings.Contains(err.Error(), "belum") {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -1187,10 +1265,45 @@ func (h *AppHandler) GetResidentBillDetail(c *fiber.Ctx) error {
 		})
 	}
 
-	role, _ := c.Locals("role").(string)
-	isAdmin := role == "admin_rt"
+	// Resident endpoint strictly verifies caller's house ownership
+	bill, err := h.billingUseCase.GetBillDetail(c.Context(), billID, userID, false)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if strings.Contains(err.Error(), "akses ditolak") || strings.Contains(err.Error(), "belum") {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-	bill, err := h.billingUseCase.GetBillDetail(c.Context(), billID, userID, isAdmin)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Detail tagihan berhasil dimuat",
+		"data":    bill,
+	})
+}
+
+// GET /api/v1/admin/bills/:id
+func (h *AppHandler) GetAdminBillDetail(c *fiber.Ctx) error {
+	userID, ok := getUserIDFromLocals(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Identitas pengguna tidak ditemukan",
+		})
+	}
+
+	billID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID tagihan tidak valid",
+		})
+	}
+
+	bill, err := h.billingUseCase.GetBillDetail(c.Context(), billID, userID, true)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -1200,7 +1313,7 @@ func (h *AppHandler) GetResidentBillDetail(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Detail tagihan berhasil dimuat",
+		"message": "Detail tagihan admin berhasil dimuat",
 		"data":    bill,
 	})
 }
@@ -1294,7 +1407,11 @@ func (h *AppHandler) SubmitBillPayment(c *fiber.Ctx) error {
 	if err != nil {
 		// Clean up uploaded file if business logic fails
 		_ = os.Remove(savePath)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		status := fiber.StatusBadRequest
+		if strings.Contains(err.Error(), "akses ditolak") || strings.Contains(err.Error(), "belum") {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -1441,5 +1558,426 @@ func (h *AppHandler) GetAdminDashboardStats(c *fiber.Ctx) error {
 		"data":    stats,
 	})
 }
+
+// ----------------------------------------------------
+// SPRINT 3: CASHBOOK (BUKU KAS RT) HANDLERS
+// ----------------------------------------------------
+
+// GET /api/v1/cashbook/summary
+func (h *AppHandler) GetCashbookSummary(c *fiber.Ctx) error {
+	summary, err := h.cashbookUseCase.GetSummary(c.Context())
+	if err != nil {
+		log.Printf("[ERROR] GetCashbookSummary: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal mengambil ringkasan buku kas: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    summary,
+	})
+}
+
+// GET /api/v1/cashbook/transactions
+func (h *AppHandler) GetCashbookTransactions(c *fiber.Ctx) error {
+	txType := c.Query("type")
+	category := c.Query("category")
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+
+	filter := entity.CashTransactionsFilter{
+		Type:      txType,
+		Category:  category,
+		StartDate: startDate,
+		EndDate:   endDate,
+		Page:      page,
+		Limit:     limit,
+	}
+
+	transactions, total, err := h.cashbookUseCase.GetTransactions(c.Context(), filter)
+	if err != nil {
+		log.Printf("[ERROR] GetCashbookTransactions: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal mengambil daftar transaksi kas: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    transactions,
+		"total":   total,
+		"page":    page,
+		"limit":   limit,
+	})
+}
+
+// POST /api/v1/admin/cashbook/transactions
+func (h *AppHandler) AdminCreateCashTransaction(c *fiber.Ctx) error {
+	adminID, ok := getUserIDFromLocals(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Sesi tidak valid",
+		})
+	}
+
+	txType := strings.TrimSpace(c.FormValue("type"))
+	category := strings.TrimSpace(c.FormValue("category"))
+	desc := strings.TrimSpace(c.FormValue("description"))
+	txDate := strings.TrimSpace(c.FormValue("transaction_date"))
+	amountStr := strings.TrimSpace(c.FormValue("amount"))
+
+	if txDate == "" {
+		txDate = time.Now().Format("2006-01-02")
+	}
+
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil || amount <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Nominal transaksi tidak valid",
+		})
+	}
+
+	var proofURL *string
+	fileHeader, err := c.FormFile("proof_image")
+	if err == nil && fileHeader != nil {
+		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" && ext != ".pdf" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Format bukti nota tidak didukung. Harap unggah JPG, PNG, WEBP, atau PDF",
+			})
+		}
+
+		uploadDir := filepath.Join("uploads", "cashbook")
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyiapkan direktori penyimpanan nota",
+			})
+		}
+
+		uniqueName := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		savePath := filepath.Join(uploadDir, uniqueName)
+		if err := c.SaveFile(fileHeader, savePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyimpan file bukti nota",
+			})
+		}
+
+		urlStr := fmt.Sprintf("/uploads/cashbook/%s", uniqueName)
+		proofURL = &urlStr
+	}
+
+	txItem := &entity.CashTransaction{
+		Type:            txType,
+		Category:        category,
+		Amount:          amount,
+		TransactionDate: txDate,
+		Description:     desc,
+		ProofImageURL:   proofURL,
+		CreatedBy:       &adminID,
+	}
+
+	if err := h.cashbookUseCase.CreateManualTransaction(c.Context(), txItem); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Transaksi kas berhasil dicatat",
+		"data":    txItem,
+	})
+}
+
+// DELETE /api/v1/admin/cashbook/transactions/:id
+func (h *AppHandler) AdminDeleteCashTransaction(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID transaksi tidak valid",
+		})
+	}
+
+	if err := h.cashbookUseCase.DeleteManualTransaction(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Transaksi kas berhasil dihapus",
+	})
+}
+
+// ----------------------------------------------------
+// SPRINT 3: ANNOUNCEMENT (PAPAN PENGUMUMAN) HANDLERS
+// ----------------------------------------------------
+
+// GET /api/v1/announcements
+func (h *AppHandler) GetAnnouncements(c *fiber.Ctx) error {
+	category := c.Query("category")
+	search := c.Query("search")
+
+	list, err := h.announcementUseCase.GetAll(c.Context(), category, search)
+	if err != nil {
+		log.Printf("[ERROR] GetAnnouncements: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal mengambil daftar pengumuman: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    list,
+	})
+}
+
+// GET /api/v1/announcements/:id
+func (h *AppHandler) GetAnnouncementDetail(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengumuman tidak valid",
+		})
+	}
+
+	a, err := h.announcementUseCase.GetByID(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal mengambil detail pengumuman: " + err.Error(),
+		})
+	}
+	if a == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Pengumuman tidak ditemukan",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    a,
+	})
+}
+
+// POST /api/v1/admin/announcements
+func (h *AppHandler) AdminCreateAnnouncement(c *fiber.Ctx) error {
+	adminID, ok := getUserIDFromLocals(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Sesi tidak valid",
+		})
+	}
+
+	title := strings.TrimSpace(c.FormValue("title"))
+	content := strings.TrimSpace(c.FormValue("content"))
+	category := strings.TrimSpace(c.FormValue("category"))
+	isPinnedStr := strings.TrimSpace(c.FormValue("is_pinned"))
+	isPinned := isPinnedStr == "true" || isPinnedStr == "1"
+
+	// Support JSON body fallback if not multipart form
+	if title == "" && content == "" {
+		type jsonReq struct {
+			Title    string `json:"title"`
+			Content  string `json:"content"`
+			Category string `json:"category"`
+			IsPinned bool   `json:"is_pinned"`
+		}
+		var req jsonReq
+		if err := c.BodyParser(&req); err == nil {
+			title = req.Title
+			content = req.Content
+			category = req.Category
+			isPinned = req.IsPinned
+		}
+	}
+
+	var imageURL *string
+	fileHeader, err := c.FormFile("image")
+	if err == nil && fileHeader != nil {
+		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Format gambar poster tidak didukung. Harap unggah JPG, PNG, atau WEBP",
+			})
+		}
+
+		uploadDir := filepath.Join("uploads", "announcements")
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyiapkan direktori penyimpanan gambar pengumuman",
+			})
+		}
+
+		uniqueName := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		savePath := filepath.Join(uploadDir, uniqueName)
+		if err := c.SaveFile(fileHeader, savePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyimpan gambar pengumuman",
+			})
+		}
+
+		urlStr := fmt.Sprintf("/uploads/announcements/%s", uniqueName)
+		imageURL = &urlStr
+	}
+
+	item := &entity.Announcement{
+		Title:    title,
+		Content:  content,
+		Category: category,
+		ImageURL: imageURL,
+		IsPinned: isPinned,
+		AuthorID: &adminID,
+	}
+
+	if err := h.announcementUseCase.Create(c.Context(), item); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Pengumuman berhasil dipublikasikan",
+		"data":    item,
+	})
+}
+
+// PUT /api/v1/admin/announcements/:id
+func (h *AppHandler) AdminUpdateAnnouncement(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengumuman tidak valid",
+		})
+	}
+
+	title := strings.TrimSpace(c.FormValue("title"))
+	content := strings.TrimSpace(c.FormValue("content"))
+	category := strings.TrimSpace(c.FormValue("category"))
+	isPinnedStr := strings.TrimSpace(c.FormValue("is_pinned"))
+	isPinned := isPinnedStr == "true" || isPinnedStr == "1"
+
+	if title == "" && content == "" {
+		type jsonReq struct {
+			Title    string `json:"title"`
+			Content  string `json:"content"`
+			Category string `json:"category"`
+			IsPinned bool   `json:"is_pinned"`
+		}
+		var req jsonReq
+		if err := c.BodyParser(&req); err == nil {
+			title = req.Title
+			content = req.Content
+			category = req.Category
+			isPinned = req.IsPinned
+		}
+	}
+
+	var imageURL *string
+	fileHeader, err := c.FormFile("image")
+	if err == nil && fileHeader != nil {
+		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Format gambar poster tidak didukung. Harap unggah JPG, PNG, atau WEBP",
+			})
+		}
+
+		uploadDir := filepath.Join("uploads", "announcements")
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyiapkan direktori penyimpanan gambar pengumuman",
+			})
+		}
+
+		uniqueName := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		savePath := filepath.Join(uploadDir, uniqueName)
+		if err := c.SaveFile(fileHeader, savePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyimpan gambar pengumuman",
+			})
+		}
+
+		urlStr := fmt.Sprintf("/uploads/announcements/%s", uniqueName)
+		imageURL = &urlStr
+	}
+
+	item := &entity.Announcement{
+		ID:       id,
+		Title:    title,
+		Content:  content,
+		Category: category,
+		ImageURL: imageURL,
+		IsPinned: isPinned,
+	}
+
+	if err := h.announcementUseCase.Update(c.Context(), item); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Pengumuman berhasil diperbarui",
+		"data":    item,
+	})
+}
+
+// DELETE /api/v1/admin/announcements/:id
+func (h *AppHandler) AdminDeleteAnnouncement(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengumuman tidak valid",
+		})
+	}
+
+	if err := h.announcementUseCase.Delete(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Pengumuman berhasil dihapus",
+	})
+}
+
 
 

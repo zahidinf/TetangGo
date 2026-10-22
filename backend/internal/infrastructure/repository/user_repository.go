@@ -21,7 +21,7 @@ func NewPostgresUserRepository(db *sql.DB) repository.UserRepository {
 func (r *postgresUserRepository) GetByID(ctx context.Context, id int64) (*entity.User, error) {
 	query := `
 		SELECT 
-			u.id, u.name, u.phone, u.email, u.password_hash, u.role_id, r.name,
+			u.id, COALESCE(u.salutation, 'Bapak'), u.name, u.phone, u.email, u.password_hash, u.role_id, r.name,
 			u.house_id, u.status, COALESCE(u.ownership_status, 'pemilik'),
 			u.rejection_reason, u.profile_photo_url, u.created_at, u.updated_at,
 			h.id, h.block, h.house_number, h.status
@@ -38,7 +38,7 @@ func (r *postgresUserRepository) GetByID(ctx context.Context, id int64) (*entity
 	var hBlock, hNumber, hStatus sql.NullString
 
 	err := row.Scan(
-		&u.ID, &u.Name, &u.Phone, &u.Email, &u.PasswordHash,
+		&u.ID, &u.Salutation, &u.Name, &u.Phone, &u.Email, &u.PasswordHash,
 		&u.RoleID, &u.RoleName, &houseID, &u.Status, &u.OwnershipStatus,
 		&u.RejectionReason, &u.ProfilePhotoURL, &u.CreatedAt, &u.UpdatedAt,
 		&hID, &hBlock, &hNumber, &hStatus,
@@ -50,6 +50,7 @@ func (r *postgresUserRepository) GetByID(ctx context.Context, id int64) (*entity
 		return nil, err
 	}
 
+	u.Salutation = entity.NormalizeSalutation(u.Salutation)
 	if houseID.Valid {
 		val := houseID.Int64
 		u.HouseID = &val
@@ -69,22 +70,27 @@ func (r *postgresUserRepository) GetByID(ctx context.Context, id int64) (*entity
 func (r *postgresUserRepository) GetByEmailOrPhone(ctx context.Context, identifier string) (*entity.User, error) {
 	query := `
 		SELECT 
-			u.id, u.name, u.phone, u.email, u.password_hash, u.role_id, r.name,
+			u.id, COALESCE(u.salutation, 'Bapak'), u.name, u.phone, u.email, u.password_hash, u.role_id, r.name,
 			u.house_id, u.status, COALESCE(u.ownership_status, 'pemilik'),
-			u.rejection_reason, u.profile_photo_url, u.created_at, u.updated_at
+			u.rejection_reason, u.profile_photo_url, u.created_at, u.updated_at,
+			h.id, h.block, h.house_number, h.status
 		FROM users u
 		JOIN roles r ON u.role_id = r.id
+		LEFT JOIN houses h ON u.house_id = h.id
 		WHERE u.email = $1 OR u.phone = $1
 	`
 	row := r.db.QueryRowContext(ctx, query, identifier)
 
 	var u entity.User
 	var houseID sql.NullInt64
+	var hID sql.NullInt64
+	var hBlock, hNumber, hStatus sql.NullString
 
 	err := row.Scan(
-		&u.ID, &u.Name, &u.Phone, &u.Email, &u.PasswordHash,
+		&u.ID, &u.Salutation, &u.Name, &u.Phone, &u.Email, &u.PasswordHash,
 		&u.RoleID, &u.RoleName, &houseID, &u.Status, &u.OwnershipStatus,
 		&u.RejectionReason, &u.ProfilePhotoURL, &u.CreatedAt, &u.UpdatedAt,
+		&hID, &hBlock, &hNumber, &hStatus,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -93,23 +99,33 @@ func (r *postgresUserRepository) GetByEmailOrPhone(ctx context.Context, identifi
 		return nil, err
 	}
 
+	u.Salutation = entity.NormalizeSalutation(u.Salutation)
 	if houseID.Valid {
 		val := houseID.Int64
 		u.HouseID = &val
+	}
+	if hID.Valid {
+		u.House = &entity.House{
+			ID:          hID.Int64,
+			Block:       hBlock.String,
+			HouseNumber: hNumber.String,
+			Status:      hStatus.String,
+		}
 	}
 
 	return &u, nil
 }
 
 func (r *postgresUserRepository) Create(ctx context.Context, u *entity.User) error {
+	u.Salutation = entity.NormalizeSalutation(u.Salutation)
 	query := `
-		INSERT INTO users (name, phone, email, password_hash, role_id, house_id, status, ownership_status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+		INSERT INTO users (salutation, name, phone, email, password_hash, role_id, house_id, status, ownership_status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
 		RETURNING id, created_at, updated_at
 	`
 	return r.db.QueryRowContext(
 		ctx, query,
-		u.Name, u.Phone, u.Email, u.PasswordHash, u.RoleID, u.HouseID, u.Status, u.OwnershipStatus,
+		u.Salutation, u.Name, u.Phone, u.Email, u.PasswordHash, u.RoleID, u.HouseID, u.Status, u.OwnershipStatus,
 	).Scan(&u.ID, &u.CreatedAt, &u.UpdatedAt)
 }
 
@@ -126,7 +142,7 @@ func (r *postgresUserRepository) UpdateProfile(ctx context.Context, id int64, na
 func (r *postgresUserRepository) GetPendingUsers(ctx context.Context) ([]entity.PendingUser, error) {
 	query := `
 		SELECT 
-			u.id, u.name, u.phone, u.email, r.name, u.house_id,
+			u.id, COALESCE(u.salutation, 'Bapak'), u.name, u.phone, u.email, r.name, u.house_id,
 			COALESCE(h.block, ''), COALESCE(h.house_number, ''),
 			COALESCE(u.ownership_status, 'pemilik'), u.status, u.created_at
 		FROM users u
@@ -146,11 +162,12 @@ func (r *postgresUserRepository) GetPendingUsers(ctx context.Context) ([]entity.
 		var pu entity.PendingUser
 		var houseID sql.NullInt64
 		if err := rows.Scan(
-			&pu.ID, &pu.Name, &pu.Phone, &pu.Email, &pu.RoleName, &houseID,
+			&pu.ID, &pu.Salutation, &pu.Name, &pu.Phone, &pu.Email, &pu.RoleName, &houseID,
 			&pu.HouseBlock, &pu.HouseNumber, &pu.OwnershipStatus, &pu.Status, &pu.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
+		pu.Salutation = entity.NormalizeSalutation(pu.Salutation)
 		if houseID.Valid {
 			val := houseID.Int64
 			pu.HouseID = &val
@@ -189,7 +206,7 @@ func (r *postgresUserRepository) CountPending(ctx context.Context) (int, error) 
 
 func (r *postgresUserRepository) GetUnassignedResidents(ctx context.Context, search string) ([]entity.UnassignedResident, error) {
 	query := `
-		SELECT u.id, u.name, u.phone, u.email, r.name, u.status, u.created_at
+		SELECT u.id, COALESCE(u.salutation, 'Bapak'), u.name, u.phone, u.email, r.name, u.status, u.created_at
 		FROM users u
 		JOIN roles r ON u.role_id = r.id
 		WHERE u.house_id IS NULL AND u.status = 'active'
@@ -211,10 +228,11 @@ func (r *postgresUserRepository) GetUnassignedResidents(ctx context.Context, sea
 	for rows.Next() {
 		var res entity.UnassignedResident
 		if err := rows.Scan(
-			&res.ID, &res.Name, &res.Phone, &res.Email, &res.Role, &res.Status, &res.CreatedAt,
+			&res.ID, &res.Salutation, &res.Name, &res.Phone, &res.Email, &res.Role, &res.Status, &res.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
+		res.Salutation = entity.NormalizeSalutation(res.Salutation)
 		residents = append(residents, res)
 	}
 
@@ -260,7 +278,7 @@ func (r *postgresUserRepository) UnassignHouse(ctx context.Context, userID int64
 
 func (r *postgresUserRepository) GetOccupantsByHouseID(ctx context.Context, houseID int64) ([]entity.HouseOccupant, error) {
 	query := `
-		SELECT u.id, u.name, u.phone, u.email, r.name, COALESCE(u.ownership_status, 'pemilik'), u.created_at
+		SELECT u.id, COALESCE(u.salutation, 'Bapak'), u.name, u.phone, u.email, r.name, COALESCE(u.ownership_status, 'pemilik'), u.created_at
 		FROM users u
 		JOIN roles r ON u.role_id = r.id
 		WHERE u.house_id = $1 AND u.status = 'active'
@@ -276,10 +294,11 @@ func (r *postgresUserRepository) GetOccupantsByHouseID(ctx context.Context, hous
 	for rows.Next() {
 		var o entity.HouseOccupant
 		if err := rows.Scan(
-			&o.ID, &o.Name, &o.Phone, &o.Email, &o.Role, &o.OwnershipStatus, &o.CreatedAt,
+			&o.ID, &o.Salutation, &o.Name, &o.Phone, &o.Email, &o.Role, &o.OwnershipStatus, &o.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
+		o.Salutation = entity.NormalizeSalutation(o.Salutation)
 		occupants = append(occupants, o)
 	}
 
@@ -296,13 +315,15 @@ func (r *postgresUserRepository) CountOccupantsByHouseID(ctx context.Context, ho
 }
 
 func (r *postgresUserRepository) Update(ctx context.Context, user *entity.User) error {
+	user.Salutation = entity.NormalizeSalutation(user.Salutation)
 	query := `
 		UPDATE users
-		SET name = $1, phone = $2, email = $3, role_id = $4, house_id = $5,
-		    status = $6, ownership_status = $7, updated_at = NOW()
-		WHERE id = $8
+		SET salutation = $1, name = $2, phone = $3, email = $4, role_id = $5, house_id = $6,
+		    status = $7, ownership_status = $8, updated_at = NOW()
+		WHERE id = $9
 	`
 	res, err := r.db.ExecContext(ctx, query,
+		user.Salutation,
 		user.Name,
 		user.Phone,
 		user.Email,
@@ -351,7 +372,7 @@ func (r *postgresUserRepository) UpdatePassword(ctx context.Context, id int64, p
 func (r *postgresUserRepository) GetAllUsers(ctx context.Context, search, status, role string, houseID *int64) ([]entity.User, error) {
 	query := `
 		SELECT 
-			u.id, u.name, u.phone, u.email, u.role_id, r.name AS role_name,
+			u.id, COALESCE(u.salutation, 'Bapak'), u.name, u.phone, u.email, u.role_id, r.name AS role_name,
 			u.house_id, u.status, COALESCE(u.ownership_status, ''),
 			u.profile_photo_url, u.created_at, u.updated_at,
 			h.id, h.block, h.house_number, h.status
@@ -404,13 +425,15 @@ func (r *postgresUserRepository) GetAllUsers(ctx context.Context, search, status
 		var houseIDVal sql.NullInt64
 
 		if err := rows.Scan(
-			&u.ID, &u.Name, &u.Phone, &u.Email, &u.RoleID, &u.RoleName,
+			&u.ID, &u.Salutation, &u.Name, &u.Phone, &u.Email, &u.RoleID, &u.RoleName,
 			&houseIDVal, &u.Status, &u.OwnershipStatus,
 			&u.ProfilePhotoURL, &u.CreatedAt, &u.UpdatedAt,
 			&hID, &hBlock, &hNumber, &hStatus,
 		); err != nil {
 			return nil, err
 		}
+
+		u.Salutation = entity.NormalizeSalutation(u.Salutation)
 
 		if houseIDVal.Valid {
 			val := houseIDVal.Int64

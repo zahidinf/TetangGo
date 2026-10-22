@@ -59,8 +59,9 @@ func (m *AuthMiddleware) RequireRole(roles ...string) fiber.Handler {
 			})
 		}
 
+		userRoleClean := strings.ToUpper(strings.TrimSpace(userRole))
 		for _, r := range roles {
-			if r == userRole {
+			if strings.EqualFold(r, userRoleClean) {
 				return c.Next()
 			}
 		}

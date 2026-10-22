@@ -11,8 +11,13 @@ import 'widgets/payment_settings_dialog.dart';
 
 class AdminBillingView extends StatefulWidget {
   final VoidCallback? onPendingCountUpdated;
+  final VoidCallback? onNavigateToResidentBilling;
 
-  const AdminBillingView({super.key, this.onPendingCountUpdated});
+  const AdminBillingView({
+    super.key,
+    this.onPendingCountUpdated,
+    this.onNavigateToResidentBilling,
+  });
 
   @override
   State<AdminBillingView> createState() => _AdminBillingViewState();
@@ -363,6 +368,20 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
                     ],
                   ),
                 ),
+                if (widget.onNavigateToResidentBilling != null) ...[
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    onPressed: widget.onNavigateToResidentBilling,
+                    icon: const Icon(Icons.payment_rounded, size: 18),
+                    label: const Text('Bayar Iuran Saya', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,

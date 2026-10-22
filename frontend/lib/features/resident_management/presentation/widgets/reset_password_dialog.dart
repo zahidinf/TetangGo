@@ -46,7 +46,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Kata sandi untuk "${widget.user.name}" berhasil direset.'),
+            content: Text('Kata sandi untuk "${widget.user.displayName}" berhasil direset.'),
             backgroundColor: AppTheme.success,
           ),
         );
@@ -97,7 +97,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Masukkan kata sandi baru untuk akun ${widget.user.name} (${widget.user.phone}):',
+                'Masukkan kata sandi baru untuk akun ${widget.user.displayName} (${widget.user.phone}):',
                 style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 14),

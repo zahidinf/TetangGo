@@ -1,13 +1,26 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConstants {
-  // Web uses localhost, Android emulator uses 10.0.2.2, iOS simulator uses localhost
+  // Base URL configuration:
+  // - Supports --dart-define=API_URL=http://<IP>:8000 when running/building
+  // - If running on web: localhost:8000
+  // - If running on Android/iOS: defaults to Wi-Fi IP or localhost (with adb reverse)
+  static const String _defaultUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: '',
+  );
+
   static String get baseUrl {
+    if (_defaultUrl.isNotEmpty) {
+      return _defaultUrl;
+    }
     if (kIsWeb) {
       return 'http://localhost:8000';
     }
-    // Android device with adb reverse tcp:8000 tcp:8000 or emulator
+    // Android device
     if (defaultTargetPlatform == TargetPlatform.android) {
+      // Both http://localhost:8000 (via adb reverse) and http://192.168.18.178:8000 work.
+      // Use localhost:8000 with adb reverse for zero-firewall friction on Wireless Debugging.
       return 'http://localhost:8000';
     }
     return 'http://localhost:8000';
@@ -24,6 +37,7 @@ class ApiConstants {
   static const String adminUsers = '/api/v1/admin/users';
   static String adminUserDetail(int id) => '/api/v1/admin/users/$id';
   static String adminResetPassword(int id) => '/api/v1/admin/users/$id/reset-password';
+  static String adminAssignRole(int id) => '/api/v1/admin/users/$id/role';
   static const String pendingUsers = '/api/v1/admin/pending-users';
   static String approveUser(int id) => '/api/v1/admin/users/$id/approve';
   static String rejectUser(int id) => '/api/v1/admin/users/$id/reject';
@@ -63,6 +77,18 @@ class ApiConstants {
   static const String residentInitiateBill = '/api/v1/resident/bills/initiate';
   static String residentBillDetail(int id) => '/api/v1/resident/bills/$id';
   static String residentPayBill(int id) => '/api/v1/resident/bills/$id/pay';
+
+  // Sprint 3: Cashbook Endpoints
+  static const String cashbookSummary = '/api/v1/cashbook/summary';
+  static const String cashbookTransactions = '/api/v1/cashbook/transactions';
+  static const String adminCashbookTransactions = '/api/v1/admin/cashbook/transactions';
+  static String adminDeleteCashbookTransaction(int id) => '/api/v1/admin/cashbook/transactions/$id';
+
+  // Sprint 3: Announcements Endpoints
+  static const String announcements = '/api/v1/announcements';
+  static String announcementDetail(int id) => '/api/v1/announcements/$id';
+  static const String adminAnnouncements = '/api/v1/admin/announcements';
+  static String adminAnnouncementDetail(int id) => '/api/v1/admin/announcements/$id';
 
   // Storage Keys
   static const String tokenKey = 'tetanggo_access_token';

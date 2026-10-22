@@ -118,7 +118,7 @@ class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
                           ),
                           child: Column(
                             children: [
-                              _buildRowInfo('Nama Warga', user?.name ?? '-'),
+                              _buildRowInfo('Nama Warga', user?.displayName ?? '-'),
                               const Divider(height: 16),
                               _buildRowInfo('Nomor WhatsApp', user?.phone ?? '-'),
                               const Divider(height: 16),

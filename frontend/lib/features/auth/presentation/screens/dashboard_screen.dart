@@ -39,7 +39,7 @@ class DashboardScreen extends StatelessWidget {
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           final user = state.user;
-          final userName = user?.name ?? 'Warga TetangGo';
+          final userName = user?.displayName ?? 'Warga TetangGo';
           final userRole = user?.roleDisplay ?? 'Warga Cluster';
           final userPhone = user?.phone ?? '-';
           final userEmail = user?.email ?? '-';

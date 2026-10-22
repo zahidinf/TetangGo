@@ -381,14 +381,16 @@ class _HouseDetailDialogState extends State<HouseDetailDialog> {
     final familyList = _details?.familyMembers ?? [];
     final vehicleList = _details?.vehicles ?? [];
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720, maxHeight: 780),
         child: Padding(
-          padding: const EdgeInsets.all(28),
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -515,15 +517,27 @@ class _HouseDetailDialogState extends State<HouseDetailDialog> {
                                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                                                 ),
                                                 const SizedBox(height: 4),
-                                                Row(
+                                                Wrap(
+                                                  spacing: 12,
+                                                  runSpacing: 4,
+                                                  crossAxisAlignment: WrapCrossAlignment.center,
                                                   children: [
-                                                    const Icon(Icons.phone_outlined, size: 14, color: AppTheme.textSecondary),
-                                                    const SizedBox(width: 4),
-                                                    Text(head.phone, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                                                    const SizedBox(width: 12),
-                                                    const Icon(Icons.email_outlined, size: 14, color: AppTheme.textSecondary),
-                                                    const SizedBox(width: 4),
-                                                    Text(head.email, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.phone_outlined, size: 14, color: AppTheme.textSecondary),
+                                                        const SizedBox(width: 4),
+                                                        Text(head.phone, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.email_outlined, size: 14, color: AppTheme.textSecondary),
+                                                        const SizedBox(width: 4),
+                                                        Text(head.email, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                                                      ],
+                                                    ),
                                                   ],
                                                 ),
                                               ],

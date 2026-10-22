@@ -1,14 +1,50 @@
 package entity
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type RoleName string
 
 const (
-	RoleAdminRT RoleName = "admin_rt"
-	RoleWarga   RoleName = "warga"
-	RoleSatpam  RoleName = "satpam"
+	RoleAdmin           RoleName = "ADMIN"
+	RoleChairperson     RoleName = "CHAIRPERSON"
+	RoleViceChairperson RoleName = "VICE_CHAIRPERSON"
+	RoleTreasurer       RoleName = "TREASURER"
+	RoleSecretary       RoleName = "SECRETARY"
+	RoleResident        RoleName = "RESIDENT"
 )
+
+// IsValidOrganizationalRole returns true if the role can be assigned/revoked in the organizational flow
+func IsValidOrganizationalRole(role string) bool {
+	switch RoleName(role) {
+	case RoleChairperson, RoleViceChairperson, RoleTreasurer, RoleSecretary, RoleResident:
+		return true
+	default:
+		return false
+	}
+}
+
+// RoleDisplayName returns the Indonesian display name for a role
+func RoleDisplayName(role string) string {
+	switch RoleName(role) {
+	case RoleAdmin:
+		return "Administrator"
+	case RoleChairperson:
+		return "Ketua"
+	case RoleViceChairperson:
+		return "Wakil Ketua"
+	case RoleTreasurer:
+		return "Bendahara"
+	case RoleSecretary:
+		return "Sekretaris"
+	case RoleResident:
+		return "Warga"
+	default:
+		return role
+	}
+}
 
 type Role struct {
 	ID   int64  `json:"id"`
@@ -44,8 +80,27 @@ const (
 	UserStatusInactive UserStatus = "inactive"
 )
 
+const (
+	SalutationBapak = "Bapak"
+	SalutationIbu   = "Ibu"
+)
+
+// NormalizeSalutation standardizes raw salutation to either 'Bapak' or 'Ibu'.
+// Rule A: Map Mba, Mbak, Mama, Mamah (case-insensitive, trimmed) to 'Ibu'.
+// Rule B: Map all other values (Pak, Bp, Mas, Kak, empty, unknown) to 'Bapak'.
+func NormalizeSalutation(raw string) string {
+	trimmed := strings.ToUpper(strings.TrimSpace(raw))
+	switch trimmed {
+	case "IBU", "MBA", "MBAK", "MAMA", "MAMAH":
+		return SalutationIbu
+	default:
+		return SalutationBapak
+	}
+}
+
 type User struct {
 	ID              int64      `json:"id"`
+	Salutation      string     `json:"salutation"`
 	Name            string     `json:"name"`
 	Phone           string     `json:"phone"`
 	Email           string     `json:"email"`
@@ -62,8 +117,18 @@ type User struct {
 	UpdatedAt       time.Time  `json:"updated_at"`
 }
 
+func (u *User) FullName() string {
+	salutation := NormalizeSalutation(u.Salutation)
+	trimmedName := strings.TrimSpace(u.Name)
+	if trimmedName != "" {
+		return salutation + " " + trimmedName
+	}
+	return salutation
+}
+
 type PendingUser struct {
 	ID              int64     `json:"id"`
+	Salutation      string    `json:"salutation"`
 	Name            string    `json:"name"`
 	Phone           string    `json:"phone"`
 	Email           string    `json:"email"`
@@ -103,6 +168,7 @@ type UserProfileData struct {
 
 type HouseOccupant struct {
 	ID              int64     `json:"id"`
+	Salutation      string    `json:"salutation"`
 	Name            string    `json:"name"`
 	Phone           string    `json:"phone"`
 	Email           string    `json:"email"`
@@ -125,8 +191,9 @@ type HouseDetailData struct {
 }
 
 type UnassignedResident struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
+	ID         int64     `json:"id"`
+	Salutation string    `json:"salutation"`
+	Name       string    `json:"name"`
 	Phone     string    `json:"phone"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
@@ -251,5 +318,57 @@ type AdminDashboardStats struct {
 	PendingPaymentsCount int                       `json:"pending_payments_count"`
 	RecentActivities     []DashboardRecentActivity `json:"recent_activities"`
 }
+
+// Sprint 3: Cashbook (Buku Kas Lingkungan) & Announcements
+
+type CashTransaction struct {
+	ID              int64     `json:"id"`
+	Type            string    `json:"type"` // 'income' atau 'expense'
+	Category        string    `json:"category"`
+	Amount          float64   `json:"amount"`
+	TransactionDate string    `json:"transaction_date"` // 'YYYY-MM-DD'
+	Description     string    `json:"description"`
+	ProofImageURL   *string   `json:"proof_image_url,omitempty"`
+	BillID          *int64    `json:"bill_id,omitempty"`
+	CreatedBy       *int64    `json:"created_by,omitempty"`
+	CreatorName     string    `json:"creator_name,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type MonthlyCashFlow struct {
+	Month   string  `json:"month"` // 'YYYY-MM'
+	Income  float64 `json:"income"`
+	Expense float64 `json:"expense"`
+}
+
+type CashbookSummary struct {
+	CurrentBalance float64           `json:"current_balance"`
+	TotalIncome    float64           `json:"total_income"`
+	TotalExpense   float64           `json:"total_expense"`
+	MonthlySummary []MonthlyCashFlow `json:"monthly_summary"`
+}
+
+type CashTransactionsFilter struct {
+	Type      string
+	Category  string
+	StartDate string
+	EndDate   string
+	Page      int
+	Limit     int
+}
+
+type Announcement struct {
+	ID         int64     `json:"id"`
+	Title      string    `json:"title"`
+	Content    string    `json:"content"`
+	Category   string    `json:"category"` // 'biasa', 'penting', 'darurat'
+	ImageURL   *string   `json:"image_url,omitempty"`
+	IsPinned   bool      `json:"is_pinned"`
+	AuthorID   *int64    `json:"author_id,omitempty"`
+	AuthorName string    `json:"author_name,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 
 

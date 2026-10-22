@@ -4,7 +4,9 @@ import '../../../../core/theme/app_theme.dart';
 import '../data/resident_repository.dart';
 import '../domain/models/house_model.dart';
 import '../domain/models/resident_user_model.dart';
+import 'widgets/house_detail_dialog.dart';
 import 'widgets/reset_password_dialog.dart';
+import 'widgets/role_assignment_dialog.dart';
 import 'widgets/user_form_dialog.dart';
 
 class ResidentsManagementView extends StatefulWidget {
@@ -111,6 +113,57 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
     );
   }
 
+  void _showResidentFamilyAndVehicles(ResidentUserModel user) {
+    if (user.house == null && user.houseId == null) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 40),
+          title: const Text('Belum Terhubung ke Hunian', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(
+            'Warga "${user.displayName}" belum dipetakan ke unit hunian manapun.\n\nSilakan edit warga ini dan pilih unit hunian terlebih dahulu untuk mengelola anggota keluarga dan kendaraannya.',
+            style: const TextStyle(fontSize: 13),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showEditUserDialog(user);
+              },
+              child: const Text('Petakan Hunian Sekarang'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final house = user.house ??
+        _houses.firstWhere(
+          (h) => h.id == user.houseId,
+          orElse: () => HouseModel(
+            id: user.houseId!,
+            block: '',
+            houseNumber: '',
+            status: 'milik',
+          ),
+        );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => HouseDetailDialog(
+        initialHouse: house,
+        onDataChanged: () {
+          _fetchUsers();
+          _fetchHouses();
+        },
+      ),
+    );
+  }
+
   void _showResetPasswordDialog(ResidentUserModel user) {
     showDialog(
       context: context,
@@ -134,7 +187,7 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
           ],
         ),
         content: Text(
-          'Hapus akun "${user.name}"? Data akun ini akan dihapus permanen dari sistem.',
+          'Hapus akun "${user.displayName}"? Data akun ini akan dihapus permanen dari sistem.',
           style: const TextStyle(fontSize: 14),
         ),
         actions: [
@@ -155,7 +208,7 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Akun warga "${user.name}" berhasil dihapus'),
+                      content: Text('Akun warga "${user.displayName}" berhasil dihapus'),
                       backgroundColor: AppTheme.success,
                     ),
                   );
@@ -218,6 +271,17 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
       child: Text(
         label,
         style: TextStyle(color: text, fontWeight: FontWeight.bold, fontSize: 11),
+      ),
+    );
+  }
+
+  void _showRoleAssignmentDialog(ResidentUserModel user) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => RoleAssignmentDialog(
+        user: user,
+        onRoleUpdated: _fetchUsers,
       ),
     );
   }
@@ -481,11 +545,11 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      user.name,
+                                      user.displayName,
                                       style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
                                     ),
                                     Text(
-                                      user.role.toUpperCase(),
+                                      user.roleDisplay,
                                       style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
                                     ),
                                   ],
@@ -501,60 +565,84 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                               ),
                               // Hunian
                               DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      user.house != null ? Icons.home_rounded : Icons.home_outlined,
-                                      size: 16,
-                                      color: user.house != null ? AppTheme.primary : AppTheme.textSecondary,
+                                InkWell(
+                                  onTap: () => _showResidentFamilyAndVehicles(user),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          user.house != null ? Icons.home_rounded : Icons.home_outlined,
+                                          size: 16,
+                                          color: user.house != null ? AppTheme.primary : AppTheme.textSecondary,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          user.houseDisplay,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: user.house != null ? FontWeight.w600 : FontWeight.normal,
+                                            color: user.house != null ? AppTheme.primary : AppTheme.textSecondary,
+                                            decoration: user.house != null ? TextDecoration.underline : TextDecoration.none,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      user.houseDisplay,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: user.house != null ? FontWeight.w500 : FontWeight.normal,
-                                        color: user.house != null ? AppTheme.textPrimary : AppTheme.textSecondary,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
                               // Status Badge
                               DataCell(_buildStatusBadge(user.status)),
-                              // Aksi: 1. Edit (Pensil), 2. Reset Password (Kunci), 3. Hapus (Sampah Merah)
-                              DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // 1. Edit
-                                    Tooltip(
-                                      message: 'Edit Data Warga',
-                                      child: IconButton(
-                                        icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primary),
-                                        onPressed: () => _showEditUserDialog(user),
+                                // Aksi: 1. Peran Organisasi, 2. Keluarga & Kendaraan, 3. Edit, 4. Reset Password, 5. Hapus
+                                DataCell(
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // 1. Role Assignment
+                                      Tooltip(
+                                        message: 'Kelola Peran Organisasi',
+                                        child: IconButton(
+                                          icon: const Icon(Icons.badge_outlined, size: 20, color: AppTheme.primary),
+                                          onPressed: () => _showRoleAssignmentDialog(user),
+                                        ),
                                       ),
-                                    ),
-                                    // 2. Reset Password
-                                    Tooltip(
-                                      message: 'Reset Kata Sandi',
-                                      child: IconButton(
-                                        icon: const Icon(Icons.key_outlined, size: 18, color: Color(0xFFD97706)),
-                                        onPressed: () => _showResetPasswordDialog(user),
+                                      // 2. Kelola Keluarga & Kendaraan
+                                      Tooltip(
+                                        message: 'Kelola Anggota Keluarga & Kendaraan Warga',
+                                        child: IconButton(
+                                          icon: const Icon(Icons.family_restroom_rounded, size: 20, color: Color(0xFF6366F1)),
+                                          onPressed: () => _showResidentFamilyAndVehicles(user),
+                                        ),
                                       ),
-                                    ),
-                                    // 3. Hapus
-                                    Tooltip(
-                                      message: 'Hapus Akun Warga',
-                                      child: IconButton(
-                                        icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
-                                        onPressed: () => _showDeleteUserConfirm(user),
+                                      // 3. Edit
+                                      Tooltip(
+                                        message: 'Edit Data Warga',
+                                        child: IconButton(
+                                          icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primary),
+                                          onPressed: () => _showEditUserDialog(user),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      // 4. Reset Password
+                                      Tooltip(
+                                        message: 'Reset Kata Sandi',
+                                        child: IconButton(
+                                          icon: const Icon(Icons.key_outlined, size: 18, color: Color(0xFFD97706)),
+                                          onPressed: () => _showResetPasswordDialog(user),
+                                        ),
+                                      ),
+                                      // 5. Hapus
+                                      Tooltip(
+                                        message: 'Hapus Akun Warga',
+                                        child: IconButton(
+                                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
+                                          onPressed: () => _showDeleteUserConfirm(user),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
                             ],
                           );
                         }).toList(),

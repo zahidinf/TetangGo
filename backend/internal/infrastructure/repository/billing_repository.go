@@ -456,6 +456,21 @@ func (r *PostgresBillingRepository) CreatePayment(ctx context.Context, p *entity
 	}
 	defer tx.Rollback()
 
+	// Row locking: Lock bill row to serialize concurrent payment attempts on the same bill
+	var currentStatus string
+	checkQuery := `SELECT status FROM bills WHERE id = $1 FOR UPDATE;`
+	err = tx.QueryRowContext(ctx, checkQuery, p.BillID).Scan(&currentStatus)
+	if err != nil {
+		return fmt.Errorf("failed to lock bill: %w", err)
+	}
+
+	if currentStatus == "paid" {
+		return errors.New("tagihan ini sudah lunas")
+	}
+	if currentStatus == "pending_verification" {
+		return errors.New("Pembayaran untuk periode ini sedang menunggu verifikasi pengurus")
+	}
+
 	insertPaymentQuery := `
 		INSERT INTO payments (bill_id, user_id, sender_bank, sender_name, amount_paid, proof_image_url, notes, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
@@ -502,6 +517,18 @@ func (r *PostgresBillingRepository) VerifyPayment(ctx context.Context, billID in
 	}
 	defer tx.Rollback()
 
+	// Row locking: Lock bill row to ensure atomic status transition
+	var currentStatus string
+	checkQuery := `SELECT status FROM bills WHERE id = $1 FOR UPDATE;`
+	err = tx.QueryRowContext(ctx, checkQuery, billID).Scan(&currentStatus)
+	if err != nil {
+		return fmt.Errorf("failed to lock bill for verification: %w", err)
+	}
+
+	if currentStatus != "pending_verification" {
+		return fmt.Errorf("tagihan tidak dalam status antrean verifikasi (status: %s)", currentStatus)
+	}
+
 	now := time.Now()
 	newStatus := "paid"
 	if action == "reject" {
@@ -518,24 +545,40 @@ func (r *PostgresBillingRepository) VerifyPayment(ctx context.Context, billID in
 		return fmt.Errorf("failed to update bill status on verify: %w", err)
 	}
 
-	var updatePaymentQuery string
 	if action == "reject" {
-		updatePaymentQuery = `
+		updatePaymentQuery := `
 			UPDATE payments
 			SET verified_by = $1, verified_at = $2, rejection_reason = $3
 			WHERE id = (SELECT id FROM payments WHERE bill_id = $4 ORDER BY id DESC LIMIT 1);
 		`
 		_, err = tx.ExecContext(ctx, updatePaymentQuery, verifiedBy, now, rejectionReason, billID)
+		if err != nil {
+			return fmt.Errorf("failed to update payment verification details: %w", err)
+		}
 	} else {
-		updatePaymentQuery = `
+		updatePaymentQuery := `
 			UPDATE payments
 			SET verified_by = $1, verified_at = $2, rejection_reason = NULL
 			WHERE id = (SELECT id FROM payments WHERE bill_id = $3 ORDER BY id DESC LIMIT 1);
 		`
 		_, err = tx.ExecContext(ctx, updatePaymentQuery, verifiedBy, now, billID)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to update payment verification details: %w", err)
+		if err != nil {
+			return fmt.Errorf("failed to update payment verification details: %w", err)
+		}
+
+		// Sprint 3: Automasi Sinkronisasi Iuran ke Buku Kas (HANYA saat APPROVE)
+		insertCashQuery := `
+			INSERT INTO cash_transactions (type, category, amount, transaction_date, description, bill_id, created_by, created_at)
+			SELECT 'income', 'iuran', b.amount, CURRENT_DATE, 'Iuran IPL Blok ' || h.block || ' No. ' || h.house_number || ' (' || b.billing_period || ')', b.id, $1, NOW()
+			FROM bills b
+			JOIN houses h ON b.house_id = h.id
+			WHERE b.id = $2
+			  AND NOT EXISTS (SELECT 1 FROM cash_transactions ct WHERE ct.bill_id = b.id);
+		`
+		_, err = tx.ExecContext(ctx, insertCashQuery, verifiedBy, billID)
+		if err != nil {
+			return fmt.Errorf("failed to record cashbook transaction on approve: %w", err)
+		}
 	}
 
 	return tx.Commit()
@@ -549,7 +592,7 @@ func (r *PostgresBillingRepository) GetPendingPayments(ctx context.Context) ([]e
 			h.id AS house_id,
 			h.block,
 			h.house_number,
-			COALESCE(u.name, 'Penghuni') AS resident_name,
+			COALESCE(CASE WHEN u.salutation IS NOT NULL AND u.salutation != '' THEN u.salutation || ' ' || u.name ELSE u.name END, 'Penghuni') AS resident_name,
 			COALESCE(u.phone, '') AS resident_phone,
 			b.billing_period,
 			b.amount AS bill_amount,
@@ -612,7 +655,7 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 	baseQuery := `
 		SELECT 
 			h.id, h.block, h.house_number,
-			COALESCE(head.name, 'Belum Terdaftar') AS resident_name,
+			COALESCE(CASE WHEN head.salutation IS NOT NULL AND head.salutation != '' THEN head.salutation || ' ' || head.name ELSE head.name END, 'Belum Terdaftar') AS resident_name,
 			COALESCE(head.phone, '-') AS resident_phone,
 			COALESCE(b.status, 'unpaid') AS bill_status,
 			b.id AS bill_id,
@@ -621,7 +664,7 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 			p.proof_image_url
 		FROM houses h
 		LEFT JOIN LATERAL (
-			SELECT u.name, u.phone
+			SELECT u.salutation, u.name, u.phone
 			FROM users u
 			WHERE u.house_id = h.id AND u.status = 'active'
 			ORDER BY u.id ASC

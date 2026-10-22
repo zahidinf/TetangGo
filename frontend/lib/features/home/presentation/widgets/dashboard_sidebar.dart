@@ -3,6 +3,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/models/user_model.dart';
 
 class SidebarItemData {
+  final String keyId;
   final String title;
   final IconData icon;
   final IconData selectedIcon;
@@ -10,12 +11,149 @@ class SidebarItemData {
   final String? badge;
 
   const SidebarItemData({
+    required this.keyId,
     required this.title,
     required this.icon,
     required this.selectedIcon,
     required this.index,
     this.badge,
   });
+}
+
+class NavigationItemBuilder {
+  static List<SidebarItemData> buildNavigationItems(
+    UserModel? user, {
+    int pendingCount = 0,
+    int pendingBillsCount = 0,
+  }) {
+    final List<SidebarItemData> items = [];
+    int index = 0;
+
+    // 1. Common Baseline: Beranda Lingkungan / Dashboard
+    items.add(
+      SidebarItemData(
+        keyId: 'dashboard',
+        title: user?.canAccessLeadership ?? false ? 'Dashboard' : 'Beranda Lingkungan',
+        icon: Icons.dashboard_outlined,
+        selectedIcon: Icons.dashboard_rounded,
+        index: index++,
+      ),
+    );
+
+    // 2. Administrative: Verifikasi Warga (Admin, Chairperson, Vice Chairperson, Secretary)
+    if (user?.canAccessVerificationAdmin ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'verification',
+          title: 'Verifikasi Warga',
+          icon: Icons.how_to_reg_outlined,
+          selectedIcon: Icons.how_to_reg_rounded,
+          index: index++,
+          badge: pendingCount > 0 ? '$pendingCount Baru' : null,
+        ),
+      );
+    }
+
+    // 3. Administrative: Data Hunian & Warga (Admin, Chairperson, Vice Chairperson, Secretary)
+    if (user?.canAccessHousesAdmin ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'houses',
+          title: 'Data Hunian & Warga',
+          icon: Icons.home_work_outlined,
+          selectedIcon: Icons.home_work_rounded,
+          index: index++,
+        ),
+      );
+    }
+
+    // 4. Common Baseline: Profil Hunian & Keluarga (or Profil Pengurus RT)
+    items.add(
+      SidebarItemData(
+        keyId: 'profile',
+        title: user?.canAccessLeadership ?? false ? 'Profil Pengurus RT' : 'Profil Hunian & Keluarga',
+        icon: user?.canAccessLeadership ?? false ? Icons.manage_accounts_outlined : Icons.family_restroom_rounded,
+        selectedIcon: user?.canAccessLeadership ?? false ? Icons.manage_accounts_rounded : Icons.family_restroom_rounded,
+        index: index++,
+      ),
+    );
+
+    // 5. Administrative: Kelola Iuran & Tagihan (Admin, Chairperson, Vice Chairperson, Treasurer)
+    if (user?.canAccessBillingAdmin ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'billing',
+          title: 'Iuran & Tagihan (Admin)',
+          icon: Icons.receipt_long_outlined,
+          selectedIcon: Icons.receipt_long_rounded,
+          index: index++,
+          badge: pendingBillsCount > 0 ? '$pendingBillsCount Baru' : null,
+        ),
+      );
+    }
+
+    // 6. Resident Baseline: Iuran Warga (Accessible to ANY user with valid housing association)
+    if (user?.canAccessResidentIuran ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'resident_billing',
+          title: user?.canAccessBillingAdmin ?? false ? 'Iuran Pribadi Warga' : 'Iuran Warga',
+          icon: Icons.payments_outlined,
+          selectedIcon: Icons.payments_rounded,
+          index: index++,
+        ),
+      );
+    }
+
+    // 7. Common Baseline: Kas Transparan (Accessible to EVERY resident and admin; editable by admin/treasurer)
+    items.add(
+      SidebarItemData(
+        keyId: 'cashbook',
+        title: 'Kas Transparan',
+        icon: Icons.account_balance_wallet_outlined,
+        selectedIcon: Icons.account_balance_wallet_rounded,
+        index: index++,
+      ),
+    );
+
+    // 8. Common Baseline: Pengumuman RT (Accessible to EVERY resident and admin; editable by leadership)
+    items.add(
+      SidebarItemData(
+        keyId: 'announcements',
+        title: 'Pengumuman RT',
+        icon: Icons.campaign_outlined,
+        selectedIcon: Icons.campaign_rounded,
+        index: index++,
+      ),
+    );
+
+    // 9. Common Baseline: Panic Button (Accessible to EVERY resident and admin)
+    items.add(
+      SidebarItemData(
+        keyId: 'panic',
+        title: 'Panic Button',
+        icon: Icons.contact_emergency_outlined,
+        selectedIcon: Icons.contact_emergency_rounded,
+        index: index++,
+        badge: 'Siaga',
+      ),
+    );
+
+    // 10. Administrative: Buku Tamu Satpam (Admin, Chairperson, Vice Chairperson, Secretary)
+    if (user?.canAccessSecurityGuestbookAdmin ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'guestbook',
+          title: 'Buku Tamu Satpam',
+          icon: Icons.shield_outlined,
+          selectedIcon: Icons.shield_rounded,
+          index: index++,
+        ),
+      );
+    }
+
+    return items;
+  }
 }
 
 class DashboardSidebar extends StatelessWidget {
@@ -36,106 +174,11 @@ class DashboardSidebar extends StatelessWidget {
     this.pendingBillsCount = 0,
   });
 
-  List<SidebarItemData> get menuItems {
-    final isAdmin = user?.role == 'admin_rt';
-
-    if (isAdmin) {
-      return [
-        const SidebarItemData(
-          title: 'Dashboard',
-          icon: Icons.dashboard_outlined,
-          selectedIcon: Icons.dashboard_rounded,
-          index: 0,
-        ),
-        SidebarItemData(
-          title: 'Verifikasi Warga',
-          icon: Icons.how_to_reg_outlined,
-          selectedIcon: Icons.how_to_reg_rounded,
-          index: 1,
-          badge: pendingCount > 0 ? '$pendingCount Baru' : null,
-        ),
-        const SidebarItemData(
-          title: 'Data Hunian & Warga',
-          icon: Icons.home_work_outlined,
-          selectedIcon: Icons.home_work_rounded,
-          index: 2,
-        ),
-        const SidebarItemData(
-          title: 'Profil & Keluarga',
-          icon: Icons.account_circle_outlined,
-          selectedIcon: Icons.account_circle_rounded,
-          index: 3,
-        ),
-        SidebarItemData(
-          title: 'Iuran & Tagihan',
-          icon: Icons.receipt_long_outlined,
-          selectedIcon: Icons.receipt_long_rounded,
-          index: 4,
-          badge: pendingBillsCount > 0 ? '$pendingBillsCount Baru' : null,
-        ),
-        const SidebarItemData(
-          title: 'Kas Transparan',
-          icon: Icons.account_balance_wallet_outlined,
-          selectedIcon: Icons.account_balance_wallet_rounded,
-          index: 5,
-        ),
-        const SidebarItemData(
-          title: 'Pengumuman RT',
-          icon: Icons.campaign_outlined,
-          selectedIcon: Icons.campaign_rounded,
-          index: 6,
-        ),
-        const SidebarItemData(
-          title: 'Panic Alert',
-          icon: Icons.contact_emergency_outlined,
-          selectedIcon: Icons.contact_emergency_rounded,
-          index: 7,
-          badge: 'Siaga',
-        ),
-        const SidebarItemData(
-          title: 'Buku Tamu Satpam',
-          icon: Icons.shield_outlined,
-          selectedIcon: Icons.shield_rounded,
-          index: 8,
-        ),
-      ];
-    } else {
-      // Warga Menu
-      return const [
-        SidebarItemData(
-          title: 'Beranda Lingkungan',
-          icon: Icons.dashboard_outlined,
-          selectedIcon: Icons.dashboard_rounded,
-          index: 0,
-        ),
-        SidebarItemData(
-          title: 'Profil Hunian & Keluarga',
-          icon: Icons.family_restroom_rounded,
-          selectedIcon: Icons.family_restroom_rounded,
-          index: 1,
-        ),
-        SidebarItemData(
-          title: 'Iuran Warga',
-          icon: Icons.receipt_long_outlined,
-          selectedIcon: Icons.receipt_long_rounded,
-          index: 2,
-        ),
-        SidebarItemData(
-          title: 'Pengumuman RT',
-          icon: Icons.campaign_outlined,
-          selectedIcon: Icons.campaign_rounded,
-          index: 3,
-        ),
-        SidebarItemData(
-          title: 'Panic Button',
-          icon: Icons.emergency_rounded,
-          selectedIcon: Icons.emergency_rounded,
-          index: 4,
-          badge: 'Siaga',
-        ),
-      ];
-    }
-  }
+  List<SidebarItemData> get menuItems => NavigationItemBuilder.buildNavigationItems(
+        user,
+        pendingCount: pendingCount,
+        pendingBillsCount: pendingBillsCount,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -195,7 +238,7 @@ class DashboardSidebar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          user?.role == 'admin_rt' ? 'Portal Pengurus RT' : 'Portal Warga',
+                          user?.hasAdminAccess ?? false ? 'Portal Pengurus RT' : 'Portal Warga',
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -260,7 +303,7 @@ class DashboardSidebar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        user?.name ?? 'Pengurus RT',
+                        user?.displayName ?? 'Pengurus RT',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -270,7 +313,7 @@ class DashboardSidebar extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        user?.roleDisplay ?? 'Admin RT',
+                        user?.roleDisplay ?? 'Warga',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -316,7 +359,7 @@ class _SidebarItemTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.primary.withOpacity(0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
@@ -325,8 +368,8 @@ class _SidebarItemTile extends StatelessWidget {
             children: [
               Icon(
                 isSelected ? item.selectedIcon : item.icon,
-                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
                 size: 20,
+                color: isSelected ? AppTheme.primaryDark : AppTheme.textSecondary,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -341,17 +384,17 @@ class _SidebarItemTile extends StatelessWidget {
               ),
               if (item.badge != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: item.badge!.contains('Baru') ? const Color(0xFFFEF3C7) : AppTheme.danger.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    color: isSelected ? AppTheme.primaryDark : AppTheme.danger,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     item.badge!,
-                    style: TextStyle(
+                    style: const TextStyle(
+                      color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: item.badge!.contains('Baru') ? const Color(0xFFB45309) : AppTheme.danger,
                     ),
                   ),
                 ),

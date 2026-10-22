@@ -73,4 +73,21 @@ type DashboardRepository interface {
 	GetAdminDashboardStats(ctx context.Context, period string) (*entity.AdminDashboardStats, error)
 }
 
+type CashbookRepository interface {
+	GetSummary(ctx context.Context) (*entity.CashbookSummary, error)
+	GetTransactions(ctx context.Context, filter entity.CashTransactionsFilter) ([]entity.CashTransaction, int, error)
+	GetTransactionByID(ctx context.Context, id int64) (*entity.CashTransaction, error)
+	CreateTransaction(ctx context.Context, tx *entity.CashTransaction) error
+	DeleteManualTransaction(ctx context.Context, id int64) error
+}
+
+type AnnouncementRepository interface {
+	GetAll(ctx context.Context, category string, search string) ([]entity.Announcement, error)
+	GetByID(ctx context.Context, id int64) (*entity.Announcement, error)
+	Create(ctx context.Context, a *entity.Announcement) error
+	Update(ctx context.Context, a *entity.Announcement) error
+	Delete(ctx context.Context, id int64) error
+}
+
+
 

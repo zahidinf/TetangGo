@@ -23,7 +23,11 @@ func (r *postgresHouseRepository) GetAll(ctx context.Context, block, status, sea
 	baseQuery := `
 		SELECT 
 			h.id, h.block, h.house_number, h.status,
-			u.name AS resident_name,
+			CASE 
+				WHEN u.id IS NOT NULL THEN 
+					CASE WHEN u.salutation IS NOT NULL AND u.salutation != '' THEN u.salutation || ' ' || u.name ELSE u.name END
+				ELSE NULL 
+			END AS resident_name,
 			u.phone AS resident_phone,
 			COALESCE((SELECT COUNT(*) FROM family_members fm WHERE fm.house_id = h.id), 0) AS family_count,
 			(CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END + 
@@ -152,7 +156,11 @@ func (r *postgresHouseRepository) GetByID(ctx context.Context, id int64) (*entit
 	query := `
 		SELECT 
 			h.id, h.block, h.house_number, h.status,
-			u.name AS resident_name,
+			CASE 
+				WHEN u.id IS NOT NULL THEN 
+					CASE WHEN u.salutation IS NOT NULL AND u.salutation != '' THEN u.salutation || ' ' || u.name ELSE u.name END
+				ELSE NULL 
+			END AS resident_name,
 			u.phone AS resident_phone,
 			COALESCE((SELECT COUNT(*) FROM family_members fm WHERE fm.house_id = h.id), 0) AS family_count,
 			COALESCE((SELECT COUNT(*) FROM vehicles v WHERE v.house_id = h.id), 0) AS vehicle_count

@@ -459,7 +459,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user?.name ?? 'Nama Warga',
+                              user?.displayName ?? 'Nama Warga',
                               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                             ),
                             const SizedBox(height: 4),

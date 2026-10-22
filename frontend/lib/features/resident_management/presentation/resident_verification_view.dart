@@ -73,7 +73,7 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Nama: ${user.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Nama: ${user.displayName}', style: const TextStyle(fontWeight: FontWeight.bold)),
                   Text('Rumah: ${user.houseDisplay} (${user.ownershipDisplay})'),
                   Text('No. HP / WA: ${user.phone}'),
                 ],
@@ -141,7 +141,7 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Tolak pendaftaran akun atas nama ${user.name}?'),
+            Text('Tolak pendaftaran akun atas nama ${user.displayName}?'),
             const SizedBox(height: 12),
             const Text('Alasan Penolakan:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
@@ -366,7 +366,7 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                                             ),
                                           ),
                                           const SizedBox(width: 10),
-                                          Text(u.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                          Text(u.displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
                                         ],
                                       ),
                                     ),

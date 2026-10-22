@@ -88,8 +88,26 @@ func RunMigrations(db *sql.DB, migrationsDir string) error {
 		return fmt.Errorf("cannot read migrations dir: %w", err)
 	}
 
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
+		version VARCHAR(255) PRIMARY KEY,
+		applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	);`)
+	if err != nil {
+		return fmt.Errorf("failed creating schema_migrations table: %w", err)
+	}
+
 	for _, entry := range entries {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".up.sql") {
+			version := entry.Name()
+			var alreadyApplied bool
+			err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)", version).Scan(&alreadyApplied)
+			if err != nil {
+				return fmt.Errorf("failed checking migration status for %s: %w", version, err)
+			}
+			if alreadyApplied {
+				continue
+			}
+
 			fullPath := filepath.Join(migrationsDir, entry.Name())
 			log.Printf("[DB Migration] Executing %s...", entry.Name())
 			sqlBytes, err := os.ReadFile(fullPath)
@@ -100,6 +118,10 @@ func RunMigrations(db *sql.DB, migrationsDir string) error {
 			if _, err := db.Exec(string(sqlBytes)); err != nil {
 				return fmt.Errorf("error executing %s: %w", entry.Name(), err)
 			}
+
+			if _, err := db.Exec("INSERT INTO schema_migrations (version) VALUES ($1)", version); err != nil {
+				return fmt.Errorf("error recording migration %s: %w", version, err)
+			}
 		}
 	}
 
@@ -108,8 +130,8 @@ func RunMigrations(db *sql.DB, migrationsDir string) error {
 }
 
 func SeedInitialData(db *sql.DB) error {
-	// Roles: admin_rt, warga, satpam
-	roles := []string{"admin_rt", "warga", "satpam"}
+	// Roles: ADMIN, CHAIRPERSON, VICE_CHAIRPERSON, TREASURER, SECRETARY, RESIDENT
+	roles := []string{"ADMIN", "CHAIRPERSON", "VICE_CHAIRPERSON", "TREASURER", "SECRETARY", "RESIDENT"}
 	for _, role := range roles {
 		_, err := db.Exec("INSERT INTO roles (name) VALUES ($1) ON CONFLICT (name) DO NOTHING;", role)
 		if err != nil {
@@ -117,7 +139,7 @@ func SeedInitialData(db *sql.DB) error {
 		}
 	}
 
-	// Default Admin RT check & seed
+	// Default Admin user check & seed
 	var adminCount int
 	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE email = $1", "admin@tetanggo.id").Scan(&adminCount)
 	if err != nil {
@@ -126,9 +148,9 @@ func SeedInitialData(db *sql.DB) error {
 
 	if adminCount == 0 {
 		var roleID int64
-		err := db.QueryRow("SELECT id FROM roles WHERE name = 'admin_rt'").Scan(&roleID)
+		err := db.QueryRow("SELECT id FROM roles WHERE name = 'ADMIN'").Scan(&roleID)
 		if err != nil {
-			return fmt.Errorf("failed resolving admin_rt role ID: %w", err)
+			return fmt.Errorf("failed resolving ADMIN role ID: %w", err)
 		}
 
 		hash, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
@@ -145,9 +167,9 @@ func SeedInitialData(db *sql.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed seeding admin user: %w", err)
 		}
-		log.Println("[DB Seed] Seeded default Admin RT: admin@tetanggo.id (password: password123)")
+		log.Println("[DB Seed] Seeded default Admin: admin@tetanggo.id (password: password123)")
 	} else {
-		log.Println("[DB Seed] Default Admin RT already exists.")
+		log.Println("[DB Seed] Default Admin already exists.")
 	}
 
 	return nil
