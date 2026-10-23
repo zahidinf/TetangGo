@@ -146,3 +146,12 @@ TetangGo/
    # Jalankan di Android Emulator
    flutter run -d android
    ```
+
+---
+
+## 6. Lisensi / License
+
+TetangGo is publicly available for viewing, learning, modification, and sharing under the terms of the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
+
+- **Noncommercial use only:** Commercial use is not permitted under this license.
+- **Full terms:** Users must read the [`LICENSE`](LICENSE) file to understand permitted uses and restrictions.
