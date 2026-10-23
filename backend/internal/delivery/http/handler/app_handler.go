@@ -1150,13 +1150,37 @@ func (h *AppHandler) AdminUpdatePaymentSettings(c *fiber.Ctx) error {
 }
 
 type GenerateBillsInput struct {
-	Period string `json:"period"` // 'YYYY-MM'
+	Period  string `json:"period"` // 'YYYY-MM'
+	HouseID *int64 `json:"house_id,omitempty"`
+}
+
+type GenerateIndividualBillInput struct {
+	HouseID int64  `json:"house_id"`
+	Period  string `json:"period"` // 'YYYY-MM'
 }
 
 // POST /api/v1/admin/bills/generate
 func (h *AppHandler) AdminGenerateBills(c *fiber.Ctx) error {
 	var input GenerateBillsInput
 	_ = c.BodyParser(&input) // optional body
+
+	if input.HouseID != nil && *input.HouseID > 0 {
+		bill, err := h.billingUseCase.GenerateIndividualBill(c.Context(), *input.HouseID, input.Period)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"message": "Berhasil menerbitkan tagihan individual",
+			"data": fiber.Map{
+				"generated_count": 1,
+				"bill":            bill,
+			},
+		})
+	}
 
 	count, err := h.billingUseCase.GenerateMonthlyBills(c.Context(), input.Period)
 	if err != nil {
@@ -1171,6 +1195,34 @@ func (h *AppHandler) AdminGenerateBills(c *fiber.Ctx) error {
 		"message": fmt.Sprintf("Berhasil menerbitkan %d tagihan baru", count),
 		"data": fiber.Map{
 			"generated_count": count,
+		},
+	})
+}
+
+// POST /api/v1/admin/bills/generate-individual
+func (h *AppHandler) AdminGenerateIndividualBill(c *fiber.Ctx) error {
+	var input GenerateIndividualBillInput
+	if err := c.BodyParser(&input); err != nil || input.HouseID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Unit rumah wajib dipilih",
+		})
+	}
+
+	bill, err := h.billingUseCase.GenerateIndividualBill(c.Context(), input.HouseID, input.Period)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Berhasil menerbitkan tagihan individual",
+		"data": fiber.Map{
+			"generated_count": 1,
+			"bill":            bill,
 		},
 	})
 }
@@ -1336,52 +1388,62 @@ func (h *AppHandler) SubmitBillPayment(c *fiber.Ctx) error {
 		})
 	}
 
-	// 1. Process uploaded proof_image file
-	fileHeader, err := c.FormFile("proof_image")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Bukti transfer (proof_image) wajib dilampirkan",
-		})
+	paymentMethod := strings.ToUpper(strings.TrimSpace(c.FormValue("payment_method")))
+	if paymentMethod == "" {
+		paymentMethod = string(entity.PaymentMethodTransfer)
 	}
 
-	// Max 5MB check
-	if fileHeader.Size > 5*1024*1024 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Ukuran file bukti transfer maksimal 5MB",
-		})
+	var proofURL string
+	var savePath string
+
+	if paymentMethod == string(entity.PaymentMethodTransfer) {
+		// 1. Process uploaded proof_image file for transfer
+		fileHeader, err := c.FormFile("proof_image")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Bukti transfer (proof_image) wajib dilampirkan",
+			})
+		}
+
+		// Max 5MB check
+		if fileHeader.Size > 5*1024*1024 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Ukuran file bukti transfer maksimal 5MB",
+			})
+		}
+
+		// Validate file type
+		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Format file tidak didukung. Harap unggah format JPG, JPEG, atau PNG",
+			})
+		}
+
+		// Ensure upload directory exists
+		uploadDir := filepath.Join("uploads", "payments")
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyiapkan direktori penyimpanan bukti pembayaran",
+			})
+		}
+
+		uniqueFileName := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		savePath = filepath.Join(uploadDir, uniqueFileName)
+
+		if err := c.SaveFile(fileHeader, savePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyimpan file bukti transfer",
+			})
+		}
+
+		proofURL = fmt.Sprintf("/uploads/payments/%s", uniqueFileName)
 	}
-
-	// Validate file type
-	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
-	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Format file tidak didukung. Harap unggah format JPG, JPEG, atau PNG",
-		})
-	}
-
-	// Ensure upload directory exists
-	uploadDir := filepath.Join("uploads", "payments")
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"message": "Gagal menyiapkan direktori penyimpanan bukti pembayaran",
-		})
-	}
-
-	uniqueFileName := fmt.Sprintf("%s%s", uuid.New().String(), ext)
-	savePath := filepath.Join(uploadDir, uniqueFileName)
-
-	if err := c.SaveFile(fileHeader, savePath); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"message": "Gagal menyimpan file bukti transfer",
-		})
-	}
-
-	proofURL := fmt.Sprintf("/uploads/payments/%s", uniqueFileName)
 
 	// 2. Parse form fields
 	senderBank := c.FormValue("sender_bank")
@@ -1398,6 +1460,7 @@ func (h *AppHandler) SubmitBillPayment(c *fiber.Ctx) error {
 		c.Context(),
 		billID,
 		userID,
+		paymentMethod,
 		senderBank,
 		senderName,
 		amountPaid,
@@ -1406,10 +1469,14 @@ func (h *AppHandler) SubmitBillPayment(c *fiber.Ctx) error {
 	)
 	if err != nil {
 		// Clean up uploaded file if business logic fails
-		_ = os.Remove(savePath)
+		if savePath != "" {
+			_ = os.Remove(savePath)
+		}
 		status := fiber.StatusBadRequest
 		if strings.Contains(err.Error(), "akses ditolak") || strings.Contains(err.Error(), "belum") {
 			status = fiber.StatusForbidden
+		} else if strings.Contains(err.Error(), "sudah tercatat lunas") || strings.Contains(err.Error(), "sedang dalam proses verifikasi") {
+			status = fiber.StatusConflict
 		}
 		return c.Status(status).JSON(fiber.Map{
 			"success": false,
@@ -1417,11 +1484,17 @@ func (h *AppHandler) SubmitBillPayment(c *fiber.Ctx) error {
 		})
 	}
 
+	successMsg := "Bukti transfer berhasil dikirim. Menunggu verifikasi pengurus RT."
+	if paymentMethod == string(entity.PaymentMethodCash) {
+		successMsg = "Deklarasi pembayaran tunai berhasil dikirim. Menunggu verifikasi dan konfirmasi pengurus RT."
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "Bukti transfer berhasil dikirim. Menunggu verifikasi pengurus RT.",
+		"message": successMsg,
 		"data": fiber.Map{
 			"bill_id":         billID,
+			"payment_method":  paymentMethod,
 			"proof_image_url": proofURL,
 			"status":          entity.BillStatusPendingVerification,
 		},
@@ -1511,22 +1584,9 @@ func (h *AppHandler) GetAdminBillsSummary(c *fiber.Ctx) error {
 	summary, err := h.billingUseCase.GetBillingSummary(c.Context(), period, block)
 	if err != nil {
 		log.Printf("[ERROR] GetBillingSummary: %v", err)
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"message": "Rekapitulasi iuran berhasil dimuat",
-			"data": fiber.Map{
-				"period":              period,
-				"block":               block,
-				"total_houses":        0,
-				"paid_houses":         0,
-				"unpaid_houses":       0,
-				"total_paid_houses":   0,
-				"total_unpaid_houses": 0,
-				"total_paid_amount":   0,
-				"total_unpaid_amount": 0,
-				"house_bills":         []interface{}{},
-				"items":               []interface{}{},
-			},
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
 		})
 	}
 
@@ -1534,6 +1594,192 @@ func (h *AppHandler) GetAdminBillsSummary(c *fiber.Ctx) error {
 		"success": true,
 		"message": "Rekapitulasi iuran berhasil dimuat",
 		"data":    summary,
+	})
+}
+
+// GET /api/v1/admin/bills/eligible-residents
+func (h *AppHandler) AdminGetEligibleResidents(c *fiber.Ctx) error {
+	residents, err := h.billingUseCase.GetEligibleResidentsForBilling(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal memuat daftar warga: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Daftar warga berhasil dimuat",
+		"data":    residents,
+	})
+}
+
+// GET /api/v1/admin/bills/resident-periods
+func (h *AppHandler) AdminGetResidentEligiblePeriods(c *fiber.Ctx) error {
+	residentID, err := strconv.ParseInt(c.Query("resident_id"), 10, 64)
+	if err != nil || residentID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Parameter resident_id tidak valid",
+		})
+	}
+
+	periods, err := h.billingUseCase.GetResidentEligiblePeriods(c.Context(), residentID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal memuat periode iuran warga: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Daftar periode iuran berhasil dimuat",
+		"data":    periods,
+	})
+}
+
+type AdminRecordCashPaymentInput struct {
+	ResidentID  int64   `json:"resident_id"`
+	BillID      int64   `json:"bill_id"`
+	Amount      float64 `json:"amount"`
+	PaymentDate string  `json:"payment_date"`
+	Notes       *string `json:"notes"`
+}
+
+// POST /api/v1/admin/bills/record-cash
+func (h *AppHandler) AdminRecordCashPayment(c *fiber.Ctx) error {
+	adminID, ok := getUserIDFromLocals(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Identitas pengguna tidak ditemukan",
+		})
+	}
+
+	var input AdminRecordCashPaymentInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Format data tidak valid: " + err.Error(),
+		})
+	}
+
+	if input.ResidentID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Warga (resident_id) wajib dipilih",
+		})
+	}
+
+	if input.BillID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Periode iuran (bill_id) wajib dipilih",
+		})
+	}
+
+	parsedDate := time.Now()
+	if strings.TrimSpace(input.PaymentDate) != "" {
+		formats := []string{
+			time.RFC3339Nano,
+			time.RFC3339,
+			"2006-01-02T15:04:05.999999999",
+			"2006-01-02T15:04:05.999",
+			"2006-01-02T15:04:05",
+			"2006-01-02",
+		}
+		var parsed bool
+		for _, f := range formats {
+			if t, err := time.Parse(f, strings.TrimSpace(input.PaymentDate)); err == nil {
+				parsedDate = t
+				parsed = true
+				break
+			}
+		}
+		if !parsed {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Format tanggal pembayaran tidak valid",
+			})
+		}
+	}
+
+	payment, err := h.billingUseCase.RecordDirectCashPayment(
+		c.Context(),
+		adminID,
+		billing.DirectCashPaymentInput{
+			ResidentID:  input.ResidentID,
+			BillID:      input.BillID,
+			Amount:      input.Amount,
+			PaymentDate: parsedDate,
+			Notes:       input.Notes,
+		},
+	)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if strings.Contains(err.Error(), "sudah tercatat lunas") || strings.Contains(err.Error(), "sedang dalam antrean verifikasi") {
+			status = fiber.StatusConflict
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Pembayaran tunai berhasil dicatat dan disinkronkan ke buku kas",
+		"data":    payment,
+	})
+}
+
+type AdminBulkProcessPaymentsInput struct {
+	Period        string  `json:"period"`
+	PaymentMethod string  `json:"payment_method"`
+	BillIDs       []int64 `json:"bill_ids"`
+	Notes         *string `json:"notes,omitempty"`
+}
+
+// POST /api/v1/admin/bills/bulk-pay
+func (h *AppHandler) AdminBulkProcessPayments(c *fiber.Ctx) error {
+	treasurerID, ok := getUserIDFromLocals(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Identitas pengguna tidak ditemukan",
+		})
+	}
+
+	var input AdminBulkProcessPaymentsInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Format data tidak valid: " + err.Error(),
+		})
+	}
+
+	result, err := h.billingUseCase.BulkProcessPayments(
+		c.Context(),
+		treasurerID,
+		billing.BulkProcessPaymentsInput{
+			Period:        input.Period,
+			PaymentMethod: input.PaymentMethod,
+			BillIDs:       input.BillIDs,
+			Notes:         input.Notes,
+		},
+	)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": fmt.Sprintf("Bulk process selesai: %d berhasil, %d gagal/dilewati", result.SuccessCount, result.FailedCount),
+		"data":    result,
 	})
 }
 
@@ -1586,6 +1832,9 @@ func (h *AppHandler) GetCashbookTransactions(c *fiber.Ctx) error {
 	category := c.Query("category")
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
+	period := c.Query("period")
+	month, _ := strconv.Atoi(c.Query("month", "0"))
+	year, _ := strconv.Atoi(c.Query("year", "0"))
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "20"))
 
@@ -1594,11 +1843,14 @@ func (h *AppHandler) GetCashbookTransactions(c *fiber.Ctx) error {
 		Category:  category,
 		StartDate: startDate,
 		EndDate:   endDate,
+		Period:    period,
+		Month:     month,
+		Year:      year,
 		Page:      page,
 		Limit:     limit,
 	}
 
-	transactions, total, err := h.cashbookUseCase.GetTransactions(c.Context(), filter)
+	result, err := h.cashbookUseCase.GetTransactions(c.Context(), filter)
 	if err != nil {
 		log.Printf("[ERROR] GetCashbookTransactions: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -1608,11 +1860,18 @@ func (h *AppHandler) GetCashbookTransactions(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"success": true,
-		"data":    transactions,
-		"total":   total,
-		"page":    page,
-		"limit":   limit,
+		"success":          true,
+		"data":             result.Transactions,
+		"total":            result.Total,
+		"page":             result.Page,
+		"limit":            result.Limit,
+		"period":           result.Period,
+		"start_date":       result.StartDate,
+		"end_date":         result.EndDate,
+		"previous_balance": result.PreviousBalance,
+		"period_income":    result.PeriodIncome,
+		"period_expense":   result.PeriodExpense,
+		"ending_balance":   result.EndingBalance,
 	})
 }
 

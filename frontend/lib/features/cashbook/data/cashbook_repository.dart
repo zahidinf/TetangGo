@@ -21,11 +21,14 @@ class CashbookRepository {
     }
   }
 
-  Future<List<CashTransactionModel>> getCashbookTransactions({
+  Future<CashTransactionsResultModel> getCashbookTransactionsResult({
     String? type,
     String? category,
     String? startDate,
     String? endDate,
+    String? period,
+    int? month,
+    int? year,
     int page = 1,
     int limit = 100,
   }) async {
@@ -46,6 +49,15 @@ class CashbookRepository {
       if (endDate != null && endDate.isNotEmpty) {
         queryParams['end_date'] = endDate;
       }
+      if (period != null && period.isNotEmpty) {
+        queryParams['period'] = period;
+      }
+      if (month != null && month > 0) {
+        queryParams['month'] = month;
+      }
+      if (year != null && year > 0) {
+        queryParams['year'] = year;
+      }
 
       final response = await _dioClient.dio.get(
         ApiConstants.cashbookTransactions,
@@ -53,17 +65,38 @@ class CashbookRepository {
       );
 
       if (response.data['success'] == true) {
-        final list = (response.data['data'] as List<dynamic>?)
-                ?.map((e) => CashTransactionModel.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            [];
-        return list;
+        return CashTransactionsResultModel.fromJson(response.data);
       }
       throw Exception(response.data['message'] ?? 'Gagal memuat mutasi kas');
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat mutasi kas';
       throw Exception(msg);
     }
+  }
+
+  Future<List<CashTransactionModel>> getCashbookTransactions({
+    String? type,
+    String? category,
+    String? startDate,
+    String? endDate,
+    String? period,
+    int? month,
+    int? year,
+    int page = 1,
+    int limit = 100,
+  }) async {
+    final result = await getCashbookTransactionsResult(
+      type: type,
+      category: category,
+      startDate: startDate,
+      endDate: endDate,
+      period: period,
+      month: month,
+      year: year,
+      page: page,
+      limit: limit,
+    );
+    return result.transactions;
   }
 
   Future<CashTransactionModel> createManualTransaction({

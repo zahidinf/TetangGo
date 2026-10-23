@@ -99,8 +99,87 @@ func (r *PostgresBillingRepository) CountPaidOrPendingBillsByPeriod(ctx context.
 	return paidCount, nil
 }
 
-func (r *PostgresBillingRepository) GenerateMonthlyBills(ctx context.Context, period string, amount float64) (int64, error) {
+func (r *PostgresBillingRepository) CountTotalBillsByPeriod(ctx context.Context, period string) (int, error) {
+	var total int
+	err := r.db.QueryRowContext(ctx, `
+		SELECT COUNT(*) 
+		FROM bills 
+		WHERE billing_period = $1
+	`, period).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count total bills for period: %w", err)
+	}
+	return total, nil
+}
+
+func (r *PostgresBillingRepository) CountAnyPaymentsByPeriod(ctx context.Context, period string) (int, error) {
+	var count int
+	// Checks if any resident has initiated/made a payment for this period (pending, paid, or rejected)
+	// or if any bill has status != unpaid
+	err := r.db.QueryRowContext(ctx, `
+		SELECT COUNT(DISTINCT b.id)
+		FROM bills b
+		LEFT JOIN payments p ON p.bill_id = b.id
+		WHERE b.billing_period = $1
+		  AND (p.id IS NOT NULL OR b.status IN ('paid', 'pending_verification', 'rejected'))
+	`, period).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count any payments for period: %w", err)
+	}
+	return count, nil
+}
+
+func (r *PostgresBillingRepository) GetDistinctPaymentAmountsByPeriod(ctx context.Context, period string) ([]float64, error) {
 	query := `
+		SELECT DISTINCT COALESCE(p.amount_paid, b.amount)
+		FROM bills b
+		LEFT JOIN payments p ON p.bill_id = b.id
+		WHERE b.billing_period = $1
+		  AND (p.id IS NOT NULL OR b.status IN ('paid', 'pending_verification', 'rejected'))
+		ORDER BY 1 ASC;
+	`
+	rows, err := r.db.QueryContext(ctx, query, period)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query payment amounts: %w", err)
+	}
+	defer rows.Close()
+
+	var amounts []float64
+	for rows.Next() {
+		var amt float64
+		if err := rows.Scan(&amt); err != nil {
+			return nil, fmt.Errorf("failed to scan payment amount: %w", err)
+		}
+		amounts = append(amounts, amt)
+	}
+	return amounts, nil
+}
+
+func (r *PostgresBillingRepository) GenerateMonthlyBills(ctx context.Context, period string, amount float64) (int64, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// 1. Update existing unpaid bills if amount changed, provided they have no payment records
+	updateQuery := `
+		UPDATE bills
+		SET amount = CAST($2 AS NUMERIC), updated_at = CURRENT_TIMESTAMP
+		WHERE billing_period = CAST($1 AS VARCHAR)
+		  AND status = 'unpaid'
+		  AND NOT EXISTS (
+		      SELECT 1 FROM payments p WHERE p.bill_id = bills.id
+		  );
+	`
+	resUpdate, err := tx.ExecContext(ctx, updateQuery, period, amount)
+	if err != nil {
+		return 0, fmt.Errorf("failed to update existing unpaid bills: %w", err)
+	}
+	updatedRows, _ := resUpdate.RowsAffected()
+
+	// 2. Insert bills for houses without bills yet
+	insertQuery := `
 		INSERT INTO bills (house_id, billing_period, amount, status)
 		SELECT h.id, CAST($1 AS VARCHAR), CAST($2 AS NUMERIC), 'unpaid'
 		FROM houses h
@@ -109,11 +188,69 @@ func (r *PostgresBillingRepository) GenerateMonthlyBills(ctx context.Context, pe
 		      SELECT 1 FROM bills b WHERE b.house_id = h.id AND b.billing_period = CAST($1 AS VARCHAR)
 		  );
 	`
-	res, err := r.db.ExecContext(ctx, query, period, amount)
+	resInsert, err := tx.ExecContext(ctx, insertQuery, period, amount)
 	if err != nil {
 		return 0, fmt.Errorf("failed to generate monthly bills: %w", err)
 	}
-	return res.RowsAffected()
+	insertedRows, _ := resInsert.RowsAffected()
+
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("failed to commit bill generation: %w", err)
+	}
+
+	totalAffected := insertedRows + updatedRows
+	return totalAffected, nil
+}
+
+func (r *PostgresBillingRepository) GenerateIndividualBill(ctx context.Context, houseID int64, period string, amount float64) (*entity.Bill, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// 1. Verify house exists and is eligible
+	var houseStatus string
+	err = tx.QueryRowContext(ctx, "SELECT status FROM houses WHERE id = $1", houseID).Scan(&houseStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("unit rumah tidak ditemukan")
+		}
+		return nil, fmt.Errorf("failed to query house: %w", err)
+	}
+	if houseStatus != "milik" && houseStatus != "kontrak" {
+		return nil, fmt.Errorf("unit rumah tidak memenuhi syarat untuk tagihan iuran (status: %s)", houseStatus)
+	}
+
+	// 2. Insert with ON CONFLICT DO NOTHING to prevent race conditions & duplicate bills
+	query := `
+		INSERT INTO bills (house_id, billing_period, amount, status)
+		VALUES ($1, $2, $3, 'unpaid')
+		ON CONFLICT (house_id, billing_period) DO NOTHING
+		RETURNING id, house_id, billing_period, amount, status, created_at, updated_at;
+	`
+	var bill entity.Bill
+	err = tx.QueryRowContext(ctx, query, houseID, period, amount).Scan(
+		&bill.ID,
+		&bill.HouseID,
+		&bill.BillingPeriod,
+		&bill.Amount,
+		&bill.Status,
+		&bill.CreatedAt,
+		&bill.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("unit rumah ini sudah memiliki tagihan untuk periode %s", period)
+		}
+		return nil, fmt.Errorf("failed to generate individual bill: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit individual bill: %w", err)
+	}
+
+	return &bill, nil
 }
 
 func (r *PostgresBillingRepository) GetBillsByHouseID(ctx context.Context, houseID int64) ([]entity.Bill, error) {
@@ -121,11 +258,11 @@ func (r *PostgresBillingRepository) GetBillsByHouseID(ctx context.Context, house
 		SELECT 
 			b.id, b.house_id, b.billing_period, b.amount, b.status, b.created_at, b.updated_at,
 			h.id, h.block, h.house_number, h.status,
-			p.id, p.amount_paid, p.proof_image_url, p.sender_bank, p.sender_name, p.notes, p.rejection_reason, p.verified_at, p.created_at
+			p.id, p.amount_paid, p.payment_method, p.proof_image_url, p.sender_bank, p.sender_name, p.notes, p.rejection_reason, p.verified_at, p.created_at
 		FROM bills b
 		INNER JOIN houses h ON h.id = b.house_id
 		LEFT JOIN LATERAL (
-			SELECT id, amount_paid, proof_image_url, sender_bank, sender_name, notes, rejection_reason, verified_at, created_at
+			SELECT id, amount_paid, COALESCE(payment_method, 'TRANSFER') AS payment_method, proof_image_url, sender_bank, sender_name, notes, rejection_reason, verified_at, created_at
 			FROM payments
 			WHERE payments.bill_id = b.id
 			ORDER BY id DESC
@@ -146,6 +283,7 @@ func (r *PostgresBillingRepository) GetBillsByHouseID(ctx context.Context, house
 		var h entity.House
 		var pID sql.NullInt64
 		var pAmountPaid sql.NullFloat64
+		var pPaymentMethod sql.NullString
 		var pProofURL sql.NullString
 		var pSenderBank sql.NullString
 		var pSenderName sql.NullString
@@ -168,6 +306,7 @@ func (r *PostgresBillingRepository) GetBillsByHouseID(ctx context.Context, house
 			&h.Status,
 			&pID,
 			&pAmountPaid,
+			&pPaymentMethod,
 			&pProofURL,
 			&pSenderBank,
 			&pSenderName,
@@ -187,6 +326,7 @@ func (r *PostgresBillingRepository) GetBillsByHouseID(ctx context.Context, house
 				ID:            pID.Int64,
 				BillID:        b.ID,
 				AmountPaid:    pAmountPaid.Float64,
+				PaymentMethod: pPaymentMethod.String,
 				ProofImageURL: pProofURL.String,
 			}
 			if pSenderBank.Valid {
@@ -221,11 +361,11 @@ func (r *PostgresBillingRepository) GetBillsByHouseIDAndPeriod(ctx context.Conte
 		SELECT 
 			b.id, b.house_id, b.billing_period, b.amount, b.status, b.created_at, b.updated_at,
 			h.id, h.block, h.house_number, h.status,
-			p.id, p.amount_paid, p.proof_image_url, p.sender_bank, p.sender_name, p.notes, p.rejection_reason, p.verified_at, p.created_at
+			p.id, p.amount_paid, p.payment_method, p.proof_image_url, p.sender_bank, p.sender_name, p.notes, p.rejection_reason, p.verified_at, p.created_at
 		FROM bills b
 		INNER JOIN houses h ON h.id = b.house_id
 		LEFT JOIN LATERAL (
-			SELECT id, amount_paid, proof_image_url, sender_bank, sender_name, notes, rejection_reason, verified_at, created_at
+			SELECT id, amount_paid, COALESCE(payment_method, 'TRANSFER') AS payment_method, proof_image_url, sender_bank, sender_name, notes, rejection_reason, verified_at, created_at
 			FROM payments
 			WHERE payments.bill_id = b.id
 			ORDER BY id DESC
@@ -246,6 +386,7 @@ func (r *PostgresBillingRepository) GetBillsByHouseIDAndPeriod(ctx context.Conte
 		var h entity.House
 		var pID sql.NullInt64
 		var pAmountPaid sql.NullFloat64
+		var pPaymentMethod sql.NullString
 		var pProofURL sql.NullString
 		var pSenderBank sql.NullString
 		var pSenderName sql.NullString
@@ -268,6 +409,7 @@ func (r *PostgresBillingRepository) GetBillsByHouseIDAndPeriod(ctx context.Conte
 			&h.Status,
 			&pID,
 			&pAmountPaid,
+			&pPaymentMethod,
 			&pProofURL,
 			&pSenderBank,
 			&pSenderName,
@@ -287,6 +429,7 @@ func (r *PostgresBillingRepository) GetBillsByHouseIDAndPeriod(ctx context.Conte
 				ID:            pID.Int64,
 				BillID:        b.ID,
 				AmountPaid:    pAmountPaid.Float64,
+				PaymentMethod: pPaymentMethod.String,
 				ProofImageURL: pProofURL.String,
 			}
 			if pSenderBank.Valid {
@@ -326,7 +469,7 @@ func (r *PostgresBillingRepository) GetBillByHouseAndPeriod(ctx context.Context,
 		return nil, err
 	}
 	if len(bills) == 0 {
-		return nil, errors.New("tagihan tidak ditemukan")
+		return nil, nil
 	}
 	return &bills[0], nil
 }
@@ -346,12 +489,12 @@ func (r *PostgresBillingRepository) GetBillByID(ctx context.Context, billID int6
 		SELECT 
 			b.id, b.house_id, b.billing_period, b.amount, b.status, b.created_at, b.updated_at,
 			h.block, h.house_number, h.status,
-			p.id, p.user_id, p.amount_paid, p.proof_image_url, p.sender_bank, p.sender_name, 
+			p.id, p.user_id, p.amount_paid, p.payment_method, p.proof_image_url, p.sender_bank, p.sender_name, 
 			p.notes, p.rejection_reason, p.verified_by, u_admin.name, p.verified_at, p.created_at
 		FROM bills b
 		JOIN houses h ON h.id = b.house_id
 		LEFT JOIN LATERAL (
-			SELECT id, user_id, amount_paid, proof_image_url, sender_bank, sender_name, notes, rejection_reason, verified_by, verified_at, created_at
+			SELECT id, user_id, amount_paid, COALESCE(payment_method, 'TRANSFER') AS payment_method, proof_image_url, sender_bank, sender_name, notes, rejection_reason, verified_by, verified_at, created_at
 			FROM payments
 			WHERE payments.bill_id = b.id
 			ORDER BY id DESC
@@ -365,6 +508,7 @@ func (r *PostgresBillingRepository) GetBillByID(ctx context.Context, billID int6
 	var pID sql.NullInt64
 	var pUserID sql.NullInt64
 	var pAmountPaid sql.NullFloat64
+	var pPaymentMethod sql.NullString
 	var pProofURL sql.NullString
 	var pSenderBank sql.NullString
 	var pSenderName sql.NullString
@@ -389,6 +533,7 @@ func (r *PostgresBillingRepository) GetBillByID(ctx context.Context, billID int6
 		&pID,
 		&pUserID,
 		&pAmountPaid,
+		&pPaymentMethod,
 		&pProofURL,
 		&pSenderBank,
 		&pSenderName,
@@ -414,6 +559,7 @@ func (r *PostgresBillingRepository) GetBillByID(ctx context.Context, billID int6
 			ID:            pID.Int64,
 			BillID:        b.ID,
 			AmountPaid:    pAmountPaid.Float64,
+			PaymentMethod: pPaymentMethod.String,
 			ProofImageURL: pProofURL.String,
 		}
 		if pUserID.Valid {
@@ -465,15 +611,24 @@ func (r *PostgresBillingRepository) CreatePayment(ctx context.Context, p *entity
 	}
 
 	if currentStatus == "paid" {
-		return errors.New("tagihan ini sudah lunas")
+		return errors.New("Pembayaran untuk periode iuran ini sudah tercatat lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.")
 	}
 	if currentStatus == "pending_verification" {
 		return errors.New("Pembayaran untuk periode ini sedang menunggu verifikasi pengurus")
 	}
 
+	if p.PaymentMethod == "" {
+		p.PaymentMethod = string(entity.PaymentMethodTransfer)
+	}
+
+	var proofURL sql.NullString
+	if p.ProofImageURL != "" {
+		proofURL = sql.NullString{String: p.ProofImageURL, Valid: true}
+	}
+
 	insertPaymentQuery := `
-		INSERT INTO payments (bill_id, user_id, sender_bank, sender_name, amount_paid, proof_image_url, notes, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+		INSERT INTO payments (bill_id, user_id, payment_method, sender_bank, sender_name, amount_paid, proof_image_url, notes, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
 		RETURNING id, created_at;
 	`
 	err = tx.QueryRowContext(
@@ -481,10 +636,11 @@ func (r *PostgresBillingRepository) CreatePayment(ctx context.Context, p *entity
 		insertPaymentQuery,
 		p.BillID,
 		p.UserID,
+		p.PaymentMethod,
 		p.SenderBank,
 		p.SenderName,
 		p.AmountPaid,
-		p.ProofImageURL,
+		proofURL,
 		p.Notes,
 	).Scan(&p.ID, &p.CreatedAt)
 	if err != nil {
@@ -525,8 +681,11 @@ func (r *PostgresBillingRepository) VerifyPayment(ctx context.Context, billID in
 		return fmt.Errorf("failed to lock bill for verification: %w", err)
 	}
 
+	if currentStatus == "paid" {
+		return errors.New("Pembayaran untuk periode iuran ini sudah tercatat lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.")
+	}
 	if currentStatus != "pending_verification" {
-		return fmt.Errorf("tagihan tidak dalam status antrean verifikasi (status: %s)", currentStatus)
+		return fmt.Errorf("tagihan tidak dalam antrean verifikasi (status saat ini: %s)", currentStatus)
 	}
 
 	now := time.Now()
@@ -569,9 +728,24 @@ func (r *PostgresBillingRepository) VerifyPayment(ctx context.Context, billID in
 		// Sprint 3: Automasi Sinkronisasi Iuran ke Buku Kas (HANYA saat APPROVE)
 		insertCashQuery := `
 			INSERT INTO cash_transactions (type, category, amount, transaction_date, description, bill_id, created_by, created_at)
-			SELECT 'income', 'iuran', b.amount, CURRENT_DATE, 'Iuran IPL Blok ' || h.block || ' No. ' || h.house_number || ' (' || b.billing_period || ')', b.id, $1, NOW()
+			SELECT 
+				'income', 
+				'iuran', 
+				b.amount, 
+				CURRENT_DATE, 
+				CASE 
+					WHEN COALESCE(p.payment_method, 'TRANSFER') = 'CASH' 
+					THEN 'Iuran IPL (Tunai) Blok ' || h.block || ' No. ' || h.house_number || ' (' || b.billing_period || ')'
+					ELSE 'Iuran IPL Blok ' || h.block || ' No. ' || h.house_number || ' (' || b.billing_period || ')'
+				END,
+				b.id, 
+				$1, 
+				NOW()
 			FROM bills b
 			JOIN houses h ON b.house_id = h.id
+			LEFT JOIN LATERAL (
+				SELECT payment_method FROM payments WHERE payments.bill_id = b.id ORDER BY id DESC LIMIT 1
+			) p ON true
 			WHERE b.id = $2
 			  AND NOT EXISTS (SELECT 1 FROM cash_transactions ct WHERE ct.bill_id = b.id);
 		`
@@ -597,15 +771,16 @@ func (r *PostgresBillingRepository) GetPendingPayments(ctx context.Context) ([]e
 			b.billing_period,
 			b.amount AS bill_amount,
 			p.amount_paid,
+			COALESCE(p.payment_method, 'TRANSFER') AS payment_method,
 			COALESCE(p.sender_bank, '') AS sender_bank,
 			COALESCE(p.sender_name, '') AS sender_name,
-			p.proof_image_url,
+			COALESCE(p.proof_image_url, '') AS proof_image_url,
 			COALESCE(p.notes, '') AS notes,
 			p.created_at
 		FROM bills b
 		JOIN houses h ON h.id = b.house_id
 		JOIN LATERAL (
-			SELECT id, user_id, amount_paid, sender_bank, sender_name, proof_image_url, notes, created_at
+			SELECT id, user_id, amount_paid, payment_method, sender_bank, sender_name, proof_image_url, notes, created_at
 			FROM payments
 			WHERE payments.bill_id = b.id
 			ORDER BY id DESC
@@ -635,6 +810,7 @@ func (r *PostgresBillingRepository) GetPendingPayments(ctx context.Context) ([]e
 			&item.BillingPeriod,
 			&item.BillAmount,
 			&item.AmountPaid,
+			&item.PaymentMethod,
 			&item.SenderBank,
 			&item.SenderName,
 			&item.ProofImageURL,
@@ -661,7 +837,8 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 			b.id AS bill_id,
 			COALESCE(b.amount, (SELECT COALESCE(monthly_fee, 0) FROM payment_settings ORDER BY id ASC LIMIT 1), 0) AS bill_amount,
 			p.verified_at AS paid_at,
-			p.proof_image_url
+			p.proof_image_url,
+			p.payment_method
 		FROM houses h
 		LEFT JOIN LATERAL (
 			SELECT u.salutation, u.name, u.phone
@@ -672,7 +849,7 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 		) head ON true
 		LEFT JOIN bills b ON b.house_id = h.id AND b.billing_period = $1
 		LEFT JOIN LATERAL (
-			SELECT verified_at, proof_image_url
+			SELECT verified_at, proof_image_url, payment_method
 			FROM payments
 			WHERE payments.bill_id = b.id
 			ORDER BY id DESC
@@ -698,6 +875,7 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 	summary := &entity.BillingSummaryResponse{
 		Period:            period,
 		Block:             block,
+		IsPeriodGenerated: false,
 		TotalHouses:       0,
 		PaidHouses:        0,
 		UnpaidHouses:      0,
@@ -714,6 +892,7 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 		var bID sql.NullInt64
 		var pPaidAt sql.NullTime
 		var pProofURL sql.NullString
+		var pPaymentMethod sql.NullString
 
 		err := rows.Scan(
 			&item.HouseID,
@@ -726,6 +905,7 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 			&item.Amount,
 			&pPaidAt,
 			&pProofURL,
+			&pPaymentMethod,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan house bill status: %w", err)
@@ -733,12 +913,18 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 
 		if bID.Valid {
 			item.BillID = &bID.Int64
+			summary.IsPeriodGenerated = true
+		} else {
+			item.Status = "no_bill"
 		}
 		if pPaidAt.Valid {
 			item.PaidAt = &pPaidAt.Time
 		}
 		if pProofURL.Valid {
 			item.ProofImageURL = &pProofURL.String
+		}
+		if pPaymentMethod.Valid {
+			item.PaymentMethod = &pPaymentMethod.String
 		}
 
 		summary.TotalHouses++
@@ -758,4 +944,184 @@ func (r *PostgresBillingRepository) GetBillingSummary(ctx context.Context, perio
 	summary.TotalUnpaidHouses = summary.UnpaidHouses
 
 	return summary, nil
+}
+
+func (r *PostgresBillingRepository) RecordDirectCashPayment(
+	ctx context.Context,
+	billID int64,
+	adminID int64,
+	residentUserID *int64,
+	amount float64,
+	paymentDate time.Time,
+	notes *string,
+) (*entity.Payment, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// 1. Lock bill row FOR UPDATE to strictly serialize concurrent operations
+	var currentStatus string
+	var billAmount float64
+	var billingPeriod string
+	var houseBlock, houseNumber string
+
+	checkQuery := `
+		SELECT b.status, b.amount, b.billing_period, h.block, h.house_number
+		FROM bills b
+		JOIN houses h ON b.house_id = h.id
+		WHERE b.id = $1
+		FOR UPDATE OF b;
+	`
+	err = tx.QueryRowContext(ctx, checkQuery, billID).Scan(&currentStatus, &billAmount, &billingPeriod, &houseBlock, &houseNumber)
+	if err == sql.ErrNoRows {
+		return nil, errors.New("tagihan tidak ditemukan")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to lock bill: %w", err)
+	}
+
+	// 2. Authoritative check
+	if currentStatus == "paid" {
+		return nil, errors.New("Pembayaran untuk periode iuran ini sudah tercatat lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.")
+	}
+	if currentStatus == "pending_verification" {
+		return nil, errors.New("Pembayaran untuk periode iuran ini sedang dalam antrean verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.")
+	}
+	if amount <= 0 {
+		amount = billAmount
+	}
+	if amount != billAmount {
+		return nil, fmt.Errorf("nominal pembayaran tidak sesuai dengan tagihan (Rp %.0f)", billAmount)
+	}
+
+	if paymentDate.IsZero() {
+		paymentDate = time.Now()
+	}
+
+	// 3. Insert payment record (immediately approved, payment_method = CASH)
+	insertPaymentQuery := `
+		INSERT INTO payments (bill_id, user_id, payment_method, amount_paid, notes, verified_by, verified_at, created_at)
+		VALUES ($1, $2, 'CASH', $3, $4, $5, $6, $6)
+		RETURNING id, created_at;
+	`
+	var p entity.Payment
+	p.BillID = billID
+	p.UserID = residentUserID
+	p.PaymentMethod = string(entity.PaymentMethodCash)
+	p.AmountPaid = amount
+	p.Notes = notes
+	p.VerifiedBy = &adminID
+	p.VerifiedAt = &paymentDate
+
+	err = tx.QueryRowContext(
+		ctx,
+		insertPaymentQuery,
+		billID,
+		residentUserID,
+		amount,
+		notes,
+		adminID,
+		paymentDate,
+	).Scan(&p.ID, &p.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to record cash payment: %w", err)
+	}
+
+	// 4. Update bill status to paid
+	updateBillQuery := `
+		UPDATE bills
+		SET status = 'paid', updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1;
+	`
+	_, err = tx.ExecContext(ctx, updateBillQuery, billID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update bill status: %w", err)
+	}
+
+	// 5. Record cash ledger entry (income, atomic, idempotent)
+	cashDesc := fmt.Sprintf("Iuran IPL (Tunai) Blok %s No. %s (%s)", houseBlock, houseNumber, billingPeriod)
+	insertCashQuery := `
+		INSERT INTO cash_transactions (type, category, amount, transaction_date, description, bill_id, created_by, created_at)
+		SELECT 'income', 'iuran', $1, $2::date, $3, $4, $5, CURRENT_TIMESTAMP
+		WHERE NOT EXISTS (SELECT 1 FROM cash_transactions WHERE bill_id = $4);
+	`
+	_, err = tx.ExecContext(ctx, insertCashQuery, amount, paymentDate.Format("2006-01-02"), cashDesc, billID, adminID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to record cashbook transaction: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit cash payment transaction: %w", err)
+	}
+
+	return &p, nil
+}
+
+func (r *PostgresBillingRepository) GetEligiblePeriodsByHouseID(ctx context.Context, houseID int64) ([]entity.EligibleDuesPeriod, error) {
+	// Query ONLY bills that were officially generated by admin/pengurus for this house
+	query := `
+		SELECT id, house_id, billing_period, amount, status
+		FROM bills
+		WHERE house_id = $1
+		ORDER BY billing_period ASC;
+	`
+	rows, err := r.db.QueryContext(ctx, query, houseID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get periods for house %d: %w", houseID, err)
+	}
+	defer rows.Close()
+
+	var list []entity.EligibleDuesPeriod
+	for rows.Next() {
+		var item entity.EligibleDuesPeriod
+		if err := rows.Scan(&item.BillID, &item.HouseID, &item.BillingPeriod, &item.Amount, &item.Status); err != nil {
+			return nil, fmt.Errorf("failed to scan period: %w", err)
+		}
+		item.IsEligible = (item.Status == "unpaid" || item.Status == "rejected")
+		list = append(list, item)
+	}
+	if list == nil {
+		list = []entity.EligibleDuesPeriod{}
+	}
+	return list, nil
+}
+
+func (r *PostgresBillingRepository) GetEligibleResidentsForBilling(ctx context.Context) ([]entity.ResidentBillingOption, error) {
+	query := `
+		SELECT 
+			u.id, 
+			COALESCE(CASE WHEN u.salutation IS NOT NULL AND u.salutation != '' THEN u.salutation || ' ' || u.name ELSE u.name END, u.name) as name,
+			COALESCE(u.phone, '') as phone,
+			h.id as house_id,
+			h.block,
+			h.house_number,
+			COALESCE(u.ownership_status, '') as ownership_status
+		FROM users u
+		JOIN houses h ON u.house_id = h.id
+		WHERE u.status = 'active'
+		ORDER BY h.block ASC, h.house_number ASC, u.name ASC;
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get residents for billing: %w", err)
+	}
+	defer rows.Close()
+
+	var list []entity.ResidentBillingOption
+	for rows.Next() {
+		var rbo entity.ResidentBillingOption
+		if err := rows.Scan(&rbo.UserID, &rbo.Name, &rbo.Phone, &rbo.HouseID, &rbo.HouseBlock, &rbo.HouseNumber, &rbo.OwnershipStatus); err != nil {
+			return nil, fmt.Errorf("failed to scan resident billing option: %w", err)
+		}
+		rbo.ResidentID = rbo.UserID
+		rbo.ResidentName = rbo.Name
+		rbo.ResidentPhone = rbo.Phone
+		list = append(list, rbo)
+	}
+	if list == nil {
+		list = []entity.ResidentBillingOption{}
+	}
+	return list, nil
 }

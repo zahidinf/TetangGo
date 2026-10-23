@@ -8,6 +8,8 @@ import '../../billing/domain/models/billing_models.dart';
 import '../../billing/presentation/widgets/digital_receipt_dialog.dart';
 import 'widgets/full_image_preview_dialog.dart';
 import 'widgets/payment_settings_dialog.dart';
+import 'widgets/record_cash_payment_dialog.dart';
+import 'widgets/bulk_process_payment_dialog.dart';
 
 class AdminBillingView extends StatefulWidget {
   final VoidCallback? onPendingCountUpdated;
@@ -169,6 +171,20 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
     }
   }
 
+  void _openRecordCashDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => RecordCashPaymentDialog(
+        repository: context.read<BillingRepository>(),
+        onSuccess: () {
+          _loadInitialData();
+          widget.onPendingCountUpdated?.call();
+        },
+      ),
+    );
+  }
+
   void _openSettingsDialog() {
     if (_settings == null) return;
     showDialog(
@@ -180,6 +196,46 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
           _loadSettings();
           _loadPendingPayments();
           _loadSummary();
+        },
+      ),
+    );
+  }
+
+  void _openBulkProcessDialog(BillingSummaryModel sum) {
+    if (!sum.isPeriodGenerated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tagihan periode ini belum diterbitkan. Silakan generate tagihan terlebih dahulu.'),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+      return;
+    }
+
+    final unpaidBills = sum.houseBills
+        .where((b) => b.billId != null && b.status != 'paid' && b.status != 'pending' && b.status != 'no_bill')
+        .toList();
+
+    if (unpaidBills.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak ada unit yang belum lunas pada periode ini.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => BulkProcessPaymentDialog(
+        repository: context.read<BillingRepository>(),
+        period: sum.period,
+        unpaidBills: unpaidBills,
+        onSuccess: () {
+          _loadInitialData();
+          widget.onPendingCountUpdated?.call();
         },
       ),
     );
@@ -235,6 +291,82 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
           ),
         );
         _loadPendingPayments();
+        _loadSummary();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppTheme.danger,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _generateIndividualBill(HouseBillStatusModel item, String period) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Terbitkan Tagihan Individual', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Terbitkan tagihan iuran periode $period untuk:'),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Unit: Blok ${item.block} No. ${item.houseNumber}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('Penghuni: ${item.residentName}'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Nominal tagihan akan otomatis mengikuti nominal pembayaran yang sudah ada pada periode $period atau konfigurasi tarif iuran yang berlaku.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Terbitkan Tagihan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final repo = context.read<BillingRepository>();
+      await repo.generateIndividualBill(item.houseId, period);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tagihan individual Blok ${item.block} No. ${item.houseNumber} periode $period berhasil diterbitkan!'),
+            backgroundColor: AppTheme.success,
+          ),
+        );
         _loadSummary();
       }
     } catch (e) {
@@ -382,6 +514,19 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
                   ),
                   const SizedBox(width: 8),
                 ],
+                ElevatedButton.icon(
+                  key: const Key('openRecordCashBtn'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  onPressed: _openRecordCashDialog,
+                  icon: const Icon(Icons.payments_outlined, size: 18),
+                  label: const Text('Catat Pembayaran Tunai', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -543,45 +688,70 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Bukti Transfer Thumbnail
-                  InkWell(
-                    onTap: () => _previewFullImage(
-                      item.proofImageUrl,
-                      'Bukti Transfer - Blok ${item.houseBlock} No. ${item.houseNumber}',
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            width: 100,
-                            height: 110,
-                            color: Colors.grey.shade100,
-                            child: Image.network(
-                              imgUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Center(
-                                child: Icon(Icons.broken_image, color: Colors.grey),
+                  // Bukti Transfer / Cash Icon Thumbnail
+                  item.isCash
+                      ? Container(
+                          width: 100,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.amber.shade300),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.payments_rounded, color: Colors.amber.shade800, size: 36),
+                              const SizedBox(height: 6),
+                              Text(
+                                'TUNAI / CASH',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.amber.shade900,
+                                ),
                               ),
-                            ),
+                            ],
+                          ),
+                        )
+                      : InkWell(
+                          onTap: () => _previewFullImage(
+                            item.proofImageUrl,
+                            'Bukti Transfer - Blok ${item.houseBlock} No. ${item.houseNumber}',
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  width: 100,
+                                  height: 110,
+                                  color: Colors.grey.shade100,
+                                  child: Image.network(
+                                    imgUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Center(
+                                      child: Icon(Icons.broken_image, color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 4,
+                                right: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.65),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Icon(Icons.zoom_in, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Positioned(
-                          bottom: 4,
-                          right: 4,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.65),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(Icons.zoom_in, color: Colors.white, size: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(width: 18),
 
                   // Data Info Pembayaran
@@ -639,15 +809,41 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
                         Row(
                           children: [
                             Text(
-                              'Pengirim: ',
+                              'Metode: ',
                               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                             ),
-                            Text(
-                              '${item.senderBank ?? '-'} a.n ${item.senderName ?? '-'}',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: item.isCash ? Colors.green.shade50 : Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.isCash ? 'TUNAI (CASH)' : 'TRANSFER BANK',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: item.isCash ? Colors.green.shade800 : AppTheme.primary,
+                                ),
+                              ),
                             ),
                           ],
                         ),
+                        if (!item.isCash) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Pengirim: ',
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                              ),
+                              Text(
+                                '${item.senderBank ?? '-'} a.n ${item.senderName ?? '-'}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                              ),
+                            ],
+                          ),
+                        ],
                         if (item.notes != null && item.notes!.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
@@ -828,6 +1024,49 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
               ),
             )
           else ...[
+            if (!sum.isPeriodGenerated)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.amber.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 36, color: Colors.amber.shade900),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Periode ${sum.period} Belum Diterbitkan',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.amber.shade900),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tagihan iuran untuk periode ini belum diterbitkan oleh pengurus. Pembayaran massal dan pencatatan iuran tidak dapat dilakukan pada periode yang belum diterbitkan.',
+                            style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: _openSettingsDialog,
+                      icon: const Icon(Icons.add_circle_outline, size: 16),
+                      label: const Text('Terbitkan Tagihan'),
+                    ),
+                  ],
+                ),
+              ),
             Builder(
               builder: (context) {
                 final progress = sum.totalHouses > 0 ? (sum.paidHouses / sum.totalHouses) : 0.0;
@@ -934,6 +1173,20 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textPrimary),
                         ),
                         const Spacer(),
+                        if (sum.isPeriodGenerated)
+                          ElevatedButton.icon(
+                            key: const Key('bulkPayBtn'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal.shade700,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            onPressed: () => _openBulkProcessDialog(sum),
+                            icon: const Icon(Icons.playlist_add_check, size: 16),
+                            label: const Text('Proses Bayar Massal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        const SizedBox(width: 12),
                         Text(
                           'Periode: ${sum.period}',
                           style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade600, fontSize: 12),
@@ -1019,6 +1272,12 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  if (item.status == 'no_bill')
+                                    IconButton(
+                                      icon: const Icon(Icons.note_add_outlined, color: Colors.indigo, size: 20),
+                                      tooltip: 'Terbitkan Tagihan Individual',
+                                      onPressed: () => _generateIndividualBill(item, sum.period),
+                                    ),
                                   if (item.proofImageUrl != null && item.proofImageUrl!.isNotEmpty)
                                     IconButton(
                                       icon: const Icon(Icons.image_outlined, color: AppTheme.primary, size: 20),
@@ -1152,6 +1411,11 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
         bg = Colors.red.shade50;
         fg = Colors.red.shade700;
         label = 'Ditolak';
+        break;
+      case 'no_bill':
+        bg = Colors.grey.shade100;
+        fg = Colors.grey.shade700;
+        label = 'Belum Terbit';
         break;
       default:
         bg = Colors.red.shade50;

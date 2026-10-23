@@ -59,127 +59,6 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
     }
   }
 
-  Future<void> _initiateBillForPeriod(String targetPeriod) async {
-    final period = targetPeriod.trim();
-    if (period.isEmpty) return;
-
-    // Frontend pre-check: prevent attempting to pay already paid or pending period
-    final existingBill = _bills.cast<BillModel?>().firstWhere(
-          (b) => b?.billingPeriod == period,
-          orElse: () => null,
-        );
-
-    if (existingBill != null) {
-      if (existingBill.isPaid) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Iuran untuk periode ini sudah dibayar dan diverifikasi.'),
-            backgroundColor: AppTheme.success,
-          ),
-        );
-        setState(() => _selectedPeriodFilter = period);
-        return;
-      }
-      if (existingBill.isPending) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pembayaran untuk periode ini sedang menunggu verifikasi pengurus.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        setState(() => _selectedPeriodFilter = period);
-        return;
-      }
-    }
-
-    try {
-      final repo = context.read<BillingRepository>();
-      final bill = await repo.initiateResidentBill(period);
-      await _fetchData();
-      if (mounted) {
-        setState(() {
-          _selectedPeriodFilter = period;
-        });
-        _openPaymentDialog(bill);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: AppTheme.danger,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _openInitiatePeriodDialog() async {
-    final now = DateTime.now();
-    final defaultNextMonth = DateTime(now.year, now.month + 1, 1);
-    final periodCtrl = TextEditingController(text: DateFormat('yyyy-MM').format(defaultNextMonth));
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Bayar Periode Lain / Di Muka', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Pilih atau masukkan periode yang ingin dibayar di muka (format: YYYY-MM):',
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: periodCtrl,
-              decoration: InputDecoration(
-                labelText: 'Periode (YYYY-MM)',
-                hintText: '2026-11',
-                prefixIcon: const Icon(Icons.calendar_today, size: 20),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 18, color: Colors.blue.shade800),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Tarif resmi iuran bulanan: ${_setting != null ? _formatCurrency(_setting!.monthlyFee) : '-'}',
-                      style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Lanjutkan'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-    await _initiateBillForPeriod(periodCtrl.text);
-  }
-
   String _formatCurrency(double amount) {
     try {
       final currencyFormatter = NumberFormat.currency(
@@ -368,18 +247,6 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal.shade700,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  ),
-                  onPressed: _openInitiatePeriodDialog,
-                  icon: const Icon(Icons.add_circle_outline, size: 18),
-                  label: const Text('+ Bayar Periode Lain / Di Muka', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
               ],
             ),
           ),
@@ -425,9 +292,6 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
   }
 
   Widget _buildEmptyBillCard() {
-    final now = DateTime.now();
-    final currentPeriod = DateFormat('yyyy-MM').format(now);
-
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -440,26 +304,26 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
           Icon(Icons.receipt_long_outlined, size: 54, color: AppTheme.primary.withOpacity(0.6)),
           const SizedBox(height: 12),
           const Text(
-            'Belum Ada Tagihan untuk Periode Ini',
+            'Tagihan Belum Diterbitkan',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 6),
           Text(
-            'Tagihan rutin belum digenerate oleh pengurus. Anda dapat langsung menginisiasi dan membayar iuran untuk bulan ini ($currentPeriod) atau bulan lainnya.',
+            'Tagihan iuran untuk periode ini belum diterbitkan oleh admin/pengurus. Pembayaran hanya dapat dilakukan setelah tagihan resmi diterbitkan.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
-          const SizedBox(height: 18),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.primary,
+              side: const BorderSide(color: AppTheme.primary),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: () => _initiateBillForPeriod(currentPeriod),
-            icon: const Icon(Icons.payment_rounded, size: 18),
-            label: Text('Bayar Iuran Bulan Ini ($currentPeriod)', style: const TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: _fetchData,
+            icon: const Icon(Icons.refresh, size: 16),
+            label: const Text('Periksa Ulang Tagihan'),
           ),
         ],
       ),

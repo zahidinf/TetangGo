@@ -2,8 +2,12 @@ package billing_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"sort"
 	"strings"
 	"testing"
+	"time"
 	"tetanggo-backend/internal/domain/entity"
 	"tetanggo-backend/internal/domain/repository"
 	"tetanggo-backend/internal/usecase/billing"
@@ -92,11 +96,170 @@ func (m *mockBillingRepo) GetBillingSummary(ctx context.Context, period string, 
 }
 
 func (m *mockBillingRepo) CountPaidOrPendingBillsByPeriod(ctx context.Context, period string) (int, error) {
-	return 0, nil
+	var count int
+	for _, b := range m.bills {
+		if b.BillingPeriod == period && (b.Status == "paid" || b.Status == "pending_verification") {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *mockBillingRepo) CountTotalBillsByPeriod(ctx context.Context, period string) (int, error) {
+	var count int
+	for _, b := range m.bills {
+		if b.BillingPeriod == period {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *mockBillingRepo) CountAnyPaymentsByPeriod(ctx context.Context, period string) (int, error) {
+	var count int
+	for _, b := range m.bills {
+		if b.BillingPeriod == period && (b.Status == "paid" || b.Status == "pending_verification" || b.Status == "rejected" || b.Payment != nil) {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *mockBillingRepo) GetDistinctPaymentAmountsByPeriod(ctx context.Context, period string) ([]float64, error) {
+	amountMap := make(map[float64]bool)
+	for _, b := range m.bills {
+		if b.BillingPeriod == period && (b.Status == "paid" || b.Status == "pending_verification" || b.Status == "rejected" || b.Payment != nil) {
+			if b.Payment != nil {
+				amountMap[b.Payment.AmountPaid] = true
+			} else {
+				amountMap[b.Amount] = true
+			}
+		}
+	}
+	for _, p := range m.payments {
+		if b, ok := m.bills[p.BillID]; ok && b.BillingPeriod == period {
+			amountMap[p.AmountPaid] = true
+		}
+	}
+	amounts := make([]float64, 0, len(amountMap))
+	for amt := range amountMap {
+		amounts = append(amounts, amt)
+	}
+	return amounts, nil
 }
 
 func (m *mockBillingRepo) GenerateMonthlyBills(ctx context.Context, period string, amount float64) (int64, error) {
-	return 0, nil
+	var count int64
+	for _, b := range m.bills {
+		if b.BillingPeriod == period && b.Status == "unpaid" && b.Payment == nil {
+			b.Amount = amount
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *mockBillingRepo) GenerateIndividualBill(ctx context.Context, houseID int64, period string, amount float64) (*entity.Bill, error) {
+	for _, b := range m.bills {
+		if b.HouseID == houseID && b.BillingPeriod == period {
+			return nil, fmt.Errorf("unit rumah ini sudah memiliki tagihan untuk periode %s", period)
+		}
+	}
+	newID := int64(len(m.bills) + 1)
+	newBill := &entity.Bill{
+		ID:            newID,
+		HouseID:       houseID,
+		BillingPeriod: period,
+		Amount:        amount,
+		Status:        string(entity.BillStatusUnpaid),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+	m.bills[newID] = newBill
+	return newBill, nil
+}
+
+func (m *mockBillingRepo) RecordDirectCashPayment(ctx context.Context, billID int64, adminID int64, residentUserID *int64, amount float64, paymentDate time.Time, notes *string) (*entity.Payment, error) {
+	b, ok := m.bills[billID]
+	if !ok {
+		return nil, errors.New("tagihan tidak ditemukan")
+	}
+	if b.Status == "paid" {
+		return nil, errors.New("Pembayaran untuk periode iuran ini sudah tercatat lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.")
+	}
+	if b.Status == "pending_verification" {
+		return nil, errors.New("Pembayaran untuk periode iuran ini sedang dalam antrean verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.")
+	}
+	b.Status = "paid"
+	p := &entity.Payment{
+		ID:            int64(len(m.payments) + 1),
+		BillID:        billID,
+		UserID:        residentUserID,
+		PaymentMethod: "CASH",
+		AmountPaid:    amount,
+		Notes:         notes,
+		VerifiedBy:    &adminID,
+		VerifiedAt:    &paymentDate,
+		CreatedAt:     paymentDate,
+	}
+	m.payments[p.ID] = p
+	b.Payment = p
+	return p, nil
+}
+
+func (m *mockBillingRepo) GetEligiblePeriodsByHouseID(ctx context.Context, houseID int64) ([]entity.EligibleDuesPeriod, error) {
+	// Seed periods for this house from system periods if missing
+	periodMap := make(map[string]bool)
+	for _, b := range m.bills {
+		if b.BillingPeriod != "" {
+			periodMap[b.BillingPeriod] = true
+		}
+	}
+	if len(periodMap) == 0 {
+		periodMap[time.Now().Format("2006-01")] = true
+	}
+
+	for p := range periodMap {
+		found := false
+		for _, b := range m.bills {
+			if b.HouseID == houseID && b.BillingPeriod == p {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newID := int64(len(m.bills) + 100)
+			m.bills[newID] = &entity.Bill{
+				ID:            newID,
+				HouseID:       houseID,
+				BillingPeriod: p,
+				Amount:        35000,
+				Status:        string(entity.BillStatusUnpaid),
+			}
+		}
+	}
+
+	var list []entity.EligibleDuesPeriod
+	for _, b := range m.bills {
+		if b.HouseID == houseID {
+			list = append(list, entity.EligibleDuesPeriod{
+				BillID:        b.ID,
+				HouseID:       b.HouseID,
+				BillingPeriod: b.BillingPeriod,
+				Amount:        b.Amount,
+				Status:        b.Status,
+				IsEligible:    b.Status == "unpaid" || b.Status == "rejected",
+			})
+		}
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].BillingPeriod < list[j].BillingPeriod
+	})
+	return list, nil
+}
+
+func (m *mockBillingRepo) GetEligibleResidentsForBilling(ctx context.Context) ([]entity.ResidentBillingOption, error) {
+	return nil, nil
 }
 
 var _ repository.BillingRepository = (*mockBillingRepo)(nil)
@@ -240,13 +403,13 @@ func TestBillingHousingEligibilityAndIsolation(t *testing.T) {
 	}
 
 	// 8. Household isolation: Resident of House 101 cannot pay Bill of House 102
-	err = uc.SubmitPayment(ctx, 2, 1, "BCA", "Warga 101", 150000, "/uploads/proof.jpg", "notes")
+	err = uc.SubmitPayment(ctx, 2, 1, "TRANSFER", "BCA", "Warga 101", 150000, "/uploads/proof.jpg", "notes")
 	if err == nil || !strings.Contains(err.Error(), "akses ditolak") {
 		t.Fatalf("expected access denial when resident pays another house's bill, got: %v", err)
 	}
 
 	// 9. Legitimate payment: Resident of House 101 can pay their own bill (Bill 1)
-	err = uc.SubmitPayment(ctx, 1, 1, "BCA", "Warga 101", 150000, "/uploads/proof.jpg", "Bayar iuran")
+	err = uc.SubmitPayment(ctx, 1, 1, "TRANSFER", "BCA", "Warga 101", 150000, "/uploads/proof.jpg", "Bayar iuran")
 	if err != nil {
 		t.Fatalf("expected successful payment for own bill, got error: %v", err)
 	}

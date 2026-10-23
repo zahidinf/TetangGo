@@ -150,12 +150,19 @@ class DigitalReceiptDialog extends StatelessWidget {
                   _buildRow('No. Telepon', residentPhone!),
                 _buildRow('Unit Hunian', houseInfo),
                 _buildRow('Periode Tagihan', bill.billingPeriod.isNotEmpty ? bill.billingPeriod : '-'),
+                _buildRow(
+                  'Metode Pembayaran',
+                  payment?.isCash == true ? 'TUNAI (CASH)' : 'TRANSFER BANK',
+                  valueColor: payment?.isCash == true ? Colors.green.shade800 : AppTheme.primary,
+                ),
                 _buildRow('Status', 'LUNAS', valueColor: AppTheme.success),
                 if (senderBank != null && senderBank.isNotEmpty)
                   _buildRow('Bank Pengirim', '$senderBank${(senderName != null && senderName.isNotEmpty) ? " a.n $senderName" : ""}'),
+                if (payment?.notes != null && payment!.notes!.isNotEmpty)
+                  _buildRow('Catatan', payment.notes!),
                 _buildRow('Tanggal Lunas', _formatDate(payment?.verifiedAt ?? bill.updatedAt)),
                 if (verifiedByName != null && verifiedByName.isNotEmpty)
-                  _buildRow('Diverifikasi Oleh', verifiedByName),
+                  _buildRow('Diterima / Diverifikasi Oleh', verifiedByName),
 
                 const SizedBox(height: 16),
                 const Divider(height: 1),
@@ -165,7 +172,9 @@ class DigitalReceiptDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total Iuran Lunas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const Expanded(
+                      child: Text('Total Iuran Lunas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    ),
                     Text(
                       _formatCurrency(bill.amount),
                       style: const TextStyle(

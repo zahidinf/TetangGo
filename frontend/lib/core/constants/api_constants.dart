@@ -72,6 +72,10 @@ class ApiConstants {
   static const String adminPendingBills = '/api/v1/admin/bills/pending';
   static String adminVerifyBill(int id) => '/api/v1/admin/bills/$id/verify';
   static const String adminBillsSummary = '/api/v1/admin/bills/summary';
+  static const String adminEligibleResidents = '/api/v1/admin/bills/eligible-residents';
+  static const String adminResidentPeriods = '/api/v1/admin/bills/resident-periods';
+  static const String adminRecordCash = '/api/v1/admin/bills/record-cash';
+  static const String adminBulkPay = '/api/v1/admin/bills/bulk-pay';
 
   static const String residentBills = '/api/v1/resident/bills';
   static const String residentInitiateBill = '/api/v1/resident/bills/initiate';

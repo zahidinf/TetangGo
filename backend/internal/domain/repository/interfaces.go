@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 	"tetanggo-backend/internal/domain/entity"
 )
 
@@ -56,7 +57,11 @@ type BillingRepository interface {
 	GetPaymentSettings(ctx context.Context) (*entity.PaymentSetting, error)
 	UpdatePaymentSettings(ctx context.Context, s *entity.PaymentSetting) error
 	CountPaidOrPendingBillsByPeriod(ctx context.Context, period string) (int, error)
+	CountTotalBillsByPeriod(ctx context.Context, period string) (int, error)
+	CountAnyPaymentsByPeriod(ctx context.Context, period string) (int, error)
+	GetDistinctPaymentAmountsByPeriod(ctx context.Context, period string) ([]float64, error)
 	GenerateMonthlyBills(ctx context.Context, period string, amount float64) (int64, error)
+	GenerateIndividualBill(ctx context.Context, houseID int64, period string, amount float64) (*entity.Bill, error)
 	GetBillsByHouseID(ctx context.Context, houseID int64) ([]entity.Bill, error)
 	GetBillsByHouseIDAndPeriod(ctx context.Context, houseID int64, period string) ([]entity.Bill, error)
 	GetBillByHouseAndPeriod(ctx context.Context, houseID int64, period string) (*entity.Bill, error)
@@ -67,6 +72,9 @@ type BillingRepository interface {
 	VerifyPayment(ctx context.Context, billID int64, action string, rejectionReason *string, verifiedBy int64) error
 	GetPendingPayments(ctx context.Context) ([]entity.PendingPaymentItem, error)
 	GetBillingSummary(ctx context.Context, period string, block string) (*entity.BillingSummaryResponse, error)
+	RecordDirectCashPayment(ctx context.Context, billID int64, adminID int64, residentUserID *int64, amount float64, paymentDate time.Time, notes *string) (*entity.Payment, error)
+	GetEligiblePeriodsByHouseID(ctx context.Context, houseID int64) ([]entity.EligibleDuesPeriod, error)
+	GetEligibleResidentsForBilling(ctx context.Context) ([]entity.ResidentBillingOption, error)
 }
 
 type DashboardRepository interface {
@@ -75,7 +83,7 @@ type DashboardRepository interface {
 
 type CashbookRepository interface {
 	GetSummary(ctx context.Context) (*entity.CashbookSummary, error)
-	GetTransactions(ctx context.Context, filter entity.CashTransactionsFilter) ([]entity.CashTransaction, int, error)
+	GetTransactions(ctx context.Context, filter entity.CashTransactionsFilter) (*entity.CashTransactionsResult, error)
 	GetTransactionByID(ctx context.Context, id int64) (*entity.CashTransaction, error)
 	CreateTransaction(ctx context.Context, tx *entity.CashTransaction) error
 	DeleteManualTransaction(ctx context.Context, id int64) error

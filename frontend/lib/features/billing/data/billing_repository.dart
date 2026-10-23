@@ -63,6 +63,25 @@ class BillingRepository {
     }
   }
 
+  Future<void> generateIndividualBill(int houseId, String period) async {
+    try {
+      final response = await _dioClient.dio.post(
+        ApiConstants.adminGenerateBills,
+        data: {
+          'house_id': houseId,
+          'period': period,
+        },
+      );
+      if (response.data['success'] == true) {
+        return;
+      }
+      throw Exception(response.data['message'] ?? 'Gagal menerbitkan tagihan individual');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal menerbitkan tagihan individual';
+      throw Exception(msg);
+    }
+  }
+
   Future<List<BillModel>> getResidentBills({String? period}) async {
     try {
       final Map<String, dynamic> query = {};
@@ -115,24 +134,34 @@ class BillingRepository {
 
   Future<void> submitPayment({
     required int billId,
-    required String senderBank,
-    required String senderName,
+    String paymentMethod = 'TRANSFER',
+    String? senderBank,
+    String? senderName,
     required double amount,
     String? notes,
-    required List<int> imageBytes,
-    required String fileName,
+    List<int>? imageBytes,
+    String? fileName,
   }) async {
     try {
-      final formData = FormData.fromMap({
-        'sender_bank': senderBank,
-        'sender_name': senderName,
+      final Map<String, dynamic> formMap = {
+        'payment_method': paymentMethod,
         'amount': amount.toString(),
         'notes': notes ?? '',
-        'proof_image': MultipartFile.fromBytes(
+      };
+      if (senderBank != null && senderBank.isNotEmpty) {
+        formMap['sender_bank'] = senderBank;
+      }
+      if (senderName != null && senderName.isNotEmpty) {
+        formMap['sender_name'] = senderName;
+      }
+      if (imageBytes != null && imageBytes.isNotEmpty && fileName != null) {
+        formMap['proof_image'] = MultipartFile.fromBytes(
           imageBytes,
           filename: fileName,
-        ),
-      });
+        );
+      }
+
+      final formData = FormData.fromMap(formMap);
 
       final response = await _dioClient.dio.post(
         ApiConstants.residentPayBill(billId),
@@ -140,10 +169,70 @@ class BillingRepository {
       );
 
       if (response.data['success'] != true) {
-        throw Exception(response.data['message'] ?? 'Gagal mengirim bukti pembayaran');
+        throw Exception(response.data['message'] ?? 'Gagal mengirim pembayaran');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal mengirim bukti pembayaran';
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal mengirim pembayaran';
+      throw Exception(msg);
+    }
+  }
+
+  Future<List<ResidentBillingOptionModel>> getEligibleResidents() async {
+    try {
+      final response = await _dioClient.dio.get(ApiConstants.adminEligibleResidents);
+      if (response.data['success'] == true) {
+        final List list = response.data['data'] ?? [];
+        return list.map((e) => ResidentBillingOptionModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
+      throw Exception(response.data['message'] ?? 'Gagal memuat daftar warga');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat daftar warga';
+      throw Exception(msg);
+    }
+  }
+
+  Future<List<EligibleDuesPeriodModel>> getResidentEligiblePeriods(int residentId) async {
+    try {
+      final response = await _dioClient.dio.get(
+        ApiConstants.adminResidentPeriods,
+        queryParameters: {'resident_id': residentId},
+      );
+      if (response.data['success'] == true) {
+        final List list = response.data['data'] ?? [];
+        return list.map((e) => EligibleDuesPeriodModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
+      throw Exception(response.data['message'] ?? 'Gagal memuat periode iuran warga');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat periode iuran warga';
+      throw Exception(msg);
+    }
+  }
+
+  Future<PaymentModel> recordDirectCashPayment({
+    required int residentId,
+    required int billId,
+    required double amount,
+    DateTime? paymentDate,
+    String? notes,
+  }) async {
+    try {
+      final response = await _dioClient.dio.post(
+        ApiConstants.adminRecordCash,
+        data: {
+          'resident_id': residentId,
+          'bill_id': billId,
+          'amount': amount,
+          if (paymentDate != null) 'payment_date': paymentDate.toUtc().toIso8601String(),
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        },
+      );
+
+      if (response.data['success'] == true) {
+        return PaymentModel.fromJson(response.data['data'] as Map<String, dynamic>);
+      }
+      throw Exception(response.data['message'] ?? 'Gagal mencatat pembayaran tunai');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal mencatat pembayaran tunai';
       throw Exception(msg);
     }
   }
@@ -215,6 +304,32 @@ class BillingRepository {
       throw Exception(response.data['message'] ?? 'Gagal memuat rekapitulasi iuran');
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat rekapitulasi iuran';
+      throw Exception(msg);
+    }
+  }
+
+  Future<BulkProcessResultModel> bulkProcessPayments({
+    required String period,
+    required String paymentMethod,
+    required List<int> billIds,
+    String? notes,
+  }) async {
+    try {
+      final response = await _dioClient.dio.post(
+        ApiConstants.adminBulkPay,
+        data: {
+          'period': period,
+          'payment_method': paymentMethod,
+          'bill_ids': billIds,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        },
+      );
+      if (response.data['success'] == true) {
+        return BulkProcessResultModel.fromJson(response.data['data'] as Map<String, dynamic>);
+      }
+      throw Exception(response.data['message'] ?? 'Gagal memproses pembayaran massal');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memproses pembayaran massal';
       throw Exception(msg);
     }
   }

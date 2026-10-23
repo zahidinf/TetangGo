@@ -15,6 +15,7 @@ import '../../profile/presentation/resident_profile_screen.dart';
 import '../../resident_management/data/resident_repository.dart';
 import '../../resident_management/presentation/houses_management_view.dart';
 import '../../resident_management/presentation/resident_verification_view.dart';
+import 'widgets/about_tetanggo_dialog.dart';
 import 'widgets/dashboard_content_body.dart';
 import 'widgets/dashboard_sidebar.dart';
 
@@ -22,7 +23,8 @@ class AdaptiveDashboardScreen extends StatefulWidget {
   const AdaptiveDashboardScreen({super.key});
 
   @override
-  State<AdaptiveDashboardScreen> createState() => _AdaptiveDashboardScreenState();
+  State<AdaptiveDashboardScreen> createState() =>
+      _AdaptiveDashboardScreenState();
 }
 
 class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
@@ -99,8 +101,10 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Konfirmasi Keluar', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Apakah Anda yakin ingin keluar dari portal TetangGo?'),
+        title: const Text('Konfirmasi Keluar',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content:
+            const Text('Apakah Anda yakin ingin keluar dari portal TetangGo?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
@@ -122,7 +126,8 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
     );
   }
 
-  Widget _buildContent(UserModel? user, List<SidebarItemData> items, bool isDesktop) {
+  Widget _buildContent(
+      UserModel? user, List<SidebarItemData> items, bool isDesktop) {
     final activeItem = _getActiveItem(items);
     final key = activeItem.keyId;
 
@@ -227,23 +232,34 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Icon(Icons.holiday_village_rounded, color: AppTheme.primary, size: 24),
+            const Icon(Icons.holiday_village_rounded,
+                color: AppTheme.primary, size: 24),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 activeItem.title,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.textPrimary, fontSize: 16),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                    fontSize: 16),
               ),
             ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline_rounded,
+                color: AppTheme.textSecondary),
+            tooltip: 'Tentang TetangGo',
+            onPressed: () => AboutTetangGoDialog.show(context),
+          ),
           if ((user?.canAccessVerificationAdmin ?? false) && _pendingCount > 0)
             IconButton(
               icon: Badge(
                 label: Text('$_pendingCount'),
-                child: const Icon(Icons.how_to_reg_rounded, color: AppTheme.primary),
+                child: const Icon(Icons.how_to_reg_rounded,
+                    color: AppTheme.primary),
               ),
               onPressed: () => _navigateToKey('verification', items),
             ),
@@ -274,10 +290,14 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
         type: BottomNavigationBarType.fixed,
         onTap: (index) => _onBottomNavTapped(index, items),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Beranda'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profil'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded), label: 'Iuran'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_rounded), label: 'Menu Lain'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_rounded), label: 'Beranda'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded), label: 'Profil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_rounded), label: 'Iuran'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.menu_rounded), label: 'Menu Lain'),
         ],
       ),
     );
@@ -312,7 +332,8 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   }
 
   // --- DESKTOP & TABLET LAYOUT (>= 768px & >= 1024px) ---
-  Widget _buildDesktopScaffold(UserModel? user, List<SidebarItemData> items, {required bool isTablet}) {
+  Widget _buildDesktopScaffold(UserModel? user, List<SidebarItemData> items,
+      {required bool isTablet}) {
     final activeItem = _getActiveItem(items);
 
     return Scaffold(
@@ -322,7 +343,8 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           // Persistent Left Sidebar
           DashboardSidebar(
             selectedIndex: _selectedMenuIndex,
-            onItemSelected: (index) => setState(() => _selectedMenuIndex = index),
+            onItemSelected: (index) =>
+                setState(() => _selectedMenuIndex = index),
             user: user,
             pendingCount: _pendingCount,
             pendingBillsCount: _pendingBillsCount,
@@ -362,31 +384,50 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primary,
                                   foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
                                 ),
-                                icon: const Icon(Icons.payments_rounded, size: 18),
-                                label: const Text('Bayar Iuran Saya', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                onPressed: () => _navigateToKey('resident_billing', items),
+                                icon: const Icon(Icons.payments_rounded,
+                                    size: 18),
+                                label: const Text('Bayar Iuran Saya',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13)),
+                                onPressed: () =>
+                                    _navigateToKey('resident_billing', items),
                               ),
                             ),
-                          if ((user?.canAccessVerificationAdmin ?? false) && _pendingCount > 0)
+                          if ((user?.canAccessVerificationAdmin ?? false) &&
+                              _pendingCount > 0)
                             Padding(
                               padding: const EdgeInsets.only(right: 12),
                               child: OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppTheme.primaryDark,
-                                  side: const BorderSide(color: AppTheme.primary),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  side:
+                                      const BorderSide(color: AppTheme.primary),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                                 icon: Badge(
                                   label: Text('$_pendingCount'),
-                                  child: const Icon(Icons.how_to_reg_rounded, size: 18),
+                                  child: const Icon(Icons.how_to_reg_rounded,
+                                      size: 18),
                                 ),
                                 label: const Text('Verifikasi Warga'),
-                                onPressed: () => _navigateToKey('verification', items),
+                                onPressed: () =>
+                                    _navigateToKey('verification', items),
                               ),
                             ),
+                          IconButton(
+                            icon: const Icon(Icons.info_outline_rounded,
+                                size: 20, color: AppTheme.textSecondary),
+                            tooltip: 'Tentang TetangGo',
+                            onPressed: () => AboutTetangGoDialog.show(context),
+                          ),
+                          const SizedBox(width: 8),
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: AppTheme.primary.withOpacity(0.12),
@@ -394,13 +435,16 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
                               (user?.name.isNotEmpty ?? false)
                                   ? user!.name.substring(0, 1).toUpperCase()
                                   : 'U',
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryDark),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             user?.displayName ?? 'Pengguna',
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 13),
                           ),
                         ],
                       ),

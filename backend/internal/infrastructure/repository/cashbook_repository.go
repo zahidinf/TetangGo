@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 	"tetanggo-backend/internal/domain/entity"
 )
 
@@ -67,42 +69,106 @@ func (r *PostgresCashbookRepository) GetSummary(ctx context.Context) (*entity.Ca
 	return summary, nil
 }
 
-func (r *PostgresCashbookRepository) GetTransactions(ctx context.Context, filter entity.CashTransactionsFilter) ([]entity.CashTransaction, int, error) {
-	whereClauses := []string{"1=1"}
-	args := []interface{}{}
-	argIdx := 1
+func (r *PostgresCashbookRepository) GetTransactions(ctx context.Context, filter entity.CashTransactionsFilter) (*entity.CashTransactionsResult, error) {
+	// Resolve period, start date, and end date
+	var startDate string
+	var endDate string
+	var periodStr string
 
-	if filter.Type != "" {
+	if filter.Period != "" {
+		parts := strings.Split(filter.Period, "-")
+		if len(parts) == 2 {
+			y, _ := strconv.Atoi(parts[0])
+			m, _ := strconv.Atoi(parts[1])
+			if y > 0 && m >= 1 && m <= 12 {
+				firstDay := time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.Local)
+				lastDay := firstDay.AddDate(0, 1, -1)
+				startDate = firstDay.Format("2006-01-02")
+				endDate = lastDay.Format("2006-01-02")
+				periodStr = firstDay.Format("2006-01")
+			}
+		}
+	}
+
+	if startDate == "" && filter.Year > 0 && filter.Month >= 1 && filter.Month <= 12 {
+		firstDay := time.Date(filter.Year, time.Month(filter.Month), 1, 0, 0, 0, 0, time.Local)
+		lastDay := firstDay.AddDate(0, 1, -1)
+		startDate = firstDay.Format("2006-01-02")
+		endDate = lastDay.Format("2006-01-02")
+		periodStr = firstDay.Format("2006-01")
+	}
+
+	if startDate == "" && filter.StartDate != "" && filter.EndDate != "" {
+		startDate = filter.StartDate
+		endDate = filter.EndDate
+		if len(startDate) >= 7 {
+			periodStr = startDate[:7]
+		}
+	}
+
+	if startDate == "" {
+		now := time.Now()
+		firstDay := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local)
+		lastDay := firstDay.AddDate(0, 1, -1)
+		startDate = firstDay.Format("2006-01-02")
+		endDate = lastDay.Format("2006-01-02")
+		periodStr = firstDay.Format("2006-01")
+	}
+
+	// 1. Authoritative previous balance (transactions before startDate)
+	var previousBalance float64
+	prevQuery := `
+		SELECT COALESCE(SUM(CASE WHEN type = 'income' THEN amount WHEN type = 'expense' THEN -amount ELSE 0 END), 0)
+		FROM cash_transactions
+		WHERE transaction_date < $1;
+	`
+	err := r.db.QueryRowContext(ctx, prevQuery, startDate).Scan(&previousBalance)
+	if err != nil {
+		return nil, fmt.Errorf("failed calculating previous balance: %w", err)
+	}
+
+	// 2. Authoritative period income and expense (all transactions in the period)
+	var periodIncome, periodExpense float64
+	periodTotalsQuery := `
+		SELECT
+			COALESCE(SUM(amount) FILTER (WHERE type = 'income'), 0) AS period_income,
+			COALESCE(SUM(amount) FILTER (WHERE type = 'expense'), 0) AS period_expense
+		FROM cash_transactions
+		WHERE transaction_date >= $1 AND transaction_date <= $2;
+	`
+	err = r.db.QueryRowContext(ctx, periodTotalsQuery, startDate, endDate).Scan(&periodIncome, &periodExpense)
+	if err != nil {
+		return nil, fmt.Errorf("failed calculating period totals: %w", err)
+	}
+
+	endingBalance := previousBalance + periodIncome - periodExpense
+
+	// 3. Transactions query with date range and optional category/type
+	whereClauses := []string{
+		"ct.transaction_date >= $1",
+		"ct.transaction_date <= $2",
+	}
+	args := []interface{}{startDate, endDate}
+	argIdx := 3
+
+	if filter.Type != "" && filter.Type != "all" {
 		whereClauses = append(whereClauses, fmt.Sprintf("ct.type = $%d", argIdx))
 		args = append(args, filter.Type)
 		argIdx++
 	}
 
-	if filter.Category != "" {
+	if filter.Category != "" && filter.Category != "all" {
 		whereClauses = append(whereClauses, fmt.Sprintf("ct.category = $%d", argIdx))
 		args = append(args, filter.Category)
 		argIdx++
 	}
 
-	if filter.StartDate != "" {
-		whereClauses = append(whereClauses, fmt.Sprintf("ct.transaction_date >= $%d", argIdx))
-		args = append(args, filter.StartDate)
-		argIdx++
-	}
-
-	if filter.EndDate != "" {
-		whereClauses = append(whereClauses, fmt.Sprintf("ct.transaction_date <= $%d", argIdx))
-		args = append(args, filter.EndDate)
-		argIdx++
-	}
-
 	whereSQL := strings.Join(whereClauses, " AND ")
-
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM cash_transactions ct WHERE %s", whereSQL)
 	var total int
-	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
+	err = r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed counting transactions: %w", err)
+		return nil, fmt.Errorf("failed counting transactions: %w", err)
 	}
 
 	limit := filter.Limit
@@ -132,7 +198,7 @@ func (r *PostgresCashbookRepository) GetTransactions(ctx context.Context, filter
 	argsWithPaging := append(args, limit, offset)
 	rows, err := r.db.QueryContext(ctx, query, argsWithPaging...)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed querying cash transactions: %w", err)
+		return nil, fmt.Errorf("failed querying cash transactions: %w", err)
 	}
 	defer rows.Close()
 
@@ -153,12 +219,24 @@ func (r *PostgresCashbookRepository) GetTransactions(ctx context.Context, filter
 			&tx.CreatedAt,
 		)
 		if err != nil {
-			return nil, 0, fmt.Errorf("failed scanning cash transaction: %w", err)
+			return nil, fmt.Errorf("failed scanning cash transaction: %w", err)
 		}
 		transactions = append(transactions, tx)
 	}
 
-	return transactions, total, nil
+	return &entity.CashTransactionsResult{
+		Transactions:    transactions,
+		Total:           total,
+		Page:            page,
+		Limit:           limit,
+		Period:          periodStr,
+		StartDate:       startDate,
+		EndDate:         endDate,
+		PreviousBalance: previousBalance,
+		PeriodIncome:    periodIncome,
+		PeriodExpense:   periodExpense,
+		EndingBalance:   endingBalance,
+	}, nil
 }
 
 func (r *PostgresCashbookRepository) GetTransactionByID(ctx context.Context, id int64) (*entity.CashTransaction, error) {

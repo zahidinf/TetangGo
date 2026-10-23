@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/responsive_helper.dart';
+import '../../../home/presentation/widgets/about_tetanggo_dialog.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -48,14 +50,16 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                  const Icon(Icons.error_outline,
+                      color: Colors.white, size: 20),
                   const SizedBox(width: 8),
                   Expanded(child: Text(state.errorMessage!)),
                 ],
               ),
               backgroundColor: AppTheme.danger,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           );
         }
@@ -145,7 +149,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Content Branding
                 Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 48, vertical: 40),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 500),
                       child: Column(
@@ -157,7 +162,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.2)),
                             ),
                             child: const Icon(
                               Icons.holiday_village_rounded,
@@ -197,19 +203,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           _buildBrandFeatureItem(
                             icon: Icons.account_balance_wallet_outlined,
                             title: 'Transparansi Kas & Iuran',
-                            description: 'Laporan keuangan real-time dan kemudahan upload bukti transfer.',
+                            description:
+                                'Laporan keuangan real-time dan kemudahan upload bukti transfer.',
                           ),
                           const SizedBox(height: 20),
                           _buildBrandFeatureItem(
                             icon: Icons.shield_outlined,
                             title: 'Keamanan Cepat & Panic Alert',
-                            description: 'Tombol siaga darurat langsung tersambung ke pos satpam & warga.',
+                            description:
+                                'Tombol siaga darurat langsung tersambung ke pos satpam & warga.',
                           ),
                           const SizedBox(height: 20),
                           _buildBrandFeatureItem(
                             icon: Icons.domain_verification_outlined,
                             title: 'Administrasi Digital Warga',
-                            description: 'Pengumuman resmi, data kependudukan hunian, dan buku tamu terpadu.',
+                            description:
+                                'Pengumuman resmi, data kependudukan hunian, dan buku tamu terpadu.',
                           ),
                         ],
                       ),
@@ -227,7 +236,8 @@ class _LoginScreenState extends State<LoginScreen> {
             color: AppTheme.background,
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 440),
                   child: Container(
@@ -363,9 +373,11 @@ class _LoginScreenState extends State<LoginScreen> {
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               hintText: 'admin@tetanggo.id atau 081234567890',
-              hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+              hintStyle:
+                  const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
               prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -394,12 +406,15 @@ class _LoginScreenState extends State<LoginScreen> {
             obscureText: _obscurePassword,
             decoration: InputDecoration(
               hintText: 'Masukkan kata sandi',
-              hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+              hintStyle:
+                  const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
               prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
               suffixIcon: IconButton(
                 mouseCursor: SystemMouseCursors.click,
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                   size: 20,
                 ),
                 onPressed: () {
@@ -408,7 +423,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   });
                 },
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -431,7 +447,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Checkbox(
                   value: _rememberMe,
                   activeColor: AppTheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4)),
                   onChanged: (val) {
                     setState(() {
                       _rememberMe = val ?? true;
@@ -465,7 +482,9 @@ class _LoginScreenState extends State<LoginScreen> {
             builder: (context, state) {
               final isLoading = state.status == AuthStatus.loading;
               return MouseRegion(
-                cursor: isLoading ? SystemMouseCursors.basic : SystemMouseCursors.click,
+                cursor: isLoading
+                    ? SystemMouseCursors.basic
+                    : SystemMouseCursors.click,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -480,12 +499,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Text(
                           'Masuk Sekarang',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w700),
                         ),
                 ),
               );
@@ -513,6 +534,39 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 24),
+
+          // Copyright and About TetangGo Link
+          InkWell(
+            onTap: () => AboutTetangGoDialog.show(context),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      AppConstants.copyrightNotice,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

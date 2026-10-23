@@ -212,6 +212,13 @@ const (
 	BillStatusRejected            BillStatus = "rejected"
 )
 
+type PaymentMethod string
+
+const (
+	PaymentMethodTransfer PaymentMethod = "TRANSFER"
+	PaymentMethodCash     PaymentMethod = "CASH"
+)
+
 type PaymentSetting struct {
 	ID            int64     `json:"id"`
 	BankName      string    `json:"bank_name"`
@@ -238,6 +245,7 @@ type Payment struct {
 	ID              int64      `json:"id"`
 	BillID          int64      `json:"bill_id"`
 	UserID          *int64     `json:"user_id,omitempty"`
+	PaymentMethod   string     `json:"payment_method"`
 	SenderBank      *string    `json:"sender_bank,omitempty"`
 	SenderName      *string    `json:"sender_name,omitempty"`
 	AmountPaid      float64    `json:"amount_paid"`
@@ -261,6 +269,7 @@ type PendingPaymentItem struct {
 	BillingPeriod string     `json:"billing_period"`
 	BillAmount    float64    `json:"bill_amount"`
 	AmountPaid    float64    `json:"amount_paid"`
+	PaymentMethod string     `json:"payment_method"`
 	SenderBank    string     `json:"sender_bank"`
 	SenderName    string     `json:"sender_name"`
 	ProofImageURL string     `json:"proof_image_url"`
@@ -279,11 +288,35 @@ type HouseBillStatus struct {
 	Amount        float64    `json:"amount"`
 	PaidAt        *time.Time `json:"paid_at,omitempty"`
 	ProofImageURL *string    `json:"proof_image_url,omitempty"`
+	PaymentMethod *string    `json:"payment_method,omitempty"`
+}
+
+type EligibleDuesPeriod struct {
+	BillID        int64   `json:"bill_id"`
+	HouseID       int64   `json:"house_id"`
+	BillingPeriod string  `json:"billing_period"`
+	Amount        float64 `json:"amount"`
+	Status        string  `json:"status"`
+	IsEligible    bool    `json:"is_eligible"`
+}
+
+type ResidentBillingOption struct {
+	UserID          int64   `json:"user_id"`
+	ResidentID      int64   `json:"resident_id"`
+	Name            string  `json:"name"`
+	ResidentName    string  `json:"resident_name"`
+	Phone           string  `json:"phone"`
+	ResidentPhone   string  `json:"resident_phone"`
+	HouseID         int64   `json:"house_id"`
+	HouseBlock      string  `json:"house_block"`
+	HouseNumber     string  `json:"house_number"`
+	OwnershipStatus string  `json:"ownership_status"`
 }
 
 type BillingSummaryResponse struct {
 	Period            string            `json:"period"`
 	Block             string            `json:"block,omitempty"`
+	IsPeriodGenerated bool              `json:"is_period_generated"`
 	TotalHouses       int               `json:"total_houses"`
 	PaidHouses        int               `json:"paid_houses"`
 	UnpaidHouses      int               `json:"unpaid_houses"`
@@ -293,6 +326,27 @@ type BillingSummaryResponse struct {
 	TotalUnpaidAmount float64           `json:"total_unpaid_amount"`
 	HouseBills        []HouseBillStatus `json:"house_bills"`
 	Items             []HouseBillStatus `json:"items"`
+}
+
+type BulkProcessPaymentItemResult struct {
+	BillID       int64   `json:"bill_id"`
+	HouseID      int64   `json:"house_id"`
+	HouseBlock   string  `json:"house_block"`
+	HouseNumber  string  `json:"house_number"`
+	ResidentName string  `json:"resident_name"`
+	Success      bool    `json:"success"`
+	Status       string  `json:"status"` // 'paid', 'pending_verification', 'skipped', 'failed'
+	Message      string  `json:"message"`
+	Amount       float64 `json:"amount"`
+}
+
+type BulkProcessPaymentResult struct {
+	Period         string                         `json:"period"`
+	PaymentMethod  string                         `json:"payment_method"`
+	TotalProcessed int                            `json:"total_processed"`
+	SuccessCount   int                            `json:"success_count"`
+	FailedCount    int                            `json:"failed_count"`
+	Results        []BulkProcessPaymentItemResult `json:"results"`
 }
 
 // Sprint 2: Admin Dashboard Stats Entity
@@ -353,8 +407,25 @@ type CashTransactionsFilter struct {
 	Category  string
 	StartDate string
 	EndDate   string
+	Period    string
+	Month     int
+	Year      int
 	Page      int
 	Limit     int
+}
+
+type CashTransactionsResult struct {
+	Transactions    []CashTransaction `json:"transactions"`
+	Total           int               `json:"total"`
+	Page            int               `json:"page"`
+	Limit           int               `json:"limit"`
+	Period          string            `json:"period"`
+	StartDate       string            `json:"start_date"`
+	EndDate         string            `json:"end_date"`
+	PreviousBalance float64           `json:"previous_balance"`
+	PeriodIncome    float64           `json:"period_income"`
+	PeriodExpense   float64           `json:"period_expense"`
+	EndingBalance   float64           `json:"ending_balance"`
 }
 
 type Announcement struct {

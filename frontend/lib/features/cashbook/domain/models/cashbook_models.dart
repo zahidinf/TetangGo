@@ -116,3 +116,52 @@ class CashTransactionModel {
     );
   }
 }
+
+class CashTransactionsResultModel {
+  final List<CashTransactionModel> transactions;
+  final int total;
+  final int page;
+  final int limit;
+  final String period;
+  final String startDate;
+  final String endDate;
+  final double previousBalance;
+  final double periodIncome;
+  final double periodExpense;
+  final double endingBalance;
+
+  CashTransactionsResultModel({
+    required this.transactions,
+    required this.total,
+    required this.page,
+    required this.limit,
+    required this.period,
+    required this.startDate,
+    required this.endDate,
+    required this.previousBalance,
+    required this.periodIncome,
+    required this.periodExpense,
+    required this.endingBalance,
+  });
+
+  factory CashTransactionsResultModel.fromJson(Map<String, dynamic> json) {
+    final list = (json['data'] as List<dynamic>?)
+            ?.map((e) => CashTransactionModel.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    return CashTransactionsResultModel(
+      transactions: list,
+      total: json['total'] is int ? json['total'] : int.tryParse(json['total']?.toString() ?? '0') ?? 0,
+      page: json['page'] is int ? json['page'] : int.tryParse(json['page']?.toString() ?? '1') ?? 1,
+      limit: json['limit'] is int ? json['limit'] : int.tryParse(json['limit']?.toString() ?? '20') ?? 20,
+      period: json['period'] ?? '',
+      startDate: json['start_date'] ?? '',
+      endDate: json['end_date'] ?? '',
+      previousBalance: (json['previous_balance'] as num?)?.toDouble() ?? 0.0,
+      periodIncome: (json['period_income'] as num?)?.toDouble() ?? 0.0,
+      periodExpense: (json['period_expense'] as num?)?.toDouble() ?? 0.0,
+      endingBalance: (json['ending_balance'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}

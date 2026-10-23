@@ -149,9 +149,13 @@ TetangGo/
 
 ---
 
-## 6. Lisensi / License
+## 6. Hak Cipta & Lisensi / Copyright and License
 
-TetangGo is publicly available for viewing, learning, modification, and sharing under the terms of the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
+**Hak Cipta / Copyright:**
+`© 2026 TetangGo. All rights reserved.`
 
-- **Noncommercial use only:** Commercial use is not permitted under this license.
-- **Full terms:** Users must read the [`LICENSE`](LICENSE) file to understand permitted uses and restrictions.
+Perangkat lunak TetangGo dilisensikan di bawah ketentuan [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
+
+- **Penggunaan Non-Komersial Diizinkan:** Kode sumber terbuka untuk dipelajari, digunakan, dimodifikasi, dan didistribusikan secara gratis untuk keperluan non-komersial.
+- **Batasan Komersial:** Segala bentuk penggunaan atau eksploitasi komersial dilarang tanpa izin tertulis terpisah dari pemegang lisensi/hak cipta.
+- **Ketentuan Lengkap:** Rincian hak lisensi, paten, dan batasan selengkapnya tercantum pada berkas [`LICENSE`](LICENSE).

@@ -22,14 +22,21 @@ class _CashbookScreenState extends State<CashbookScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   CashbookSummaryModel? _summary;
+  CashTransactionsResultModel? _transactionsResult;
   List<CashTransactionModel> _transactions = [];
 
   String _selectedTypeFilter = 'all'; // 'all', 'income', 'expense'
   String _selectedCategoryFilter = 'all';
 
+  late int _selectedYear;
+  late int _selectedMonth;
+
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _selectedYear = now.year;
+    _selectedMonth = now.month;
     _loadData();
   }
 
@@ -43,16 +50,20 @@ class _CashbookScreenState extends State<CashbookScreen> {
       final repo = context.read<CashbookRepository>();
       final results = await Future.wait([
         repo.getCashbookSummary(),
-        repo.getCashbookTransactions(
+        repo.getCashbookTransactionsResult(
           type: _selectedTypeFilter,
           category: _selectedCategoryFilter,
+          year: _selectedYear,
+          month: _selectedMonth,
         ),
       ]);
 
       if (mounted) {
+        final txResult = results[1] as CashTransactionsResultModel;
         setState(() {
           _summary = results[0] as CashbookSummaryModel;
-          _transactions = results[1] as List<CashTransactionModel>;
+          _transactionsResult = txResult;
+          _transactions = txResult.transactions;
           _isLoading = false;
         });
       }
@@ -436,50 +447,144 @@ class _CashbookScreenState extends State<CashbookScreen> {
   }
 
   Widget _buildFilterBar() {
+    final months = [
+      {'val': 1, 'name': 'Januari'},
+      {'val': 2, 'name': 'Februari'},
+      {'val': 3, 'name': 'Maret'},
+      {'val': 4, 'name': 'April'},
+      {'val': 5, 'name': 'Mei'},
+      {'val': 6, 'name': 'Juni'},
+      {'val': 7, 'name': 'Juli'},
+      {'val': 8, 'name': 'Agustus'},
+      {'val': 9, 'name': 'September'},
+      {'val': 10, 'name': 'Oktober'},
+      {'val': 11, 'name': 'November'},
+      {'val': 12, 'name': 'Desember'},
+    ];
+
+    final currentYear = DateTime.now().year;
+    final years = List.generate(5, (index) => currentYear - 2 + index);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Filter Tipe:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-          ChoiceChip(
-            label: const Text('Semua'),
-            selected: _selectedTypeFilter == 'all',
-            onSelected: (val) {
-              if (val) {
-                setState(() => _selectedTypeFilter = 'all');
-                _loadData();
-              }
-            },
+          Row(
+            children: [
+              const Icon(Icons.calendar_month_rounded, size: 18, color: AppTheme.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'Filter Periode Buku Kas:',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              ),
+              const Spacer(),
+              // Month dropdown
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _selectedMonth,
+                    isDense: true,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                    items: months.map((m) {
+                      return DropdownMenuItem<int>(
+                        value: m['val'] as int,
+                        child: Text(m['name'] as String),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null && val != _selectedMonth) {
+                        setState(() => _selectedMonth = val);
+                        _loadData();
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Year dropdown
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _selectedYear,
+                    isDense: true,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                    items: years.map((y) {
+                      return DropdownMenuItem<int>(
+                        value: y,
+                        child: Text(y.toString()),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null && val != _selectedYear) {
+                        setState(() => _selectedYear = val);
+                        _loadData();
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
-          ChoiceChip(
-            label: const Text('Pemasukan (+)'),
-            selected: _selectedTypeFilter == 'income',
-            selectedColor: AppTheme.primary.withOpacity(0.15),
-            onSelected: (val) {
-              if (val) {
-                setState(() => _selectedTypeFilter = 'income');
-                _loadData();
-              }
-            },
-          ),
-          ChoiceChip(
-            label: const Text('Pengeluaran (-)'),
-            selected: _selectedTypeFilter == 'expense',
-            selectedColor: AppTheme.danger.withOpacity(0.15),
-            onSelected: (val) {
-              if (val) {
-                setState(() => _selectedTypeFilter = 'expense');
-                _loadData();
-              }
-            },
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Text('Tipe Transaksi:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              ChoiceChip(
+                label: const Text('Semua'),
+                selected: _selectedTypeFilter == 'all',
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _selectedTypeFilter = 'all');
+                    _loadData();
+                  }
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Pemasukan (+)'),
+                selected: _selectedTypeFilter == 'income',
+                selectedColor: AppTheme.primary.withOpacity(0.15),
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _selectedTypeFilter = 'income');
+                    _loadData();
+                  }
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Pengeluaran (-)'),
+                selected: _selectedTypeFilter == 'expense',
+                selectedColor: AppTheme.danger.withOpacity(0.15),
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _selectedTypeFilter = 'expense');
+                    _loadData();
+                  }
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -694,8 +799,119 @@ class _CashbookScreenState extends State<CashbookScreen> {
                 );
               },
             ),
+
+          // Rekap Mutasi Periode & Saldo Sebelumnya (Requirement 3)
+          if (_transactionsResult != null)
+            _buildPeriodMutationSummary(_transactionsResult!),
         ],
       ),
+    );
+  }
+
+  Widget _buildPeriodMutationSummary(CashTransactionsResultModel res) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.analytics_outlined, size: 16, color: AppTheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Rekapitulasi Mutasi Kas Periode ${res.period.isNotEmpty ? res.period : "$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}"}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              ),
+              const Spacer(),
+              if (res.startDate.isNotEmpty && res.endDate.isNotEmpty)
+                Text(
+                  '${res.startDate} s/d ${res.endDate}',
+                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                _buildSummaryRow(
+                  label: 'Saldo Sebelumnya (sebelum awal periode)',
+                  amount: res.previousBalance,
+                  color: AppTheme.textPrimary,
+                  isBold: false,
+                ),
+                const SizedBox(height: 8),
+                _buildSummaryRow(
+                  label: '(+) Total Pemasukan Periode Berjalan',
+                  amount: res.periodIncome,
+                  color: const Color(0xFF10B981),
+                  isBold: false,
+                ),
+                const SizedBox(height: 8),
+                _buildSummaryRow(
+                  label: '(-) Total Pengeluaran Periode Berjalan',
+                  amount: res.periodExpense,
+                  color: AppTheme.danger,
+                  isBold: false,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                ),
+                _buildSummaryRow(
+                  label: '(=) Saldo Akhir Periode Terpilih',
+                  amount: res.endingBalance,
+                  color: AppTheme.primaryDark,
+                  isBold: true,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow({
+    required String label,
+    required double amount,
+    required Color color,
+    required bool isBold,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isBold ? 13 : 12,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+            color: isBold ? AppTheme.textPrimary : AppTheme.textSecondary,
+          ),
+        ),
+        Text(
+          _formatCurrency(amount),
+          style: TextStyle(
+            fontSize: isBold ? 14 : 12,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -21,7 +21,7 @@ func (uc *CashbookUseCase) GetSummary(ctx context.Context) (*entity.CashbookSumm
 	return uc.cashbookRepo.GetSummary(ctx)
 }
 
-func (uc *CashbookUseCase) GetTransactions(ctx context.Context, filter entity.CashTransactionsFilter) ([]entity.CashTransaction, int, error) {
+func (uc *CashbookUseCase) GetTransactions(ctx context.Context, filter entity.CashTransactionsFilter) (*entity.CashTransactionsResult, error) {
 	return uc.cashbookRepo.GetTransactions(ctx, filter)
 }
 

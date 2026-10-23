@@ -36,6 +36,7 @@ class PaymentSettingModel {
 class PaymentModel {
   final int id;
   final int billId;
+  final String paymentMethod;
   final double amountPaid;
   final String proofImageUrl;
   final String? senderBank;       // WAJIB NULLABLE
@@ -51,6 +52,7 @@ class PaymentModel {
   PaymentModel({
     required this.id,
     required this.billId,
+    this.paymentMethod = 'TRANSFER',
     required this.amountPaid,
     required this.proofImageUrl,
     this.senderBank,
@@ -64,12 +66,16 @@ class PaymentModel {
     this.createdAt,
   });
 
+  bool get isCash => paymentMethod.toUpperCase() == 'CASH';
+  bool get isTransfer => paymentMethod.toUpperCase() == 'TRANSFER';
+
   DateTime? get verifiedAtDateTime => verifiedAt != null ? DateTime.tryParse(verifiedAt!) : null;
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       billId: (json['bill_id'] as num?)?.toInt() ?? 0,
+      paymentMethod: (json['payment_method'] as String?) ?? 'TRANSFER',
       amountPaid: (json['amount_paid'] as num?)?.toDouble() ?? 0.0,
       proofImageUrl: (json['proof_image_url'] as String?) ?? '',
       senderBank: json['sender_bank'] as String?,
@@ -142,6 +148,7 @@ class PendingPaymentModel {
   final int billId;
   final int paymentId;
   final int houseId;
+  final String paymentMethod;
   final String houseBlock;
   final String houseNumber;
   final String residentName;
@@ -159,6 +166,7 @@ class PendingPaymentModel {
     required this.billId,
     required this.paymentId,
     required this.houseId,
+    this.paymentMethod = 'TRANSFER',
     required this.houseBlock,
     required this.houseNumber,
     required this.residentName,
@@ -173,11 +181,14 @@ class PendingPaymentModel {
     required this.createdAt,
   });
 
+  bool get isCash => paymentMethod.toUpperCase() == 'CASH';
+
   factory PendingPaymentModel.fromJson(Map<String, dynamic> json) {
     return PendingPaymentModel(
       billId: (json['bill_id'] as num?)?.toInt() ?? 0,
       paymentId: (json['payment_id'] as num?)?.toInt() ?? 0,
       houseId: (json['house_id'] as num?)?.toInt() ?? 0,
+      paymentMethod: (json['payment_method'] as String?) ?? 'TRANSFER',
       houseBlock: json['house_block'] as String? ?? '',
       houseNumber: json['house_number'] as String? ?? '',
       residentName: json['resident_name'] as String? ?? '',
@@ -238,6 +249,7 @@ class HouseBillStatusModel {
 class BillingSummaryModel {
   final String period;
   final String? block;
+  final bool isPeriodGenerated;
   final int totalHouses;
   final int paidHouses;
   final int unpaidHouses;
@@ -248,6 +260,7 @@ class BillingSummaryModel {
   BillingSummaryModel({
     required this.period,
     this.block,
+    this.isPeriodGenerated = true,
     required this.totalHouses,
     required this.paidHouses,
     required this.unpaidHouses,
@@ -265,6 +278,7 @@ class BillingSummaryModel {
     return BillingSummaryModel(
       period: json['period'] as String? ?? '',
       block: json['block'] as String?,
+      isPeriodGenerated: json['is_period_generated'] as bool? ?? true,
       totalHouses: (json['total_houses'] as num?)?.toInt() ?? 0,
       paidHouses: ((json['paid_houses'] ?? json['total_paid_houses']) as num?)?.toInt() ?? 0,
       unpaidHouses: ((json['unpaid_houses'] ?? json['total_unpaid_houses']) as num?)?.toInt() ?? 0,
@@ -278,4 +292,146 @@ class BillingSummaryModel {
   }
 }
 
+class BulkProcessItemResultModel {
+  final int billId;
+  final int houseId;
+  final String houseBlock;
+  final String houseNumber;
+  final String residentName;
+  final bool success;
+  final String status;
+  final String message;
+  final double amount;
+
+  BulkProcessItemResultModel({
+    required this.billId,
+    required this.houseId,
+    required this.houseBlock,
+    required this.houseNumber,
+    required this.residentName,
+    required this.success,
+    required this.status,
+    required this.message,
+    required this.amount,
+  });
+
+  factory BulkProcessItemResultModel.fromJson(Map<String, dynamic> json) {
+    return BulkProcessItemResultModel(
+      billId: (json['bill_id'] as num?)?.toInt() ?? 0,
+      houseId: (json['house_id'] as num?)?.toInt() ?? 0,
+      houseBlock: json['house_block'] as String? ?? '',
+      houseNumber: json['house_number'] as String? ?? '',
+      residentName: json['resident_name'] as String? ?? '',
+      success: json['success'] as bool? ?? false,
+      status: json['status'] as String? ?? '',
+      message: json['message'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class BulkProcessResultModel {
+  final String period;
+  final String paymentMethod;
+  final int totalProcessed;
+  final int successCount;
+  final int failedCount;
+  final List<BulkProcessItemResultModel> results;
+
+  BulkProcessResultModel({
+    required this.period,
+    required this.paymentMethod,
+    required this.totalProcessed,
+    required this.successCount,
+    required this.failedCount,
+    required this.results,
+  });
+
+  factory BulkProcessResultModel.fromJson(Map<String, dynamic> json) {
+    final list = json['results'] as List<dynamic>?;
+    return BulkProcessResultModel(
+      period: json['period'] as String? ?? '',
+      paymentMethod: json['payment_method'] as String? ?? '',
+      totalProcessed: (json['total_processed'] as num?)?.toInt() ?? 0,
+      successCount: (json['success_count'] as num?)?.toInt() ?? 0,
+      failedCount: (json['failed_count'] as num?)?.toInt() ?? 0,
+      results: list
+              ?.map((e) => BulkProcessItemResultModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+}
+
 typedef BillSummaryModel = BillingSummaryModel;
+
+class EligibleDuesPeriodModel {
+  final int billId;
+  final String billingPeriod;
+  final double amount;
+  final String status;
+  final bool isEligible;
+
+  EligibleDuesPeriodModel({
+    required this.billId,
+    required this.billingPeriod,
+    required this.amount,
+    required this.status,
+    bool? isEligible,
+  }) : isEligible = isEligible ?? (status == 'unpaid' || status == 'rejected');
+
+  bool get isPaid => status == 'paid';
+  bool get isPending => status == 'pending_verification';
+
+  factory EligibleDuesPeriodModel.fromJson(Map<String, dynamic> json) {
+    final s = json['status'] as String? ?? 'unpaid';
+    return EligibleDuesPeriodModel(
+      billId: (json['bill_id'] as num?)?.toInt() ?? 0,
+      billingPeriod: json['billing_period'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      status: s,
+      isEligible: json['is_eligible'] as bool? ?? (s == 'unpaid' || s == 'rejected'),
+    );
+  }
+}
+
+class ResidentBillingOptionModel {
+  final int residentId;
+  final String residentName;
+  final String residentPhone;
+  final int houseId;
+  final String houseBlock;
+  final String houseNumber;
+
+  ResidentBillingOptionModel({
+    required this.residentId,
+    required this.residentName,
+    required this.residentPhone,
+    required this.houseId,
+    required this.houseBlock,
+    required this.houseNumber,
+  });
+
+  String get occupancyIdentifier {
+    final cleanBlock = houseBlock.trim();
+    if (cleanBlock.isEmpty && houseNumber.isEmpty) return '';
+    final blockDisplay = cleanBlock.toLowerCase().startsWith('blok') ? cleanBlock : 'Blok $cleanBlock';
+    return houseNumber.isNotEmpty ? '$blockDisplay/$houseNumber' : blockDisplay;
+  }
+
+  String get displayName {
+    final occ = occupancyIdentifier;
+    return occ.isNotEmpty ? '$residentName ($occ)' : residentName;
+  }
+
+  factory ResidentBillingOptionModel.fromJson(Map<String, dynamic> json) {
+    return ResidentBillingOptionModel(
+      residentId: (json['resident_id'] ?? json['user_id'] as num?)?.toInt() ?? 0,
+      residentName: (json['resident_name'] ?? json['name'] as String?) ?? '',
+      residentPhone: (json['resident_phone'] ?? json['phone'] as String?) ?? '',
+      houseId: (json['house_id'] as num?)?.toInt() ?? 0,
+      houseBlock: (json['house_block'] as String?) ?? '',
+      houseNumber: (json['house_number'] as String?) ?? '',
+    );
+  }
+}

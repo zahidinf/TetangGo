@@ -118,8 +118,13 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			// Sprint 2: Admin Billing & Payment Management
 			adminGroup.Put("/payment-settings", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminUpdatePaymentSettings)
 			adminGroup.Post("/bills/generate", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminGenerateBills)
+			adminGroup.Post("/bills/generate-individual", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminGenerateIndividualBill)
 			adminGroup.Get("/bills/pending", authMid.RequireRole(roleFinanceManagement...), appHandler.GetAdminPendingBills)
 			adminGroup.Get("/bills/summary", authMid.RequireRole(roleFinanceManagement...), appHandler.GetAdminBillsSummary)
+			adminGroup.Get("/bills/eligible-residents", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminGetEligibleResidents)
+			adminGroup.Get("/bills/resident-periods", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminGetResidentEligiblePeriods)
+			adminGroup.Post("/bills/record-cash", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminRecordCashPayment)
+			adminGroup.Post("/bills/bulk-pay", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminBulkProcessPayments)
 			adminGroup.Get("/bills/:id", authMid.RequireRole(roleFinanceManagement...), appHandler.GetAdminBillDetail)
 			adminGroup.Post("/bills/:id/verify", authMid.RequireRole(roleFinanceManagement...), appHandler.VerifyBillPayment)
 
