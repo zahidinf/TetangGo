@@ -351,13 +351,14 @@ type BulkProcessPaymentResult struct {
 
 // Sprint 2: Admin Dashboard Stats Entity
 type DashboardRecentActivity struct {
-	ID           int64     `json:"id"`
-	ResidentName string    `json:"resident_name"`
-	Block        string    `json:"block"`
-	HouseNumber  string    `json:"house_number"`
-	AmountPaid   float64   `json:"amount_paid"`
-	Status       string    `json:"status"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID            int64     `json:"id"`
+	ResidentName  string    `json:"resident_name"`
+	Block         string    `json:"block"`
+	HouseNumber   string    `json:"house_number"`
+	BillingPeriod string    `json:"billing_period"`
+	AmountPaid    float64   `json:"amount_paid"`
+	Status        string    `json:"status"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type AdminDashboardStats struct {

@@ -29,12 +29,22 @@ func (r *postgresHouseRepository) GetAll(ctx context.Context, block, status, sea
 				ELSE NULL 
 			END AS resident_name,
 			u.phone AS resident_phone,
-			COALESCE((SELECT COUNT(*) FROM family_members fm WHERE fm.house_id = h.id), 0) AS family_count,
+			COALESCE(fm.family_count, 0) AS family_count,
 			(CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END + 
-			 COALESCE((SELECT COUNT(*) FROM family_members fm WHERE fm.house_id = h.id), 0)) AS total_occupants,
-			COALESCE((SELECT COUNT(*) FROM vehicles v WHERE v.house_id = h.id), 0) AS vehicle_count
+			 COALESCE(fm.family_count, 0)) AS total_occupants,
+			COALESCE(v.vehicle_count, 0) AS vehicle_count
 		FROM houses h
 		LEFT JOIN users u ON u.house_id = h.id AND u.status = 'active'
+		LEFT JOIN (
+			SELECT house_id, COUNT(*) AS family_count
+			FROM family_members
+			GROUP BY house_id
+		) fm ON fm.house_id = h.id
+		LEFT JOIN (
+			SELECT house_id, COUNT(*) AS vehicle_count
+			FROM vehicles
+			GROUP BY house_id
+		) v ON v.house_id = h.id
 	`
 
 	var conditions []string

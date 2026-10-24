@@ -122,6 +122,7 @@ class CashTransactionsResultModel {
   final int total;
   final int page;
   final int limit;
+  final int totalPages;
   final String period;
   final String startDate;
   final String endDate;
@@ -130,11 +131,15 @@ class CashTransactionsResultModel {
   final double periodExpense;
   final double endingBalance;
 
+  bool get hasNextPage => page < totalPages;
+  bool get hasPreviousPage => page > 1;
+
   CashTransactionsResultModel({
     required this.transactions,
     required this.total,
     required this.page,
     required this.limit,
+    int? totalPages,
     required this.period,
     required this.startDate,
     required this.endDate,
@@ -142,7 +147,7 @@ class CashTransactionsResultModel {
     required this.periodIncome,
     required this.periodExpense,
     required this.endingBalance,
-  });
+  }) : totalPages = totalPages ?? (limit > 0 && total > 0 ? (total / limit).ceil() : 0);
 
   factory CashTransactionsResultModel.fromJson(Map<String, dynamic> json) {
     final list = (json['data'] as List<dynamic>?)
@@ -150,11 +155,20 @@ class CashTransactionsResultModel {
             .toList() ??
         [];
 
+    final total = json['total'] is int ? json['total'] : int.tryParse(json['total']?.toString() ?? '0') ?? 0;
+    final page = json['page'] is int ? json['page'] : int.tryParse(json['page']?.toString() ?? '1') ?? 1;
+    final limit = json['limit'] is int ? json['limit'] : int.tryParse(json['limit']?.toString() ?? '20') ?? 20;
+    final computedPages = limit > 0 && total > 0 ? (total / limit).ceil() : 0;
+    final totalPages = json['total_pages'] is int
+        ? json['total_pages'] as int
+        : (int.tryParse(json['total_pages']?.toString() ?? '') ?? computedPages);
+
     return CashTransactionsResultModel(
       transactions: list,
-      total: json['total'] is int ? json['total'] : int.tryParse(json['total']?.toString() ?? '0') ?? 0,
-      page: json['page'] is int ? json['page'] : int.tryParse(json['page']?.toString() ?? '1') ?? 1,
-      limit: json['limit'] is int ? json['limit'] : int.tryParse(json['limit']?.toString() ?? '20') ?? 20,
+      total: total,
+      page: page,
+      limit: limit,
+      totalPages: totalPages,
       period: json['period'] ?? '',
       startDate: json['start_date'] ?? '',
       endDate: json['end_date'] ?? '',

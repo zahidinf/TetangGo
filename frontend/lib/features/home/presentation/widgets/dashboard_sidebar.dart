@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
-import 'about_tetanggo_dialog.dart';
 import '../../../auth/domain/models/user_model.dart';
 
 class SidebarItemData {
@@ -27,6 +25,7 @@ class NavigationItemBuilder {
     UserModel? user, {
     int pendingCount = 0,
     int pendingBillsCount = 0,
+    int residentUnpaidBillsCount = 0,
   }) {
     final List<SidebarItemData> items = [];
     int index = 0;
@@ -71,19 +70,13 @@ class NavigationItemBuilder {
       );
     }
 
-    // 4. Common Baseline: Profil Hunian & Keluarga (or Profil Pengurus RT)
+    // 4. Common Baseline: Profil Hunian & Keluarga
     items.add(
       SidebarItemData(
         keyId: 'profile',
-        title: user?.canAccessLeadership ?? false
-            ? 'Profil Pengurus RT'
-            : 'Profil Hunian & Keluarga',
-        icon: user?.canAccessLeadership ?? false
-            ? Icons.manage_accounts_outlined
-            : Icons.family_restroom_rounded,
-        selectedIcon: user?.canAccessLeadership ?? false
-            ? Icons.manage_accounts_rounded
-            : Icons.family_restroom_rounded,
+        title: 'Profil Hunian & Keluarga',
+        icon: Icons.family_restroom_rounded,
+        selectedIcon: Icons.family_restroom_rounded,
         index: index++,
       ),
     );
@@ -113,6 +106,7 @@ class NavigationItemBuilder {
           icon: Icons.payments_outlined,
           selectedIcon: Icons.payments_rounded,
           index: index++,
+          badge: residentUnpaidBillsCount > 0 ? '$residentUnpaidBillsCount Belum Bayar' : null,
         ),
       );
     }
@@ -175,6 +169,7 @@ class DashboardSidebar extends StatelessWidget {
   final VoidCallback onLogout;
   final int pendingCount;
   final int pendingBillsCount;
+  final int residentUnpaidBillsCount;
 
   const DashboardSidebar({
     super.key,
@@ -184,6 +179,7 @@ class DashboardSidebar extends StatelessWidget {
     required this.onLogout,
     this.pendingCount = 0,
     this.pendingBillsCount = 0,
+    this.residentUnpaidBillsCount = 0,
   });
 
   List<SidebarItemData> get menuItems =>
@@ -191,6 +187,7 @@ class DashboardSidebar extends StatelessWidget {
         user,
         pendingCount: pendingCount,
         pendingBillsCount: pendingBillsCount,
+        residentUnpaidBillsCount: residentUnpaidBillsCount,
       );
 
   @override
@@ -253,7 +250,7 @@ class DashboardSidebar extends StatelessWidget {
                         ),
                         child: Text(
                           user?.hasAdminAccess ?? false
-                              ? 'Portal Pengurus RT'
+                              ? 'Portal Pengurus'
                               : 'Portal Warga',
                           style: const TextStyle(
                             fontSize: 10,
@@ -296,88 +293,55 @@ class DashboardSidebar extends StatelessWidget {
                 top: BorderSide(color: Color(0xFFF1F5F9)),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-                      child: Text(
-                        (user?.name.isNotEmpty ?? false)
-                            ? user!.name.substring(0, 1).toUpperCase()
-                            : 'A',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryDark,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            user?.displayName ?? 'Pengurus RT',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            user?.roleDisplay ?? 'Warga',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.logout_rounded, size: 20),
-                      color: AppTheme.danger,
-                      tooltip: 'Keluar',
-                      onPressed: onLogout,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () => AboutTetangGoDialog.show(context),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.info_outline_rounded,
-                            size: 13, color: AppTheme.textSecondary),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            AppConstants.copyrightNotice,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppTheme.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                  child: Text(
+                    (user?.name.isNotEmpty ?? false)
+                        ? user!.name.substring(0, 1).toUpperCase()
+                        : 'A',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryDark,
+                      fontSize: 14,
                     ),
                   ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        user?.displayName ?? 'Pengurus RT',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        user?.roleDisplay ?? 'Warga',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout_rounded, size: 20),
+                  color: AppTheme.danger,
+                  tooltip: 'Keluar',
+                  onPressed: onLogout,
                 ),
               ],
             ),

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../constants/api_constants.dart';
 import '../storage/secure_storage_service.dart';
 import 'auth_interceptor.dart';
@@ -20,14 +21,21 @@ class DioClient {
       ),
     );
 
-    dio.interceptors.addAll([
-      AuthInterceptor(storageService),
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        logPrint: (obj) => debugPrint('[Dio] $obj'),
-      ),
-    ]);
+    dio.interceptors.add(AuthInterceptor(storageService));
+
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          request: true,
+          requestHeader: false,
+          requestBody: false,
+          responseHeader: false,
+          responseBody: false,
+          error: true,
+          logPrint: (obj) => debugPrint('[Dio] $obj'),
+        ),
+      );
+    }
   }
 
   void debugPrint(String message) {

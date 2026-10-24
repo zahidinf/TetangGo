@@ -40,7 +40,10 @@ func (r *PostgresCashbookRepository) GetSummary(ctx context.Context) (*entity.Ca
 
 	monthlyQuery := `
 		WITH months AS (
-			SELECT TO_CHAR(date_trunc('month', CURRENT_DATE - (n || ' month')::interval), 'YYYY-MM') AS month_str
+			SELECT 
+				date_trunc('month', CURRENT_DATE - (n || ' month')::interval)::date AS m_start,
+				(date_trunc('month', CURRENT_DATE - (n || ' month')::interval) + INTERVAL '1 month')::date AS m_next,
+				TO_CHAR(date_trunc('month', CURRENT_DATE - (n || ' month')::interval), 'YYYY-MM') AS month_str
 			FROM generate_series(5, 0, -1) n
 		)
 		SELECT 
@@ -48,9 +51,9 @@ func (r *PostgresCashbookRepository) GetSummary(ctx context.Context) (*entity.Ca
 			COALESCE(SUM(CASE WHEN c.type = 'income' THEN c.amount ELSE 0 END), 0) AS income,
 			COALESCE(SUM(CASE WHEN c.type = 'expense' THEN c.amount ELSE 0 END), 0) AS expense
 		FROM months m
-		LEFT JOIN cash_transactions c ON TO_CHAR(c.transaction_date, 'YYYY-MM') = m.month_str
-		GROUP BY m.month_str
-		ORDER BY m.month_str ASC;
+		LEFT JOIN cash_transactions c ON c.transaction_date >= m.m_start AND c.transaction_date < m.m_next
+		GROUP BY m.month_str, m.m_start
+		ORDER BY m.m_start ASC;
 	`
 	rows, err := r.db.QueryContext(ctx, monthlyQuery)
 	if err != nil {

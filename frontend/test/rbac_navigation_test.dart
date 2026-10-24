@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tetanggo_frontend/core/constants/app_constants.dart';
 import 'package:tetanggo_frontend/features/auth/domain/models/user_model.dart';
 import 'package:tetanggo_frontend/features/home/presentation/widgets/dashboard_sidebar.dart';
 
@@ -255,6 +257,78 @@ void main() {
 
       expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('billing'));
+    });
+
+    test('9. Profile menu is titled "Profil Hunian & Keluarga" across all roles', () {
+      final roles = ['ADMIN', 'CHAIRPERSON', 'VICE_CHAIRPERSON', 'TREASURER', 'SECRETARY', 'RESIDENT'];
+
+      for (final role in roles) {
+        final user = UserModel(
+          id: 99,
+          name: 'Test $role',
+          email: '$role@tetanggo.id',
+          phone: '081234567890',
+          roleId: 1,
+          role: role,
+          status: 'active',
+          houseId: 101,
+        );
+
+        final items = NavigationItemBuilder.buildNavigationItems(user);
+        final profileItem = items.firstWhere((it) => it.keyId == 'profile');
+
+        expect(
+          profileItem.title,
+          equals('Profil Hunian & Keluarga'),
+          reason: 'Role $role must display "Profil Hunian & Keluarga"',
+        );
+      }
+    });
+
+    testWidgets('10. DashboardSidebar widget test: renders "Profil Hunian & Keluarga", no "Profil Pengurus RT", and no copyright section', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      const adminUser = UserModel(
+        id: 1,
+        name: 'Ketua RT Teladan',
+        email: 'ketua@tetanggo.id',
+        phone: '081234567890',
+        roleId: 2,
+        role: 'CHAIRPERSON',
+        status: 'active',
+        houseId: 101,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DashboardSidebar(
+              selectedIndex: 0,
+              onItemSelected: (_) {},
+              user: adminUser,
+              pendingCount: 0,
+              pendingBillsCount: 0,
+              onLogout: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Profile menu label check
+      expect(find.text('Profil Hunian & Keluarga'), findsOneWidget);
+      expect(find.text('Profil Pengurus RT'), findsNothing);
+
+      // Copyright notice removed check
+      expect(find.text(AppConstants.copyrightNotice), findsNothing);
+      expect(find.textContaining('©'), findsNothing);
+      expect(find.textContaining('All rights reserved'), findsNothing);
+
+      // Footer elements check
+      expect(find.text('Bapak Ketua RT Teladan'), findsOneWidget);
+      expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
     });
   });
 }

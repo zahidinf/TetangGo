@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"tetanggo-backend/internal/infrastructure/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -68,12 +69,18 @@ func EnsureDatabaseAndMigrate(cfg *config.Config, migrationsDir string) (*sql.DB
 		return nil, fmt.Errorf("failed to ping target DB: %w", err)
 	}
 
-	// 5. Run SQL migrations
+	// 5. Configure connection pool
+	appDB.SetMaxOpenConns(25)
+	appDB.SetMaxIdleConns(10)
+	appDB.SetConnMaxLifetime(15 * time.Minute)
+	appDB.SetConnMaxIdleTime(5 * time.Minute)
+
+	// 6. Run SQL migrations
 	if err := RunMigrations(appDB, migrationsDir); err != nil {
 		return nil, fmt.Errorf("failed running migrations: %w", err)
 	}
 
-	// 6. Seed initial data
+	// 7. Seed initial data
 	if err := SeedInitialData(appDB); err != nil {
 		return nil, fmt.Errorf("failed seeding initial data: %w", err)
 	}

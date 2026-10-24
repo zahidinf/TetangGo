@@ -9,6 +9,7 @@ import '../../auth/presentation/bloc/auth_state.dart';
 import '../../admin_billing/presentation/admin_billing_view.dart';
 import '../../announcements/presentation/announcements_screen.dart';
 import '../../billing/data/billing_repository.dart';
+import '../../billing/domain/models/billing_models.dart';
 import '../../billing/presentation/resident_billing_screen.dart';
 import '../../cashbook/presentation/cashbook_screen.dart';
 import '../../profile/presentation/resident_profile_screen.dart';
@@ -30,33 +31,41 @@ class AdaptiveDashboardScreen extends StatefulWidget {
 class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   int _selectedMenuIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final Set<String> _visitedTabKeys = {'dashboard'};
   int _pendingCount = 0;
   int _pendingBillsCount = 0;
+  int _residentUnpaidBillsCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _fetchPendingCount();
+    _fetchPendingCount(skipResidentBills: true);
   }
 
-  Future<void> _fetchPendingCount() async {
+  Future<void> _fetchPendingCount({bool skipResidentBills = false}) async {
     final user = context.read<AuthBloc>().state.user;
-    if (user != null && user.hasAdminAccess) {
+    if (user != null) {
       try {
         final residentRepo = context.read<ResidentRepository>();
         final billingRepo = context.read<BillingRepository>();
 
         final futures = <Future<dynamic>>[];
-        if (user.canAccessVerificationAdmin) {
+        if (user.hasAdminAccess && user.canAccessVerificationAdmin) {
           futures.add(residentRepo.getPendingUsers());
         } else {
           futures.add(Future.value(<dynamic>[]));
         }
 
-        if (user.canAccessBillingAdmin) {
+        if (user.hasAdminAccess && user.canAccessBillingAdmin) {
           futures.add(billingRepo.getPendingPayments());
         } else {
           futures.add(Future.value(<dynamic>[]));
+        }
+
+        if (user.canAccessResidentIuran && !skipResidentBills) {
+          futures.add(billingRepo.getResidentBills());
+        } else {
+          futures.add(Future.value(<BillModel>[]));
         }
 
         final results = await Future.wait(futures);
@@ -64,9 +73,15 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
         if (mounted) {
           final users = results[0] as List;
           final bills = results[1] as List;
+          final residentBills = results[2] as List;
+          final unpaidCount = residentBills.where((b) => b is BillModel && b.isUnpaid).length;
+
           setState(() {
             _pendingCount = users.length;
             _pendingBillsCount = bills.length;
+            if (!skipResidentBills) {
+              _residentUnpaidBillsCount = unpaidCount;
+            }
           });
         }
       } catch (_) {}
@@ -92,7 +107,10 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   void _navigateToKey(String key, List<SidebarItemData> items) {
     final idx = items.indexWhere((it) => it.keyId == key);
     if (idx != -1) {
-      setState(() => _selectedMenuIndex = idx);
+      setState(() {
+        _selectedMenuIndex = idx;
+        _visitedTabKeys.add(key);
+      });
     }
   }
 
@@ -129,11 +147,41 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   Widget _buildContent(
       UserModel? user, List<SidebarItemData> items, bool isDesktop) {
     final activeItem = _getActiveItem(items);
-    final key = activeItem.keyId;
+    _visitedTabKeys.add(activeItem.keyId);
 
+    final currentIndex = items.indexWhere((it) => it.keyId == activeItem.keyId);
+    final clampedIndex = (currentIndex >= 0 && currentIndex < items.length)
+        ? currentIndex
+        : 0;
+
+    return IndexedStack(
+      index: clampedIndex,
+      children: [
+        for (int i = 0; i < items.length; i++)
+          _visitedTabKeys.contains(items[i].keyId)
+              ? KeyedSubtree(
+                  key: ValueKey(items[i].keyId),
+                  child: _buildTabWidget(items[i].keyId, user, items, isDesktop),
+                )
+              : const SizedBox.shrink(),
+      ],
+    );
+  }
+
+  Widget _buildTabWidget(
+      String key, UserModel? user, List<SidebarItemData> items, bool isDesktop) {
     switch (key) {
       case 'dashboard':
-        return DashboardContentBody(user: user, isDesktop: isDesktop);
+        return DashboardContentBody(
+          user: user,
+          isDesktop: isDesktop,
+          onNavigate: (targetKey) => _navigateToKey(targetKey, items),
+          onUnpaidCountUpdated: (count) {
+            if (mounted && _residentUnpaidBillsCount != count) {
+              setState(() => _residentUnpaidBillsCount = count);
+            }
+          },
+        );
       case 'verification':
         return ResidentVerificationView(onQueueUpdated: _fetchPendingCount);
       case 'houses':
@@ -148,7 +196,7 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
               : null,
         );
       case 'resident_billing':
-        return const ResidentBillingScreen();
+        return ResidentBillingScreen(onBillUpdated: _fetchPendingCount);
       case 'cashbook':
         return CashbookScreen(isAdmin: user?.canAccessCashbookAdmin ?? false);
       case 'announcements':
@@ -158,7 +206,7 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
       case 'panic':
         return _buildFeaturePlaceholder('Panic Alert Siaga');
       default:
-        return _buildFeaturePlaceholder(activeItem.title);
+        return _buildFeaturePlaceholder(key);
     }
   }
 
@@ -211,12 +259,19 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           user,
           pendingCount: _pendingCount,
           pendingBillsCount: _pendingBillsCount,
+          residentUnpaidBillsCount: _residentUnpaidBillsCount,
         );
 
-        return Responsive(
-          mobile: _buildMobileScaffold(user, items),
-          tablet: _buildDesktopScaffold(user, items, isTablet: true),
-          desktop: _buildDesktopScaffold(user, items, isTablet: false),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= Responsive.desktopBreakpoint) {
+              return _buildDesktopScaffold(user, items, isTablet: false);
+            } else if (constraints.maxWidth >= Responsive.mobileBreakpoint) {
+              return _buildDesktopScaffold(user, items, isTablet: true);
+            } else {
+              return _buildMobileScaffold(user, items);
+            }
+          },
         );
       },
     );
@@ -273,12 +328,18 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
         child: DashboardSidebar(
           selectedIndex: _selectedMenuIndex,
           onItemSelected: (index) {
-            setState(() => _selectedMenuIndex = index);
+            if (index >= 0 && index < items.length) {
+              setState(() {
+                _selectedMenuIndex = index;
+                _visitedTabKeys.add(items[index].keyId);
+              });
+            }
             Navigator.pop(context);
           },
           user: user,
           pendingCount: _pendingCount,
           pendingBillsCount: _pendingBillsCount,
+          residentUnpaidBillsCount: _residentUnpaidBillsCount,
           onLogout: _onLogoutPressed,
         ),
       ),
@@ -343,11 +404,18 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           // Persistent Left Sidebar
           DashboardSidebar(
             selectedIndex: _selectedMenuIndex,
-            onItemSelected: (index) =>
-                setState(() => _selectedMenuIndex = index),
+            onItemSelected: (index) {
+              if (index >= 0 && index < items.length) {
+                setState(() {
+                  _selectedMenuIndex = index;
+                  _visitedTabKeys.add(items[index].keyId);
+                });
+              }
+            },
             user: user,
             pendingCount: _pendingCount,
             pendingBillsCount: _pendingBillsCount,
+            residentUnpaidBillsCount: _residentUnpaidBillsCount,
             onLogout: _onLogoutPressed,
           ),
           // Main Body with Top Header Bar

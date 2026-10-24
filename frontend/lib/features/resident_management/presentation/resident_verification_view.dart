@@ -26,10 +26,13 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
   }
 
   Future<void> _fetchPendingUsers() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final hasExistingData = _pendingUsers.isNotEmpty;
+    if (!hasExistingData) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final repo = context.read<ResidentRepository>();
@@ -305,7 +308,7 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                 ),
                 elevation: 0,
                 color: Colors.white,
-                child: _isLoading
+                child: (_isLoading && _pendingUsers.isEmpty)
                     ? const Padding(
                         padding: EdgeInsets.all(48),
                         child: Center(child: CircularProgressIndicator()),

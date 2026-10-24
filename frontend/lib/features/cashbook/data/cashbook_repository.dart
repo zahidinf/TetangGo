@@ -30,7 +30,7 @@ class CashbookRepository {
     int? month,
     int? year,
     int page = 1,
-    int limit = 100,
+    int limit = 20,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -83,7 +83,7 @@ class CashbookRepository {
     int? month,
     int? year,
     int page = 1,
-    int limit = 100,
+    int limit = 20,
   }) async {
     final result = await getCashbookTransactionsResult(
       type: type,

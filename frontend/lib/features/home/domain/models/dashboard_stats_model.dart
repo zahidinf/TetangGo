@@ -3,6 +3,7 @@ class DashboardRecentActivityModel {
   final String residentName;
   final String block;
   final String houseNumber;
+  final String? billingPeriod;
   final double amountPaid;
   final String status;
   final DateTime createdAt;
@@ -12,6 +13,7 @@ class DashboardRecentActivityModel {
     required this.residentName,
     required this.block,
     required this.houseNumber,
+    this.billingPeriod,
     required this.amountPaid,
     required this.status,
     required this.createdAt,
@@ -23,6 +25,7 @@ class DashboardRecentActivityModel {
       residentName: json['resident_name'] as String? ?? 'Warga',
       block: json['block'] as String? ?? '',
       houseNumber: json['house_number'] as String? ?? '',
+      billingPeriod: json['billing_period'] as String?,
       amountPaid: (json['amount_paid'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String? ?? '',
       createdAt: json['created_at'] != null

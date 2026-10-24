@@ -126,11 +126,12 @@ void main() {
     expect(find.text('1 Warga Aktif'), findsOneWidget);
     expect(find.text('Semua Terverifikasi'), findsOneWidget);
 
-    // Sprint 3: Real Cashbook Balance Card 3
-    expect(find.text('Saldo Kas Transparan RT'), findsOneWidget);
+    // Real Cashbook Balance Card
+    expect(find.text('Saldo Kas Transparan'), findsOneWidget);
     expect(find.text('Rp 70.000'), findsOneWidget); // Real cashbook balance
     expect(find.textContaining('Masuk: Rp 105.000'), findsOneWidget);
-    expect(find.text('0 Transaksi'), findsOneWidget);
+    expect(find.text('Semua Tuntas'), findsOneWidget);
+    expect(find.text('Tidak ada pekerjaan yang perlu ditindaklanjuti'), findsOneWidget);
 
     // Verify Real Activity Table
     expect(find.text('Farhan Tamtsil Hasanudin'), findsOneWidget);

@@ -6,6 +6,7 @@ import (
 	"tetanggo-backend/internal/domain/entity"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -19,6 +20,9 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 	// Middlewares
 	app.Use(recover.New())
 	app.Use(logger.New())
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelDefault,
+	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
@@ -68,12 +72,19 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			string(entity.RoleViceChairperson),
 			string(entity.RoleSecretary),
 		}
+		roleManagement := []string{
+			string(entity.RoleAdmin),
+			string(entity.RoleChairperson),
+			string(entity.RoleViceChairperson),
+			string(entity.RoleTreasurer),
+			string(entity.RoleSecretary),
+		}
 
 		// Admin Endpoints with Granular RBAC
 		adminGroup := v1.Group("/admin", authMid.RequireAuth())
 		{
-			// 1. Leadership (ADMIN, CHAIRPERSON, VICE_CHAIRPERSON)
-			adminGroup.Get("/dashboard/stats", authMid.RequireRole(roleLeadership...), appHandler.GetAdminDashboardStats)
+			// 1. Leadership & Management (ADMIN, CHAIRPERSON, VICE_CHAIRPERSON, TREASURER, SECRETARY)
+			adminGroup.Get("/dashboard/stats", authMid.RequireRole(roleManagement...), appHandler.GetAdminDashboardStats)
 
 			// Organizational Role Management (Assign / Revoke)
 			adminGroup.Put("/users/:id/role", authMid.RequireRole(roleLeadership...), appHandler.AdminAssignRole)

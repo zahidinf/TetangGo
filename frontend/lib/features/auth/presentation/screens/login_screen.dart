@@ -66,10 +66,16 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       child: Scaffold(
         backgroundColor: AppTheme.background,
-        body: Responsive(
-          mobile: _buildMobileLayout(),
-          tablet: _buildSplitLayout(isTablet: true),
-          desktop: _buildSplitLayout(isTablet: false),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= Responsive.desktopBreakpoint) {
+              return _buildSplitLayout(isTablet: false);
+            } else if (constraints.maxWidth >= Responsive.mobileBreakpoint) {
+              return _buildSplitLayout(isTablet: true);
+            } else {
+              return _buildMobileLayout();
+            }
+          },
         ),
       ),
     );

@@ -7,6 +7,7 @@ import 'residents_management_view.dart';
 import 'widgets/house_detail_dialog.dart';
 import 'widgets/house_occupants_dialog.dart';
 import 'widgets/unassigned_residents_dialog.dart';
+import 'widgets/table_pagination_control.dart';
 
 class HousesManagementView extends StatefulWidget {
   final int initialTab;
@@ -26,6 +27,9 @@ class _HousesManagementViewState extends State<HousesManagementView> {
   String? _selectedBlock;
   String? _selectedStatus;
   final _searchController = TextEditingController();
+
+  int _currentPage = 1;
+  int _pageSize = 15;
 
   List<String> _blocks = [];
 
@@ -59,10 +63,13 @@ class _HousesManagementViewState extends State<HousesManagementView> {
   }
 
   Future<void> _fetchHouses() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final hasExistingData = _houses.isNotEmpty;
+    if (!hasExistingData) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final repo = context.read<ResidentRepository>();
@@ -76,6 +83,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
           _houses = result;
           _isLoading = false;
           _selectedHouseIds.removeWhere((id) => !result.any((h) => h.id == id));
+          final maxPage = result.isNotEmpty ? (result.length / _pageSize).ceil() : 1;
+          if (_currentPage > maxPage) {
+            _currentPage = maxPage;
+          }
         });
       }
     } catch (e) {
@@ -377,6 +388,17 @@ class _HousesManagementViewState extends State<HousesManagementView> {
           ),
           const Spacer(),
           TextButton.icon(
+            onPressed: () => setState(() {
+              _selectedHouseIds.addAll(_houses.map((h) => h.id));
+            }),
+            icon: const Icon(Icons.select_all_rounded, size: 16),
+            label: Text('Pilih Semua (${_houses.length})'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
             onPressed: () => setState(() => _selectedHouseIds.clear()),
             icon: const Icon(Icons.close_rounded, size: 16),
             label: const Text('Batal Pilihan'),
@@ -516,8 +538,11 @@ class _HousesManagementViewState extends State<HousesManagementView> {
               _buildTabBar(),
               const SizedBox(height: 16),
               // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 16,
+                runSpacing: 16,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,7 +558,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                       ),
                     ],
                   ),
-                  Row(
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       OutlinedButton.icon(
                         onPressed: _showUnassignedResidentsDialog,
@@ -546,7 +574,6 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
-                      const SizedBox(width: 10),
                       ElevatedButton.icon(
                         onPressed: () => _showAddOrEditHouseDialog(),
                         icon: const Icon(Icons.add_home_rounded, size: 18),
@@ -589,6 +616,7 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                                     icon: const Icon(Icons.clear, size: 18),
                                     onPressed: () {
                                       _searchController.clear();
+                                      _currentPage = 1;
                                       _fetchHouses();
                                     },
                                   )
@@ -596,7 +624,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           ),
-                          onSubmitted: (_) => _fetchHouses(),
+                          onSubmitted: (_) {
+                            _currentPage = 1;
+                            _fetchHouses();
+                          },
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -616,7 +647,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                               )),
                         ],
                         onChanged: (val) {
-                          setState(() => _selectedBlock = val);
+                          setState(() {
+                            _selectedBlock = val;
+                            _currentPage = 1;
+                          });
                           _fetchHouses();
                         },
                       ),
@@ -645,7 +679,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                           ),
                         ],
                         onChanged: (val) {
-                          setState(() => _selectedStatus = val);
+                          setState(() {
+                            _selectedStatus = val;
+                            _currentPage = 1;
+                          });
                           _fetchHouses();
                         },
                       ),
@@ -705,7 +742,7 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                 ),
                 elevation: 0,
                 color: Colors.white,
-                child: _isLoading
+                child: (_isLoading && _houses.isEmpty)
                     ? const Padding(
                         padding: EdgeInsets.all(48),
                         child: Center(child: CircularProgressIndicator()),
@@ -726,113 +763,146 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                               ),
                             ),
                           )
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-                              columnSpacing: 28,
-                              columns: const [
-                                DataColumn(label: Text('No. Rumah', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Status Huni', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Kepala Keluarga', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Anggota Keluarga', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Kendaraan', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('No. Kontak', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
-                              ],
-                              rows: _houses.map((h) {
-                                final isSelected = _selectedHouseIds.contains(h.id);
-                                return DataRow(
-                                  selected: isSelected,
-                                  onSelectChanged: (bool? selected) {
-                                    setState(() {
-                                      if (selected == true) {
-                                        _selectedHouseIds.add(h.id);
-                                      } else {
-                                        _selectedHouseIds.remove(h.id);
-                                      }
-                                    });
-                                  },
-                                  cells: [
-                                    DataCell(
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.primary.withOpacity(0.08),
-                                              borderRadius: BorderRadius.circular(8),
+                        : Builder(
+                            builder: (context) {
+                              final totalItems = _houses.length;
+                              final totalPages = totalItems > 0 ? (totalItems / _pageSize).ceil() : 1;
+                              final clampedPage = _currentPage > totalPages
+                                  ? totalPages
+                                  : (_currentPage < 1 ? 1 : _currentPage);
+                              final startIndex = (clampedPage - 1) * _pageSize;
+                              final pagedHouses = _houses.skip(startIndex).take(_pageSize).toList();
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: DataTable(
+                                      headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                                      columnSpacing: 28,
+                                      columns: const [
+                                        DataColumn(label: Text('No. Rumah', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataColumn(label: Text('Status Huni', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataColumn(label: Text('Kepala Keluarga', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataColumn(label: Text('Anggota Keluarga', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataColumn(label: Text('Kendaraan', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataColumn(label: Text('No. Kontak', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
+                                      ],
+                                      rows: pagedHouses.map((h) {
+                                        final isSelected = _selectedHouseIds.contains(h.id);
+                                        return DataRow(
+                                          selected: isSelected,
+                                          onSelectChanged: (bool? selected) {
+                                            setState(() {
+                                              if (selected == true) {
+                                                _selectedHouseIds.add(h.id);
+                                              } else {
+                                                _selectedHouseIds.remove(h.id);
+                                              }
+                                            });
+                                          },
+                                          cells: [
+                                            DataCell(
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: AppTheme.primary.withOpacity(0.08),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: const Icon(Icons.home_rounded, color: AppTheme.primary, size: 18),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Text(
+                                                    'Blok ${h.block} No. ${h.houseNumber}',
+                                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                                  ),
+                                                ],
+                                              ),
+                                              onTap: () => _showHouseDetailDialog(h),
                                             ),
-                                            child: const Icon(Icons.home_rounded, color: AppTheme.primary, size: 18),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            'Blok ${h.block} No. ${h.houseNumber}',
-                                            style: const TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                      onTap: () => _showHouseDetailDialog(h),
+                                            DataCell(
+                                              _buildStatusBadge(h.status),
+                                              onTap: () => _showHouseDetailDialog(h),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                h.residentName ?? '—',
+                                                style: TextStyle(
+                                                  fontWeight: h.residentName != null ? FontWeight.w600 : FontWeight.normal,
+                                                  color: h.residentName != null ? AppTheme.textPrimary : Colors.grey,
+                                                ),
+                                              ),
+                                              onTap: () => _showHouseDetailDialog(h),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                '${h.totalOccupants} Jiwa',
+                                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                              ),
+                                              onTap: () => _showHouseDetailDialog(h),
+                                            ),
+                                            DataCell(
+                                              Text('${h.vehicleCount} Unit'),
+                                              onTap: () => _showHouseDetailDialog(h),
+                                            ),
+                                            DataCell(
+                                              Text(h.residentPhone ?? '—'),
+                                              onTap: () => _showHouseDetailDialog(h),
+                                            ),
+                                            DataCell(
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(Icons.visibility_outlined, size: 18, color: AppTheme.primary),
+                                                    tooltip: 'Detail Hunian Lengkap',
+                                                    onPressed: () => _showHouseDetailDialog(h),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.people_alt_outlined, size: 18, color: Color(0xFF6366F1)),
+                                                    tooltip: 'Kelola Pemetaan Warga',
+                                                    onPressed: () => _showHouseOccupantsDialog(h),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.textSecondary),
+                                                    tooltip: 'Ubah Data Rumah',
+                                                    onPressed: () => _showAddOrEditHouseDialog(house: h),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
+                                                    tooltip: 'Hapus Rumah',
+                                                    onPressed: () => _showDeleteConfirm(h),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      }).toList(),
                                     ),
-                                    DataCell(
-                                      _buildStatusBadge(h.status),
-                                      onTap: () => _showHouseDetailDialog(h),
-                                    ),
-                                    DataCell(
-                                      Text(
-                                        h.residentName ?? '—',
-                                        style: TextStyle(
-                                          fontWeight: h.residentName != null ? FontWeight.w600 : FontWeight.normal,
-                                          color: h.residentName != null ? AppTheme.textPrimary : Colors.grey,
-                                        ),
-                                      ),
-                                      onTap: () => _showHouseDetailDialog(h),
-                                    ),
-                                    DataCell(
-                                      Text(
-                                        '${h.totalOccupants} Jiwa',
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
-                                      ),
-                                      onTap: () => _showHouseDetailDialog(h),
-                                    ),
-                                    DataCell(
-                                      Text('${h.vehicleCount} Unit'),
-                                      onTap: () => _showHouseDetailDialog(h),
-                                    ),
-                                    DataCell(
-                                      Text(h.residentPhone ?? '—'),
-                                      onTap: () => _showHouseDetailDialog(h),
-                                    ),
-                                    DataCell(
-                                      Row(
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.visibility_outlined, size: 18, color: AppTheme.primary),
-                                            tooltip: 'Detail Hunian Lengkap',
-                                            onPressed: () => _showHouseDetailDialog(h),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.people_alt_outlined, size: 18, color: Color(0xFF6366F1)),
-                                            tooltip: 'Kelola Pemetaan Warga',
-                                            onPressed: () => _showHouseOccupantsDialog(h),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.textSecondary),
-                                            tooltip: 'Ubah Data Rumah',
-                                            onPressed: () => _showAddOrEditHouseDialog(house: h),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
-                                            tooltip: 'Hapus Rumah',
-                                            onPressed: () => _showDeleteConfirm(h),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
+                                  ),
+                                  TablePaginationControl(
+                                    currentPage: clampedPage,
+                                    totalItems: totalItems,
+                                    pageSize: _pageSize,
+                                    keyPrefix: 'houses_pagination',
+                                    isDesktop: MediaQuery.of(context).size.width >= 768,
+                                    onPageChanged: (newPage) {
+                                      setState(() => _currentPage = newPage);
+                                    },
+                                    onPageSizeChanged: (newSize) {
+                                      setState(() {
+                                        _pageSize = newSize;
+                                        _currentPage = 1;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
                           ),
               ),
             ],

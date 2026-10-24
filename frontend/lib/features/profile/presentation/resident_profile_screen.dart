@@ -27,10 +27,13 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
   }
 
   Future<void> _fetchProfile() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final hasExistingData = _profileData != null;
+    if (!hasExistingData) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final repo = context.read<ProfileRepository>();
@@ -393,11 +396,11 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoading && _profileData == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_errorMessage != null) {
+    if (_errorMessage != null && _profileData == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

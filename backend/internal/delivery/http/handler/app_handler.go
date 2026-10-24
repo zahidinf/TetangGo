@@ -1859,12 +1859,18 @@ func (h *AppHandler) GetCashbookTransactions(c *fiber.Ctx) error {
 		})
 	}
 
+	totalPages := 0
+	if result.Limit > 0 && result.Total > 0 {
+		totalPages = (result.Total + result.Limit - 1) / result.Limit
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success":          true,
 		"data":             result.Transactions,
 		"total":            result.Total,
 		"page":             result.Page,
 		"limit":            result.Limit,
+		"total_pages":      totalPages,
 		"period":           result.Period,
 		"start_date":       result.StartDate,
 		"end_date":         result.EndDate,

@@ -118,10 +118,13 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
   }
 
   Future<void> _loadPendingPayments() async {
-    setState(() {
-      _isLoadingPending = true;
-      _errorPending = null;
-    });
+    final hasExistingData = _pendingPayments.isNotEmpty;
+    if (!hasExistingData) {
+      setState(() {
+        _isLoadingPending = true;
+        _errorPending = null;
+      });
+    }
 
     try {
       final repo = context.read<BillingRepository>();
@@ -144,10 +147,13 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
   }
 
   Future<void> _loadSummary() async {
-    setState(() {
-      _isLoadingSummary = true;
-      _errorSummary = null;
-    });
+    final hasExistingData = _summary != null;
+    if (!hasExistingData) {
+      setState(() {
+        _isLoadingSummary = true;
+        _errorSummary = null;
+      });
+    }
 
     try {
       final repo = context.read<BillingRepository>();
@@ -611,7 +617,7 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
   // TAB 1: VERIFIKASI PEMBAYARAN (PENDING)
   // ==========================================
   Widget _buildVerificationTab() {
-    if (_isLoadingPending) {
+    if (_isLoadingPending && _pendingPayments.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -985,7 +991,7 @@ class _AdminBillingViewState extends State<AdminBillingView> with SingleTickerPr
           const SizedBox(height: 20),
 
           // Content Area
-          if (_isLoadingSummary)
+          if (_isLoadingSummary && _summary == null)
             const Padding(
               padding: EdgeInsets.all(48.0),
               child: Center(child: CircularProgressIndicator()),

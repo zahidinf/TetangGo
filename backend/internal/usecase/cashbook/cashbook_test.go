@@ -88,11 +88,30 @@ func (m *mockCashbookRepo) GetTransactions(ctx context.Context, filter entity.Ca
 
 	endingBalance := previousBalance + periodIncome - periodExpense
 
+	total := len(filtered)
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	page := filter.Page
+	if page <= 0 {
+		page = 1
+	}
+	startIdx := (page - 1) * limit
+	if startIdx > total {
+		startIdx = total
+	}
+	endIdx := startIdx + limit
+	if endIdx > total {
+		endIdx = total
+	}
+	pagedTx := filtered[startIdx:endIdx]
+
 	return &entity.CashTransactionsResult{
-		Transactions:    filtered,
-		Total:           len(filtered),
-		Page:            1,
-		Limit:           20,
+		Transactions:    pagedTx,
+		Total:           total,
+		Page:            page,
+		Limit:           limit,
 		Period:          periodStr,
 		StartDate:       startDate,
 		EndDate:         endDate,
@@ -246,6 +265,63 @@ func TestCashbookFilterAndBalances(t *testing.T) {
 		}
 		if res.EndingBalance != 0 {
 			t.Fatalf("expected EndingBalance 0, got: %f", res.EndingBalance)
+		}
+	})
+
+	t.Run("Pagination 21 records: Halaman 1 isi 20, Halaman 2 isi 1, saldo identik", func(t *testing.T) {
+		var manyTx []entity.CashTransaction
+		for i := 1; i <= 21; i++ {
+			manyTx = append(manyTx, entity.CashTransaction{
+				ID:              int64(i),
+				Type:            "income",
+				Amount:          10000,
+				TransactionDate: "2026-11-15",
+				Description:     fmt.Sprintf("Iuran Warga %d", i),
+			})
+		}
+		repoMany := &mockCashbookRepo{transactions: manyTx}
+		ucMany := cashbook.NewCashbookUseCase(repoMany)
+
+		// Halaman 1
+		resP1, err := ucMany.GetTransactions(ctx, entity.CashTransactionsFilter{
+			Period: "2026-11",
+			Page:   1,
+			Limit:  20,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resP1.Total != 21 {
+			t.Fatalf("expected Total 21, got %d", resP1.Total)
+		}
+		if len(resP1.Transactions) != 20 {
+			t.Fatalf("expected 20 transactions on page 1, got %d", len(resP1.Transactions))
+		}
+		if resP1.PeriodIncome != 210000 {
+			t.Fatalf("expected PeriodIncome 210000 across full period, got %f", resP1.PeriodIncome)
+		}
+
+		// Halaman 2
+		resP2, err := ucMany.GetTransactions(ctx, entity.CashTransactionsFilter{
+			Period: "2026-11",
+			Page:   2,
+			Limit:  20,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resP2.Total != 21 {
+			t.Fatalf("expected Total 21, got %d", resP2.Total)
+		}
+		if len(resP2.Transactions) != 1 {
+			t.Fatalf("expected 1 transaction on page 2, got %d", len(resP2.Transactions))
+		}
+		if resP2.Transactions[0].ID != 21 {
+			t.Fatalf("expected transaction ID 21 on page 2, got %d", resP2.Transactions[0].ID)
+		}
+		// Financial summary must be identical on page 2
+		if resP2.PeriodIncome != resP1.PeriodIncome || resP2.EndingBalance != resP1.EndingBalance {
+			t.Fatalf("financial calculation must not change across pages")
 		}
 	})
 }

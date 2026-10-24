@@ -27,56 +27,32 @@ func (r *PostgresDashboardRepository) GetAdminDashboardStats(ctx context.Context
 		RecentActivities: make([]entity.DashboardRecentActivity, 0),
 	}
 
-	// 1. Statistik Hunian
-	// total_houses
-	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM houses;`).Scan(&stats.TotalHouses)
+	// 1, 2, 3. Consolidated Dashboard Stats (Hunian, Warga, Iuran)
+	consolidatedQuery := `
+		SELECT
+			(SELECT COUNT(*) FROM houses),
+			(SELECT COUNT(*) FROM houses WHERE status IN ('milik', 'kontrak')),
+			(SELECT COUNT(*) FROM houses WHERE status = 'kosong'),
+			(SELECT COUNT(*) FROM users WHERE status = 'active' AND role_id IN (SELECT id FROM roles WHERE name != 'ADMIN')),
+			(SELECT COUNT(*) FROM users WHERE status = 'pending_verification'),
+			(SELECT COALESCE(SUM(amount), 0) FROM bills WHERE billing_period = $1 AND status = 'paid'),
+			(SELECT COALESCE(SUM(amount), 0) FROM bills WHERE billing_period = $1),
+			(SELECT COUNT(*) FROM bills WHERE status = 'pending_verification');
+	`
+	err := r.db.QueryRowContext(ctx, consolidatedQuery, period).Scan(
+		&stats.TotalHouses,
+		&stats.OccupiedHouses,
+		&stats.EmptyHouses,
+		&stats.TotalResidents,
+		&stats.PendingResidents,
+		&stats.CollectedAmount,
+		&stats.TargetAmount,
+		&stats.PendingPaymentsCount,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// occupied_houses: SELECT COUNT(*) FROM houses WHERE status IN ('milik', 'kontrak');
-	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM houses WHERE status IN ('milik', 'kontrak');`).Scan(&stats.OccupiedHouses)
-	if err != nil {
-		return nil, err
-	}
-
-	// empty_houses: SELECT COUNT(*) FROM houses WHERE status = 'kosong';
-	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM houses WHERE status = 'kosong';`).Scan(&stats.EmptyHouses)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. Statistik Warga
-	// total_residents: all active residents (including those with organizational roles, excluding ADMIN)
-	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users WHERE status = 'active' AND role_id IN (SELECT id FROM roles WHERE name != 'ADMIN');`).Scan(&stats.TotalResidents)
-	if err != nil {
-		return nil, err
-	}
-
-	// pending_verifications: SELECT COUNT(*) FROM users WHERE status = 'pending_verification';
-	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users WHERE status = 'pending_verification';`).Scan(&stats.PendingResidents)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. Statistik Iuran Bulan Berjalan
-	// collected_amount: SELECT COALESCE(SUM(amount), 0) FROM bills WHERE billing_period = $1 AND status = 'paid';
-	err = r.db.QueryRowContext(ctx, `SELECT COALESCE(SUM(amount), 0) FROM bills WHERE billing_period = $1 AND status = 'paid';`, period).Scan(&stats.CollectedAmount)
-	if err != nil {
-		return nil, err
-	}
-
-	// target_amount: SELECT COALESCE(SUM(amount), 0) FROM bills WHERE billing_period = $1;
-	err = r.db.QueryRowContext(ctx, `SELECT COALESCE(SUM(amount), 0) FROM bills WHERE billing_period = $1;`, period).Scan(&stats.TargetAmount)
-	if err != nil {
-		return nil, err
-	}
-
-	// pending_payments_count: SELECT COUNT(*) FROM bills WHERE billing_period = $1 AND status = 'pending_verification';
-	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM bills WHERE billing_period = $1 AND status = 'pending_verification';`, period).Scan(&stats.PendingPaymentsCount)
-	if err != nil {
-		return nil, err
-	}
 
 	// 4. Riwayat Aktivitas Pembayaran Terkini (5 transaksi terakhir)
 	queryActivities := `
@@ -85,6 +61,7 @@ func (r *PostgresDashboardRepository) GetAdminDashboardStats(ctx context.Context
 			CASE WHEN u.salutation IS NOT NULL AND u.salutation != '' THEN u.salutation || ' ' || u.name ELSE u.name END AS resident_name,
 			h.block,
 			h.house_number,
+			b.billing_period,
 			p.amount_paid,
 			b.status,
 			p.created_at
@@ -108,6 +85,7 @@ func (r *PostgresDashboardRepository) GetAdminDashboardStats(ctx context.Context
 			&act.ResidentName,
 			&act.Block,
 			&act.HouseNumber,
+			&act.BillingPeriod,
 			&act.AmountPaid,
 			&act.Status,
 			&act.CreatedAt,

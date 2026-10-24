@@ -8,6 +8,7 @@ import 'widgets/house_detail_dialog.dart';
 import 'widgets/reset_password_dialog.dart';
 import 'widgets/role_assignment_dialog.dart';
 import 'widgets/user_form_dialog.dart';
+import 'widgets/table_pagination_control.dart';
 
 class ResidentsManagementView extends StatefulWidget {
   final Widget? headerWidget;
@@ -28,6 +29,9 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
 
   String? _selectedStatus;
   int? _selectedHouseId;
+
+  int _currentPage = 1;
+  int _pageSize = 15;
 
   @override
   void initState() {
@@ -58,10 +62,13 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
   }
 
   Future<void> _fetchUsers() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final hasExistingData = _users.isNotEmpty;
+    if (!hasExistingData) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final users = await _repo.getAdminUsers(
@@ -74,6 +81,10 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
         setState(() {
           _users = users;
           _isLoading = false;
+          final maxPage = users.isNotEmpty ? (users.length / _pageSize).ceil() : 1;
+          if (_currentPage > maxPage) {
+            _currentPage = maxPage;
+          }
         });
       }
     } catch (e) {
@@ -301,8 +312,11 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                 const SizedBox(height: 16),
               ],
               // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 16,
+                runSpacing: 16,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,6 +372,7 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                                     icon: const Icon(Icons.clear, size: 18),
                                     onPressed: () {
                                       _searchController.clear();
+                                      _currentPage = 1;
                                       _fetchUsers();
                                     },
                                   )
@@ -365,7 +380,10 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           ),
-                          onSubmitted: (_) => _fetchUsers(),
+                          onSubmitted: (_) {
+                            _currentPage = 1;
+                            _fetchUsers();
+                          },
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -389,7 +407,10 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                               DropdownMenuItem<String?>(value: 'inactive', child: Text('Status: Non-Aktif', style: TextStyle(fontSize: 13))),
                             ],
                             onChanged: (val) {
-                              setState(() => _selectedStatus = val);
+                              setState(() {
+                                _selectedStatus = val;
+                                _currentPage = 1;
+                              });
                               _fetchUsers();
                             },
                           ),
@@ -426,7 +447,10 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                                     )),
                               ],
                               onChanged: (val) {
-                                setState(() => _selectedHouseId = val);
+                                setState(() {
+                                  _selectedHouseId = val;
+                                  _currentPage = 1;
+                                });
                                 _fetchUsers();
                               },
                             ),
@@ -451,14 +475,14 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
               const SizedBox(height: 16),
 
               // Content Area
-              if (_isLoading)
+              if (_isLoading && _users.isEmpty)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(48.0),
                     child: CircularProgressIndicator(),
                   ),
                 )
-              else if (_errorMessage != null)
+              else if (_errorMessage != null && _users.isEmpty)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
@@ -498,12 +522,25 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                   elevation: 0,
                   clipBehavior: Clip.antiAlias,
                   color: Colors.white,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 950),
-                      child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                  child: Builder(
+                    builder: (context) {
+                      final totalItems = _users.length;
+                      final totalPages = totalItems > 0 ? (totalItems / _pageSize).ceil() : 1;
+                      final clampedPage = _currentPage > totalPages
+                          ? totalPages
+                          : (_currentPage < 1 ? 1 : _currentPage);
+                      final startIndex = (clampedPage - 1) * _pageSize;
+                      final pagedUsers = _users.skip(startIndex).take(_pageSize).toList();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minWidth: 950),
+                              child: DataTable(
+                                headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                         horizontalMargin: 20,
                         columnSpacing: 24,
                         headingTextStyle: const TextStyle(
@@ -520,7 +557,7 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                           DataColumn(label: Text('STATUS')),
                           DataColumn(label: Text('AKSI')),
                         ],
-                        rows: _users.map((user) {
+                        rows: pagedUsers.map((user) {
                           return DataRow(
                             cells: [
                               // Avatar
@@ -649,7 +686,27 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                       ),
                     ),
                   ),
-                ),
+                  TablePaginationControl(
+                    currentPage: clampedPage,
+                    totalItems: totalItems,
+                    pageSize: _pageSize,
+                    keyPrefix: 'residents_pagination',
+                    isDesktop: MediaQuery.of(context).size.width >= 768,
+                    onPageChanged: (newPage) {
+                      setState(() => _currentPage = newPage);
+                    },
+                    onPageSizeChanged: (newSize) {
+                      setState(() {
+                        _pageSize = newSize;
+                        _currentPage = 1;
+                      });
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
             ],
           ),
         ),

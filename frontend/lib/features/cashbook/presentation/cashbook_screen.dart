@@ -31,6 +31,9 @@ class _CashbookScreenState extends State<CashbookScreen> {
   late int _selectedYear;
   late int _selectedMonth;
 
+  int _currentPage = 1;
+  static const int _pageSize = 20;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +58,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
           category: _selectedCategoryFilter,
           year: _selectedYear,
           month: _selectedMonth,
+          page: _currentPage,
+          limit: _pageSize,
         ),
       ]);
 
@@ -64,6 +69,9 @@ class _CashbookScreenState extends State<CashbookScreen> {
           _summary = results[0] as CashbookSummaryModel;
           _transactionsResult = txResult;
           _transactions = txResult.transactions;
+          if (txResult.totalPages > 0 && _currentPage > txResult.totalPages) {
+            _currentPage = txResult.totalPages;
+          }
           _isLoading = false;
         });
       }
@@ -75,6 +83,16 @@ class _CashbookScreenState extends State<CashbookScreen> {
         });
       }
     }
+  }
+
+  void _goToPage(int page) {
+    if (page < 1) return;
+    if (_transactionsResult != null && page > _transactionsResult!.totalPages) return;
+    if (page == _currentPage) return;
+    setState(() {
+      _currentPage = page;
+    });
+    _loadData();
   }
 
   String _formatCurrency(double amount) {
@@ -106,13 +124,27 @@ class _CashbookScreenState extends State<CashbookScreen> {
     );
   }
 
-  void _openExportDialog() {
+  Future<void> _openExportDialog() async {
     if (_summary == null) return;
+    List<CashTransactionModel> allTransactions = _transactions;
+    try {
+      final repo = context.read<CashbookRepository>();
+      final fullResult = await repo.getCashbookTransactionsResult(
+        type: _selectedTypeFilter,
+        category: _selectedCategoryFilter,
+        year: _selectedYear,
+        month: _selectedMonth,
+        page: 1,
+        limit: 1000,
+      );
+      allTransactions = fullResult.transactions;
+    } catch (_) {}
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (ctx) => ExportReportDialog(
         summary: _summary!,
-        transactions: _transactions,
+        transactions: allTransactions,
       ),
     );
   }
@@ -505,7 +537,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                     }).toList(),
                     onChanged: (val) {
                       if (val != null && val != _selectedMonth) {
-                        setState(() => _selectedMonth = val);
+                        setState(() {
+                          _selectedMonth = val;
+                          _currentPage = 1;
+                        });
                         _loadData();
                       }
                     },
@@ -534,7 +569,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                     }).toList(),
                     onChanged: (val) {
                       if (val != null && val != _selectedYear) {
-                        setState(() => _selectedYear = val);
+                        setState(() {
+                          _selectedYear = val;
+                          _currentPage = 1;
+                        });
                         _loadData();
                       }
                     },
@@ -557,7 +595,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                 selected: _selectedTypeFilter == 'all',
                 onSelected: (val) {
                   if (val) {
-                    setState(() => _selectedTypeFilter = 'all');
+                    setState(() {
+                      _selectedTypeFilter = 'all';
+                      _currentPage = 1;
+                    });
                     _loadData();
                   }
                 },
@@ -568,7 +609,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                 selectedColor: AppTheme.primary.withOpacity(0.15),
                 onSelected: (val) {
                   if (val) {
-                    setState(() => _selectedTypeFilter = 'income');
+                    setState(() {
+                      _selectedTypeFilter = 'income';
+                      _currentPage = 1;
+                    });
                     _loadData();
                   }
                 },
@@ -579,7 +623,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                 selectedColor: AppTheme.danger.withOpacity(0.15),
                 onSelected: (val) {
                   if (val) {
-                    setState(() => _selectedTypeFilter = 'expense');
+                    setState(() {
+                      _selectedTypeFilter = 'expense';
+                      _currentPage = 1;
+                    });
                     _loadData();
                   }
                 },
@@ -626,7 +673,7 @@ class _CashbookScreenState extends State<CashbookScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${_transactions.length} Mutasi',
+                        '${_transactionsResult?.total ?? _transactions.length} Mutasi',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
                       ),
                     ),
@@ -800,11 +847,191 @@ class _CashbookScreenState extends State<CashbookScreen> {
               },
             ),
 
+          // Navigasi Paginasi (tampil jika total data > 20 record atau totalPages > 1)
+          if (_transactionsResult != null && _transactionsResult!.total > _pageSize)
+            _buildPaginationControls(isDesktop),
+
           // Rekap Mutasi Periode & Saldo Sebelumnya (Requirement 3)
           if (_transactionsResult != null)
             _buildPeriodMutationSummary(_transactionsResult!),
         ],
       ),
+    );
+  }
+
+  Widget _buildPaginationControls(bool isDesktop) {
+    if (_transactionsResult == null) return const SizedBox.shrink();
+
+    final res = _transactionsResult!;
+    final total = res.total;
+    final totalPages = res.totalPages;
+    final page = res.page;
+
+    if (total <= _pageSize || totalPages <= 1) {
+      return const SizedBox.shrink();
+    }
+
+    final startRecord = ((page - 1) * _pageSize) + 1;
+    final endRecord = (page * _pageSize) > total ? total : (page * _pageSize);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Color(0xFFF1F5F9)),
+        ),
+      ),
+      child: isDesktop
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Menampilkan $startRecord–$endRecord dari $total data (Halaman $page dari $totalPages)',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                _buildPaginationButtons(res),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Halaman $page dari $totalPages (Total $total data)',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildPaginationButtons(res),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildPaginationButtons(CashTransactionsResultModel res) {
+    final page = res.page;
+    final totalPages = res.totalPages;
+    final canPrev = res.hasPreviousPage;
+    final canNext = res.hasNextPage;
+
+    // Hitung tombol nomor halaman yang ditampilkan
+    List<int> pages = [];
+    if (totalPages <= 5) {
+      pages = List.generate(totalPages, (i) => i + 1);
+    } else {
+      int start = page - 1;
+      int end = page + 1;
+      if (start < 1) {
+        start = 1;
+        end = 3;
+      }
+      if (end > totalPages) {
+        end = totalPages;
+        start = totalPages - 2;
+      }
+      for (int i = start; i <= end; i++) {
+        pages.add(i);
+      }
+      if (!pages.contains(1)) {
+        if (pages.first > 2) pages.insert(0, -1);
+        pages.insert(0, 1);
+      }
+      if (!pages.contains(totalPages)) {
+        if (pages.last < totalPages - 1) pages.add(-1);
+        pages.add(totalPages);
+      }
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Tombol Sebelumnya
+        OutlinedButton(
+          key: const Key('cashbook_pagination_prev'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            side: BorderSide(color: canPrev ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
+            foregroundColor: canPrev ? AppTheme.textPrimary : Colors.grey.shade400,
+          ),
+          onPressed: canPrev ? () => _goToPage(page - 1) : null,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chevron_left_rounded, size: 16),
+              SizedBox(width: 2),
+              Text('Sebelumnya', style: TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+
+        // Nomor Halaman
+        for (final p in pages) ...[
+          if (p == -1)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Text('...', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+            )
+          else ...[
+            InkWell(
+              key: Key('cashbook_page_$p'),
+              onTap: p == page ? null : () => _goToPage(p),
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: p == page ? AppTheme.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: p == page ? AppTheme.primary : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Text(
+                  '$p',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: p == page ? FontWeight.bold : FontWeight.w500,
+                    color: p == page ? Colors.white : AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ],
+
+        const SizedBox(width: 2),
+        // Tombol Berikutnya
+        OutlinedButton(
+          key: const Key('cashbook_pagination_next'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            side: BorderSide(color: canNext ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
+            foregroundColor: canNext ? AppTheme.textPrimary : Colors.grey.shade400,
+          ),
+          onPressed: canNext ? () => _goToPage(page + 1) : null,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Berikutnya', style: TextStyle(fontSize: 12)),
+              SizedBox(width: 2),
+              Icon(Icons.chevron_right_rounded, size: 16),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

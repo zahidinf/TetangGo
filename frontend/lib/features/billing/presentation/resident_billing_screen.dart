@@ -10,7 +10,9 @@ import 'widgets/payment_flow_dialog.dart';
 import 'widgets/payment_proof_dialog.dart';
 
 class ResidentBillingScreen extends StatefulWidget {
-  const ResidentBillingScreen({super.key});
+  final VoidCallback? onBillUpdated;
+
+  const ResidentBillingScreen({super.key, this.onBillUpdated});
 
   @override
   State<ResidentBillingScreen> createState() => _ResidentBillingScreenState();
@@ -30,10 +32,13 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
   }
 
   Future<void> _fetchData() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final hasExistingData = _bills.isNotEmpty || _setting != null;
+    if (!hasExistingData) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final repo = context.read<BillingRepository>();
@@ -85,7 +90,10 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
         bill: bill,
         setting: _setting!,
         repository: context.read<BillingRepository>(),
-        onPaymentSuccess: _fetchData,
+        onPaymentSuccess: () {
+          _fetchData();
+          widget.onBillUpdated?.call();
+        },
       ),
     );
   }
@@ -126,7 +134,7 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
   Widget build(BuildContext context) {
     final user = context.read<AuthBloc>().state.user;
 
-    if (_isLoading) {
+    if (_isLoading && _bills.isEmpty && _setting == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
