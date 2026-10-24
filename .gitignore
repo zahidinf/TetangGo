@@ -3,6 +3,12 @@
 *.env
 !.env.example
 
+# Temporary & Logs
+*.log
+*.tmp
+tmp/
+coverage/
+
 # Binaries & Executables
 *.exe
 *.exe~
