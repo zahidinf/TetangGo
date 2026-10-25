@@ -97,6 +97,8 @@ class UserModel extends Equatable {
         return 'Bendahara';
       case 'SECRETARY':
         return 'Sekretaris';
+      case 'SECURITY':
+        return 'Petugas Keamanan';
       case 'RESIDENT':
       case 'WARGA':
       default:
@@ -108,30 +110,50 @@ class UserModel extends Equatable {
   bool get isActive => status == 'active';
 
   // Role Checks
-  bool get isAdmin => role.toUpperCase() == 'ADMIN' || role.toLowerCase() == 'admin_rt';
+  bool get isAdmin =>
+      role.toUpperCase() == 'ADMIN' || role.toLowerCase() == 'admin_rt';
   bool get isChairperson => role.toUpperCase() == 'CHAIRPERSON';
   bool get isViceChairperson => role.toUpperCase() == 'VICE_CHAIRPERSON';
   bool get isTreasurer => role.toUpperCase() == 'TREASURER';
   bool get isSecretary => role.toUpperCase() == 'SECRETARY';
-  bool get isResident => role.toUpperCase() == 'RESIDENT' || role.toLowerCase() == 'warga';
+  bool get isSecurity => role.toUpperCase() == 'SECURITY';
+  bool get isResident =>
+      role.toUpperCase() == 'RESIDENT' || role.toLowerCase() == 'warga';
 
   // Permission Checks based on Authorization Matrix
   bool get canManageRoles => isAdmin || isChairperson || isViceChairperson;
   bool get canAccessLeadership => isAdmin || isChairperson || isViceChairperson;
-  bool get canAccessBillingAdmin => isAdmin || isChairperson || isViceChairperson || isTreasurer;
-  bool get canAccessCashbookAdmin => isAdmin || isChairperson || isViceChairperson || isTreasurer;
-  bool get canAccessVerificationAdmin => isAdmin || isChairperson || isViceChairperson || isSecretary;
-  bool get canAccessHousesAdmin => isAdmin || isChairperson || isViceChairperson || isSecretary;
-  bool get canAccessSecurityGuestbookAdmin => isAdmin || isChairperson || isViceChairperson || isSecretary;
+  bool get canAccessSecurityAdmin => canAccessLeadership;
+  bool get canAccessBillingAdmin =>
+      isAdmin || isChairperson || isViceChairperson || isTreasurer;
+  bool get canAccessCashbookAdmin =>
+      isAdmin || isChairperson || isViceChairperson || isTreasurer;
+  bool get canAccessVerificationAdmin =>
+      isAdmin || isChairperson || isViceChairperson || isSecretary;
+  bool get canAccessHousesAdmin =>
+      isAdmin || isChairperson || isViceChairperson || isSecretary;
+  bool get canAccessSecurityGuestbookAdmin =>
+      isAdmin || isChairperson || isViceChairperson || isSecretary;
 
   // Has any administrative portal capability
   bool get hasAdminAccess =>
-      isAdmin || isChairperson || isViceChairperson || isTreasurer || isSecretary;
+      isAdmin ||
+      isChairperson ||
+      isViceChairperson ||
+      isTreasurer ||
+      isSecretary;
+
+  // Security operational capability
+  bool get canAccessSecurityStandby => isSecurity;
+  bool get canAccessFullEmergencyHistory => hasAdminAccess || isSecurity;
 
   // Housing-based resident Iuran eligibility: Any account mapped to a housing record
   bool get hasHousingAssociation =>
       (houseId != null && houseId! > 0) ||
-      (houseBlock != null && houseBlock!.trim().isNotEmpty && houseNumber != null && houseNumber!.trim().isNotEmpty);
+      (houseBlock != null &&
+          houseBlock!.trim().isNotEmpty &&
+          houseNumber != null &&
+          houseNumber!.trim().isNotEmpty);
 
   bool get canAccessResidentIuran => hasHousingAssociation;
 

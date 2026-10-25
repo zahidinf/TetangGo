@@ -25,8 +25,8 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Requested-With, X-Idempotency-Key",
+		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
 	}))
 
 	// Static files serving (payment proofs, profile photos, etc)
@@ -79,6 +79,14 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			string(entity.RoleTreasurer),
 			string(entity.RoleSecretary),
 		}
+		roleCashbookAccess := []string{
+			string(entity.RoleAdmin),
+			string(entity.RoleChairperson),
+			string(entity.RoleViceChairperson),
+			string(entity.RoleTreasurer),
+			string(entity.RoleSecretary),
+			string(entity.RoleResident),
+		}
 
 		// Admin Endpoints with Granular RBAC
 		adminGroup := v1.Group("/admin", authMid.RequireAuth())
@@ -94,6 +102,18 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			adminGroup.Post("/announcements", authMid.RequireRole(roleLeadership...), appHandler.AdminCreateAnnouncement)
 			adminGroup.Put("/announcements/:id", authMid.RequireRole(roleLeadership...), appHandler.AdminUpdateAnnouncement)
 			adminGroup.Delete("/announcements/:id", authMid.RequireRole(roleLeadership...), appHandler.AdminDeleteAnnouncement)
+
+			// Sprint 4: Security Account & Assignment Management (Leadership)
+			adminGroup.Get("/security/users", authMid.RequireRole(roleLeadership...), appHandler.AdminListSecurityUsers)
+			adminGroup.Post("/security/users", authMid.RequireRole(roleLeadership...), appHandler.AdminCreateSecurityUser)
+			adminGroup.Put("/security/users/:id/status", authMid.RequireRole(roleLeadership...), appHandler.AdminSetSecurityStatus)
+
+			adminGroup.Get("/security/assignments", authMid.RequireRole(roleLeadership...), appHandler.AdminListSecurityAssignments)
+			adminGroup.Post("/security/assignments", authMid.RequireRole(roleLeadership...), appHandler.AdminCreateSecurityAssignment)
+			adminGroup.Put("/security/assignments/:id/status", authMid.RequireRole(roleLeadership...), appHandler.AdminUpdateSecurityAssignmentStatus)
+			adminGroup.Delete("/security/assignments/:id", authMid.RequireRole(roleLeadership...), appHandler.AdminRevokeSecurityAssignment)
+
+			adminGroup.Get("/neighborhoods", authMid.RequireRole(roleLeadership...), appHandler.ListNeighborhoods)
 
 			// 2. Secretary Management (ADMIN, CHAIRPERSON, VICE_CHAIRPERSON, SECRETARY)
 			// Verifikasi Warga
@@ -144,8 +164,8 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			adminGroup.Delete("/cashbook/transactions/:id", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminDeleteCashTransaction)
 		}
 
-		// Sprint 3: Cashbook (Authenticated Users - Warga & Admin)
-		cashbookGroup := v1.Group("/cashbook", authMid.RequireAuth())
+		// Sprint 3: Cashbook (Authenticated Users - Warga & Pengurus, Security Excluded)
+		cashbookGroup := v1.Group("/cashbook", authMid.RequireAuth(), authMid.RequireRole(roleCashbookAccess...))
 		{
 			cashbookGroup.Get("/summary", appHandler.GetCashbookSummary)
 			cashbookGroup.Get("/transactions", appHandler.GetCashbookTransactions)
@@ -169,13 +189,54 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			housesGroup.Post("/bulk-delete", appHandler.BulkDeleteHouses)
 		}
 
-		// Resident Billing & Payments (Sprint 2)
-		residentGroup := v1.Group("/resident", authMid.RequireAuth())
+		// Resident Billing & Payments (Sprint 2 & Cumulative Access - Any account with valid housing mapping)
+		residentGroup := v1.Group("/resident", authMid.RequireAuth(), authMid.RequireHouseMapping())
 		{
 			residentGroup.Get("/bills", appHandler.GetResidentBills)
 			residentGroup.Post("/bills/initiate", appHandler.InitiateResidentBill)
 			residentGroup.Get("/bills/:id", appHandler.GetResidentBillDetail)
 			residentGroup.Post("/bills/:id/pay", appHandler.SubmitBillPayment)
+		}
+
+		// Sprint 4 (US-4.3): Realtime WebSocket Engine for Security Alarm Distribution
+		v1.Get("/incidents/ws", appHandler.HandleSecurityAlarmsWSUpgrade, appHandler.HandleSecurityAlarmsWS())
+		v1.Get("/ws/security/alarms", appHandler.HandleSecurityAlarmsWSUpgrade, appHandler.HandleSecurityAlarmsWS())
+
+		// Sprint 4: Emergency Incidents (Laporan Darurat & Penanganan)
+		incidentsGroup := v1.Group("/incidents", authMid.RequireAuth())
+		{
+			// Pelaporan insiden darurat oleh warga terhubung hunian atau pengurus/admin
+			incidentsGroup.Post("/", authMid.RequireHouseOrRole(roleManagement...), appHandler.ReportIncident)
+
+			// Monitoring insiden aktif khusus security
+			incidentsGroup.Get("/active", authMid.RequireRole(string(entity.RoleSecurity)), appHandler.GetActiveIncidents)
+
+			// Badge counter kejadian aktif
+			incidentsGroup.Get("/active-count", appHandler.GetActiveIncidentCount)
+
+			// Monitoring dan riwayat insiden
+			incidentsGroup.Get("/", appHandler.GetIncidents)
+			incidentsGroup.Get("/:id", appHandler.GetIncidentDetail)
+			incidentsGroup.Get("/:id/logs", appHandler.GetIncidentLogs)
+
+			// Koreksi laporan oleh Admin (dengan audit trail)
+			incidentsGroup.Patch("/:id/correct", authMid.RequireRole(string(entity.RoleAdmin)), appHandler.CorrectIncident)
+			incidentsGroup.Put("/:id/correct", authMid.RequireRole(string(entity.RoleAdmin)), appHandler.CorrectIncident)
+
+			// Respon penanganan oleh petugas security (Acknowledge / Respond)
+			incidentsGroup.Post("/:id/acknowledge", authMid.RequireRole(string(entity.RoleSecurity)), appHandler.AcknowledgeIncident)
+			incidentsGroup.Post("/:id/respond", authMid.RequireRole(string(entity.RoleSecurity)), appHandler.RespondIncident)
+
+			// Penyelesaian insiden oleh petugas security atau pengurus leadership
+			incidentsGroup.Post("/:id/resolve", authMid.RequireRole(string(entity.RoleSecurity), string(entity.RoleAdmin), string(entity.RoleChairperson), string(entity.RoleViceChairperson)), appHandler.ResolveIncident)
+		}
+
+		// Sprint 4: Security Operational
+		securityGroup := v1.Group("/security", authMid.RequireAuth(), authMid.RequireRole(string(entity.RoleSecurity)))
+		{
+			securityGroup.Get("/my-assignments", appHandler.GetMySecurityAssignments)
+			securityGroup.Post("/device-token", appHandler.RegisterSecurityDeviceToken)
+			securityGroup.Post("/device-token/revoke", appHandler.RevokeSecurityDeviceToken)
 		}
 
 		// Profile, Family & Vehicles (Authenticated User)

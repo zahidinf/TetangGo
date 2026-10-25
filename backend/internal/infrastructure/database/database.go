@@ -137,8 +137,8 @@ func RunMigrations(db *sql.DB, migrationsDir string) error {
 }
 
 func SeedInitialData(db *sql.DB) error {
-	// Roles: ADMIN, CHAIRPERSON, VICE_CHAIRPERSON, TREASURER, SECRETARY, RESIDENT
-	roles := []string{"ADMIN", "CHAIRPERSON", "VICE_CHAIRPERSON", "TREASURER", "SECRETARY", "RESIDENT"}
+	// Roles: ADMIN, CHAIRPERSON, VICE_CHAIRPERSON, TREASURER, SECRETARY, RESIDENT, SECURITY
+	roles := []string{"ADMIN", "CHAIRPERSON", "VICE_CHAIRPERSON", "TREASURER", "SECRETARY", "RESIDENT", "SECURITY"}
 	for _, role := range roles {
 		_, err := db.Exec("INSERT INTO roles (name) VALUES ($1) ON CONFLICT (name) DO NOTHING;", role)
 		if err != nil {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -13,9 +14,13 @@ import '../../billing/domain/models/billing_models.dart';
 import '../../billing/presentation/resident_billing_screen.dart';
 import '../../cashbook/presentation/cashbook_screen.dart';
 import '../../profile/presentation/resident_profile_screen.dart';
+import '../../panic/presentation/emergency_monitoring_screen.dart';
+import '../../panic/presentation/widgets/panic_button_fab.dart';
 import '../../resident_management/data/resident_repository.dart';
 import '../../resident_management/presentation/houses_management_view.dart';
 import '../../resident_management/presentation/resident_verification_view.dart';
+import '../../security/data/security_repository.dart';
+import '../../security/presentation/security_management_view.dart';
 import 'widgets/about_tetanggo_dialog.dart';
 import 'widgets/dashboard_content_body.dart';
 import 'widgets/dashboard_sidebar.dart';
@@ -35,11 +40,43 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   int _pendingCount = 0;
   int _pendingBillsCount = 0;
   int _residentUnpaidBillsCount = 0;
+  int? _activeIncidentsCount;
+  Timer? _incidentCountTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchPendingCount(skipResidentBills: true);
+    _startIncidentCountPolling();
+  }
+
+  void _startIncidentCountPolling() {
+    _incidentCountTimer?.cancel();
+    _incidentCountTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _fetchActiveIncidentsCount();
+    });
+  }
+
+  Future<void> _fetchActiveIncidentsCount() async {
+    if (!mounted) return;
+    final user = context.read<AuthBloc>().state.user;
+    if (user == null) return;
+    try {
+      final securityRepo = context.read<SecurityRepository>();
+      final activeCount = await securityRepo.getActiveIncidentCount();
+      if (mounted && _activeIncidentsCount != activeCount) {
+        setState(() {
+          _activeIncidentsCount = activeCount;
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _incidentCountTimer?.cancel();
+    _incidentCountTimer = null;
+    super.dispose();
   }
 
   Future<void> _fetchPendingCount({bool skipResidentBills = false}) async {
@@ -48,6 +85,7 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
       try {
         final residentRepo = context.read<ResidentRepository>();
         final billingRepo = context.read<BillingRepository>();
+        final securityRepo = context.read<SecurityRepository>();
 
         final futures = <Future<dynamic>>[];
         if (user.hasAdminAccess && user.canAccessVerificationAdmin) {
@@ -68,17 +106,24 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           futures.add(Future.value(<BillModel>[]));
         }
 
+        futures.add(securityRepo.getActiveIncidentCount());
+
         final results = await Future.wait(futures);
 
         if (mounted) {
           final users = results[0] as List;
           final bills = results[1] as List;
           final residentBills = results[2] as List;
-          final unpaidCount = residentBills.where((b) => b is BillModel && b.isUnpaid).length;
+          final activeCount = results[3] as int?;
+          final unpaidCount =
+              residentBills.where((b) => b is BillModel && b.isUnpaid).length;
 
           setState(() {
             _pendingCount = users.length;
             _pendingBillsCount = bills.length;
+            if (activeCount != null) {
+              _activeIncidentsCount = activeCount;
+            }
             if (!skipResidentBills) {
               _residentUnpaidBillsCount = unpaidCount;
             }
@@ -150,9 +195,8 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
     _visitedTabKeys.add(activeItem.keyId);
 
     final currentIndex = items.indexWhere((it) => it.keyId == activeItem.keyId);
-    final clampedIndex = (currentIndex >= 0 && currentIndex < items.length)
-        ? currentIndex
-        : 0;
+    final clampedIndex =
+        (currentIndex >= 0 && currentIndex < items.length) ? currentIndex : 0;
 
     return IndexedStack(
       index: clampedIndex,
@@ -161,15 +205,16 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           _visitedTabKeys.contains(items[i].keyId)
               ? KeyedSubtree(
                   key: ValueKey(items[i].keyId),
-                  child: _buildTabWidget(items[i].keyId, user, items, isDesktop),
+                  child:
+                      _buildTabWidget(items[i].keyId, user, items, isDesktop),
                 )
               : const SizedBox.shrink(),
       ],
     );
   }
 
-  Widget _buildTabWidget(
-      String key, UserModel? user, List<SidebarItemData> items, bool isDesktop) {
+  Widget _buildTabWidget(String key, UserModel? user,
+      List<SidebarItemData> items, bool isDesktop) {
     switch (key) {
       case 'dashboard':
         return DashboardContentBody(
@@ -186,6 +231,11 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
         return ResidentVerificationView(onQueueUpdated: _fetchPendingCount);
       case 'houses':
         return const HousesManagementView();
+      case 'security_management':
+        if (!(user?.canAccessSecurityAdmin ?? false)) {
+          return _buildFeaturePlaceholder('Akses Terbatas: Hanya Pengurus');
+        }
+        return const SecurityManagementView();
       case 'profile':
         return const ResidentProfileScreen();
       case 'billing':
@@ -204,7 +254,13 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
       case 'guestbook':
         return _buildFeaturePlaceholder('Buku Tamu Pos Satpam');
       case 'panic':
-        return _buildFeaturePlaceholder('Panic Alert Siaga');
+        return EmergencyMonitoringScreen(
+          user: user,
+          onIncidentCountChanged: () {
+            _fetchActiveIncidentsCount();
+            _fetchPendingCount(skipResidentBills: true);
+          },
+        );
       default:
         return _buildFeaturePlaceholder(key);
     }
@@ -220,7 +276,7 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
+                color: AppTheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -260,6 +316,7 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           pendingCount: _pendingCount,
           pendingBillsCount: _pendingBillsCount,
           residentUnpaidBillsCount: _residentUnpaidBillsCount,
+          activeIncidentsCount: _activeIncidentsCount,
         );
 
         return LayoutBuilder(
@@ -340,10 +397,19 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
           pendingCount: _pendingCount,
           pendingBillsCount: _pendingBillsCount,
           residentUnpaidBillsCount: _residentUnpaidBillsCount,
+          activeIncidentsCount: _activeIncidentsCount,
           onLogout: _onLogoutPressed,
         ),
       ),
       body: _buildContent(user, items, false),
+      floatingActionButton:
+          user != null && (user.isResident || user.hasHousingAssociation)
+              ? PanicButtonFab(
+                  user: user,
+                  onAlarmSent: _fetchActiveIncidentsCount,
+                )
+              : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _getBottomNavIndex(items),
         selectedItemColor: AppTheme.primaryDark,
@@ -399,6 +465,14 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
+      floatingActionButton:
+          user != null && (user.isResident || user.hasHousingAssociation)
+              ? PanicButtonFab(
+                  user: user,
+                  onAlarmSent: _fetchActiveIncidentsCount,
+                )
+              : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Row(
         children: [
           // Persistent Left Sidebar
@@ -416,6 +490,7 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
             pendingCount: _pendingCount,
             pendingBillsCount: _pendingBillsCount,
             residentUnpaidBillsCount: _residentUnpaidBillsCount,
+            activeIncidentsCount: _activeIncidentsCount,
             onLogout: _onLogoutPressed,
           ),
           // Main Body with Top Header Bar
@@ -498,7 +573,8 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
                           const SizedBox(width: 8),
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: AppTheme.primary.withOpacity(0.12),
+                            backgroundColor:
+                                AppTheme.primary.withValues(alpha: 0.12),
                             child: Text(
                               (user?.name.isNotEmpty ?? false)
                                   ? user!.name.substring(0, 1).toUpperCase()

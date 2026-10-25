@@ -10,13 +10,17 @@ import (
 	"strings"
 	"time"
 	"tetanggo-backend/internal/domain/entity"
+	"tetanggo-backend/internal/domain/repository"
+	"tetanggo-backend/internal/infrastructure/realtime"
 	"tetanggo-backend/internal/usecase/announcement"
 	"tetanggo-backend/internal/usecase/auth"
 	"tetanggo-backend/internal/usecase/billing"
 	"tetanggo-backend/internal/usecase/cashbook"
 	"tetanggo-backend/internal/usecase/dashboard"
 	"tetanggo-backend/internal/usecase/house"
+	"tetanggo-backend/internal/usecase/incident"
 	"tetanggo-backend/internal/usecase/profile"
+	"tetanggo-backend/internal/usecase/security"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -31,6 +35,13 @@ type AppHandler struct {
 	dashboardUseCase    *dashboard.DashboardUseCase
 	cashbookUseCase     *cashbook.CashbookUseCase
 	announcementUseCase *announcement.AnnouncementUseCase
+	securityUseCase     *security.SecurityUseCase
+	incidentUseCase     *incident.IncidentUseCase
+	realtimeHub         *realtime.Hub
+	tokenService        *auth.TokenService
+	secRepo             repository.SecurityRepository
+	userRepo            repository.UserRepository
+	deviceTokenRepo     repository.SecurityDeviceTokenRepository
 }
 
 func NewAppHandler(
@@ -42,6 +53,8 @@ func NewAppHandler(
 	dashboardUseCase *dashboard.DashboardUseCase,
 	cashbookUseCase *cashbook.CashbookUseCase,
 	announcementUseCase *announcement.AnnouncementUseCase,
+	securityUseCase *security.SecurityUseCase,
+	incidentUseCase *incident.IncidentUseCase,
 ) *AppHandler {
 	return &AppHandler{
 		db:                  db,
@@ -52,6 +65,8 @@ func NewAppHandler(
 		dashboardUseCase:    dashboardUseCase,
 		cashbookUseCase:     cashbookUseCase,
 		announcementUseCase: announcementUseCase,
+		securityUseCase:     securityUseCase,
+		incidentUseCase:     incidentUseCase,
 	}
 }
 
@@ -123,7 +138,7 @@ func (h *AppHandler) Register(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"message": "Pendaftaran berhasil, menunggu verifikasi pengurus RT",
+		"message": "Pendaftaran berhasil, menunggu verifikasi pengurus Cluster",
 		"data":    user,
 	})
 }
@@ -1484,9 +1499,9 @@ func (h *AppHandler) SubmitBillPayment(c *fiber.Ctx) error {
 		})
 	}
 
-	successMsg := "Bukti transfer berhasil dikirim. Menunggu verifikasi pengurus RT."
+	successMsg := "Bukti transfer berhasil dikirim. Menunggu verifikasi pengurus Cluster."
 	if paymentMethod == string(entity.PaymentMethodCash) {
-		successMsg = "Deklarasi pembayaran tunai berhasil dikirim. Menunggu verifikasi dan konfirmasi pengurus RT."
+		successMsg = "Deklarasi pembayaran tunai berhasil dikirim. Menunggu verifikasi dan konfirmasi pengurus Cluster."
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -2243,6 +2258,725 @@ func (h *AppHandler) AdminDeleteAnnouncement(c *fiber.Ctx) error {
 		"message": "Pengumuman berhasil dihapus",
 	})
 }
+
+// ----------------------------------------------------
+// SPRINT 4 (US-4.1): SECURITY MANAGEMENT HANDLERS
+// ----------------------------------------------------
+
+// GET /api/v1/admin/security/users
+func (h *AppHandler) AdminListSecurityUsers(c *fiber.Ctx) error {
+	users, err := h.securityUseCase.AdminListSecurityUsers(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    users,
+	})
+}
+
+// POST /api/v1/admin/security/users
+func (h *AppHandler) AdminCreateSecurityUser(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+
+	var input security.CreateSecurityUserInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON tidak valid",
+		})
+	}
+
+	user, err := h.securityUseCase.AdminCreateSecurityUser(c.Context(), callerRole, input)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == security.ErrUnauthorizedOperation {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Akun petugas keamanan berhasil dibuat",
+		"data":    user,
+	})
+}
+
+// PUT /api/v1/admin/security/users/:id/status
+func (h *AppHandler) AdminSetSecurityStatus(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengguna tidak valid",
+		})
+	}
+
+	type statusInput struct {
+		Status string `json:"status"`
+	}
+	var input statusInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON tidak valid",
+		})
+	}
+
+	if err := h.securityUseCase.AdminSetSecurityStatus(c.Context(), callerRole, id, input.Status); err != nil {
+		status := fiber.StatusBadRequest
+		if err == security.ErrUnauthorizedOperation {
+			status = fiber.StatusForbidden
+		} else if err == security.ErrSecurityUserNotFound {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Status akun security berhasil diperbarui",
+	})
+}
+
+// GET /api/v1/security/my-assignments
+func (h *AppHandler) GetMySecurityAssignments(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	activeOnly := true
+	list, err := h.securityUseCase.ListAssignments(c.Context(), &callerID, nil, &activeOnly)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    list,
+	})
+}
+
+// GET /api/v1/admin/security/assignments
+func (h *AppHandler) AdminListSecurityAssignments(c *fiber.Ctx) error {
+	var userID *int64
+	if uStr := c.Query("user_id"); uStr != "" {
+		if val, err := strconv.ParseInt(uStr, 10, 64); err == nil {
+			userID = &val
+		}
+	}
+
+	var neighborhoodID *int64
+	if nStr := c.Query("neighborhood_id"); nStr != "" {
+		if val, err := strconv.ParseInt(nStr, 10, 64); err == nil {
+			neighborhoodID = &val
+		}
+	}
+
+	var activeOnly *bool
+	if aStr := c.Query("active_only"); aStr != "" {
+		val := aStr == "true" || aStr == "1"
+		activeOnly = &val
+	}
+
+	list, err := h.securityUseCase.ListAssignments(c.Context(), userID, neighborhoodID, activeOnly)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    list,
+	})
+}
+
+// POST /api/v1/admin/security/assignments
+func (h *AppHandler) AdminCreateSecurityAssignment(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	var input security.AssignSecurityInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON tidak valid",
+		})
+	}
+
+	assignment, err := h.securityUseCase.AssignSecurity(c.Context(), callerID, callerRole, input)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == security.ErrUnauthorizedOperation {
+			status = fiber.StatusForbidden
+		} else if err == security.ErrSecurityUserNotFound || err == security.ErrNeighborhoodNotFound {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Petugas keamanan berhasil ditugaskan ke lingkungan",
+		"data":    assignment,
+	})
+}
+
+// PUT /api/v1/admin/security/assignments/:id/status
+func (h *AppHandler) AdminUpdateSecurityAssignmentStatus(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID penugasan tidak valid",
+		})
+	}
+
+	type statusInput struct {
+		IsActive bool   `json:"is_active"`
+		Notes    string `json:"notes"`
+	}
+	var input statusInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON tidak valid",
+		})
+	}
+
+	if err := h.securityUseCase.UpdateAssignmentStatus(c.Context(), callerRole, id, input.IsActive, input.Notes); err != nil {
+		status := fiber.StatusBadRequest
+		if err == security.ErrUnauthorizedOperation {
+			status = fiber.StatusForbidden
+		} else if err == security.ErrAssignmentNotFound {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Status penugasan security berhasil diperbarui",
+	})
+}
+
+// DELETE /api/v1/admin/security/assignments/:id
+func (h *AppHandler) AdminRevokeSecurityAssignment(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID penugasan tidak valid",
+		})
+	}
+
+	type revokeInput struct {
+		Notes string `json:"notes"`
+	}
+	var input revokeInput
+	_ = c.BodyParser(&input)
+
+	if err := h.securityUseCase.RevokeAssignment(c.Context(), callerID, callerRole, id, input.Notes); err != nil {
+		status := fiber.StatusBadRequest
+		if err == security.ErrUnauthorizedOperation {
+			status = fiber.StatusForbidden
+		} else if err == security.ErrAssignmentNotFound {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Penugasan security berhasil dicabut",
+	})
+}
+
+// GET /api/v1/admin/neighborhoods
+func (h *AppHandler) ListNeighborhoods(c *fiber.Ctx) error {
+	list, err := h.securityUseCase.ListNeighborhoods(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    list,
+	})
+}
+
+// ----------------------------------------------------
+// SPRINT 4 (US-4.1): EMERGENCY INCIDENT HANDLERS
+// ----------------------------------------------------
+
+// POST /api/v1/incidents
+func (h *AppHandler) ReportIncident(c *fiber.Ctx) error {
+	reporterID, _ := c.Locals("user_id").(int64)
+
+	var input incident.ReportIncidentInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON insiden tidak valid",
+		})
+	}
+
+	inc, err := h.incidentUseCase.ReportIncident(c.Context(), reporterID, input)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrUserInactive {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Laporan insiden darurat berhasil dibuat",
+		"data":    inc,
+	})
+}
+
+// GET /api/v1/incidents/active
+func (h *AppHandler) GetActiveIncidents(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+
+	list, err := h.incidentUseCase.GetActiveIncidentsForSecurity(c.Context(), callerID)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrNoActiveSecurityAssignment || err == incident.ErrIncidentAccessForbidden || err == incident.ErrUserInactive {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    list,
+	})
+}
+
+// GET /api/v1/incidents/active-count
+func (h *AppHandler) GetActiveIncidentCount(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	count, err := h.incidentUseCase.GetActiveIncidentCount(c.Context(), callerID, callerRole)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrIncidentAccessForbidden || err == incident.ErrUserInactive {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data": fiber.Map{
+			"active_count": count,
+		},
+	})
+}
+
+// GET /api/v1/incidents
+func (h *AppHandler) GetIncidents(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+
+	filter := entity.IncidentFilter{
+		Category:  c.Query("category"),
+		Status:    c.Query("status"),
+		StartDate: c.Query("start_date"),
+		EndDate:   c.Query("end_date"),
+		Page:      page,
+		Limit:     limit,
+	}
+
+	if nIDStr := c.Query("neighborhood_id"); nIDStr != "" {
+		if val, err := strconv.ParseInt(nIDStr, 10, 64); err == nil {
+			filter.NeighborhoodID = &val
+		}
+	}
+
+	result, err := h.incidentUseCase.GetIncidents(c.Context(), callerID, callerRole, filter)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrNoActiveSecurityAssignment || err == incident.ErrIncidentAccessForbidden || err == incident.ErrUserInactive {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    result.Incidents,
+		"meta": fiber.Map{
+			"total":       result.Total,
+			"page":        result.Page,
+			"limit":       result.Limit,
+			"total_pages": result.TotalPages,
+		},
+	})
+}
+
+// GET /api/v1/incidents/:id
+func (h *AppHandler) GetIncidentDetail(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID insiden tidak valid",
+		})
+	}
+
+	inc, err := h.incidentUseCase.GetIncidentDetail(c.Context(), callerID, callerRole, id)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrIncidentNotFound {
+			status = fiber.StatusNotFound
+		} else if err == incident.ErrIncidentAccessForbidden || err == incident.ErrUserInactive {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    inc,
+	})
+}
+
+// POST /api/v1/incidents/:id/acknowledge
+func (h *AppHandler) AcknowledgeIncident(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID insiden tidak valid",
+		})
+	}
+
+	var input incident.AcknowledgeIncidentInput
+	_ = c.BodyParser(&input)
+
+	inc, err := h.incidentUseCase.AcknowledgeIncident(c.Context(), callerID, id, input.Notes)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrIncidentNotFound {
+			status = fiber.StatusNotFound
+		} else if err == incident.ErrSecurityNotAssignedToComplex || err == incident.ErrIncidentAccessForbidden || err == incident.ErrUserInactive {
+			status = fiber.StatusForbidden
+		} else if err == incident.ErrIncidentAlreadyAcknowledged || err == incident.ErrIncidentAlreadyHandled {
+			status = fiber.StatusConflict
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Petugas keamanan berhasil mengakui dan mengambil penanganan insiden",
+		"data":    inc,
+	})
+}
+
+// POST /api/v1/incidents/:id/respond (alias for backward compatibility)
+func (h *AppHandler) RespondIncident(c *fiber.Ctx) error {
+	return h.AcknowledgeIncident(c)
+}
+
+// POST /api/v1/incidents/:id/resolve
+func (h *AppHandler) ResolveIncident(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID insiden tidak valid",
+		})
+	}
+
+	var input incident.ResolveIncidentInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON tidak valid",
+		})
+	}
+
+	inc, err := h.incidentUseCase.ResolveIncident(c.Context(), callerID, callerRole, id, input.ResolutionNotes)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrIncidentNotFound {
+			status = fiber.StatusNotFound
+		} else if err == incident.ErrIncidentAccessForbidden || err == incident.ErrUserInactive || err == incident.ErrCannotModifyOthersIncident {
+			status = fiber.StatusForbidden
+		} else if err == incident.ErrIncidentAlreadyResolved || err == incident.ErrIncidentAlreadyHandled {
+			status = fiber.StatusConflict
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Insiden berhasil diselesaikan",
+		"data":    inc,
+	})
+}
+
+// GET /api/v1/incidents/:id/logs
+func (h *AppHandler) GetIncidentLogs(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID insiden tidak valid",
+		})
+	}
+
+	logs, err := h.incidentUseCase.GetIncidentLogs(c.Context(), callerID, callerRole, id)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrIncidentNotFound {
+			status = fiber.StatusNotFound
+		} else if err == incident.ErrIncidentAccessForbidden {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    logs,
+	})
+}
+
+// PATCH /api/v1/incidents/:id/correct
+func (h *AppHandler) CorrectIncident(c *fiber.Ctx) error {
+	adminID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID insiden tidak valid",
+		})
+	}
+
+	var req incident.CorrectIncidentInput
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Format request tidak valid",
+		})
+	}
+
+	corrected, err := h.incidentUseCase.CorrectIncident(c.Context(), adminID, callerRole, id, req)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err == incident.ErrIncidentAccessForbidden || err == incident.ErrUserInactive {
+			status = fiber.StatusForbidden
+		} else if err == incident.ErrIncidentNotFound {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Laporan insiden berhasil dikoreksi",
+		"data":    corrected,
+	})
+}
+
+// ----------------------------------------------------
+// SPRINT 4 US-4.7: SECURITY DEVICE TOKENS (FCM)
+// ----------------------------------------------------
+
+type RegisterDeviceTokenInput struct {
+	DeviceID    string `json:"device_id"`
+	DeviceToken string `json:"device_token"`
+	Platform    string `json:"platform"`
+}
+
+type RevokeDeviceTokenInput struct {
+	DeviceID string `json:"device_id"`
+}
+
+// POST /api/v1/security/device-token
+func (h *AppHandler) RegisterSecurityDeviceToken(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	var input RegisterDeviceTokenInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON tidak valid",
+		})
+	}
+
+	cleanDeviceID := strings.TrimSpace(input.DeviceID)
+	cleanToken := strings.TrimSpace(input.DeviceToken)
+	if cleanDeviceID == "" || cleanToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "device_id dan device_token wajib diisi",
+		})
+	}
+
+	platform := strings.ToLower(strings.TrimSpace(input.Platform))
+	if platform != "android" && platform != "ios" && platform != "web" {
+		platform = "android"
+	}
+
+	if h.deviceTokenRepo == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Device token repository belum dikonfigurasi",
+		})
+	}
+
+	sdt := &entity.SecurityDeviceToken{
+		UserID:      callerID,
+		DeviceID:    cleanDeviceID,
+		DeviceToken: cleanToken,
+		Platform:    platform,
+	}
+
+	if err := h.deviceTokenRepo.UpsertDeviceToken(c.Context(), sdt); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal menyimpan token perangkat: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Token perangkat security berhasil didaftarkan",
+		"data": fiber.Map{
+			"user_id":   callerID,
+			"device_id": cleanDeviceID,
+			"platform":  platform,
+		},
+	})
+}
+
+// POST /api/v1/security/device-token/revoke
+func (h *AppHandler) RevokeSecurityDeviceToken(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	var input RevokeDeviceTokenInput
+	_ = c.BodyParser(&input)
+
+	cleanDeviceID := strings.TrimSpace(input.DeviceID)
+	if cleanDeviceID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "device_id wajib diisi",
+		})
+	}
+
+	if h.deviceTokenRepo == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Device token repository belum dikonfigurasi",
+		})
+	}
+
+	if err := h.deviceTokenRepo.RevokeDeviceToken(c.Context(), callerID, cleanDeviceID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal mencabut token perangkat: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Token perangkat security berhasil dicabut",
+	})
+}
+
 
 
 

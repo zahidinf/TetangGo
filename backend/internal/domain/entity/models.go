@@ -3,6 +3,8 @@ package entity
 import (
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type RoleName string
@@ -14,6 +16,7 @@ const (
 	RoleTreasurer       RoleName = "TREASURER"
 	RoleSecretary       RoleName = "SECRETARY"
 	RoleResident        RoleName = "RESIDENT"
+	RoleSecurity        RoleName = "SECURITY"
 )
 
 // IsValidOrganizationalRole returns true if the role can be assigned/revoked in the organizational flow
@@ -41,6 +44,8 @@ func RoleDisplayName(role string) string {
 		return "Sekretaris"
 	case RoleResident:
 		return "Warga"
+	case RoleSecurity:
+		return "Petugas Keamanan"
 	default:
 		return role
 	}
@@ -60,15 +65,17 @@ const (
 )
 
 type House struct {
-	ID            int64   `json:"id"`
-	Block         string  `json:"block"`
-	HouseNumber   string  `json:"house_number"`
-	Status        string  `json:"status"`
-	ResidentName  *string `json:"resident_name,omitempty"`
-	ResidentPhone *string `json:"resident_phone,omitempty"`
-	FamilyCount   int     `json:"family_count"`
-	TotalOccupants int    `json:"total_occupants"`
-	VehicleCount  int     `json:"vehicle_count"`
+	ID             int64         `json:"id"`
+	Block          string        `json:"block"`
+	HouseNumber    string        `json:"house_number"`
+	Status         string        `json:"status"`
+	NeighborhoodID *int64        `json:"neighborhood_id,omitempty"`
+	Neighborhood   *Neighborhood `json:"neighborhood,omitempty"`
+	ResidentName   *string       `json:"resident_name,omitempty"`
+	ResidentPhone  *string       `json:"resident_phone,omitempty"`
+	FamilyCount    int           `json:"family_count"`
+	TotalOccupants int           `json:"total_occupants"`
+	VehicleCount   int           `json:"vehicle_count"`
 }
 
 type UserStatus string
@@ -441,6 +448,204 @@ type Announcement struct {
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
+
+// Sprint 4 (US-4.1): Security Account, Assignment, Neighborhoods & Emergency Incidents
+
+type Neighborhood struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Code      string    `json:"code"`
+	Address   string    `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type SecurityAssignment struct {
+	ID             int64         `json:"id"`
+	UserID         int64         `json:"user_id"`
+	NeighborhoodID int64         `json:"neighborhood_id"`
+	IsActive       bool          `json:"is_active"`
+	AssignedBy     *int64        `json:"assigned_by,omitempty"`
+	AssignedByName string        `json:"assigned_by_name,omitempty"`
+	AssignedAt     time.Time     `json:"assigned_at"`
+	RevokedAt      *time.Time    `json:"revoked_at,omitempty"`
+	RevokedBy      *int64        `json:"revoked_by,omitempty"`
+	RevokedByName  string        `json:"revoked_by_name,omitempty"`
+	Notes          string        `json:"notes,omitempty"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
+	User           *User         `json:"user,omitempty"`
+	Neighborhood   *Neighborhood `json:"neighborhood,omitempty"`
+}
+
+type IncidentCategory string
+
+const (
+	IncidentCategoryCrime   IncidentCategory = "KEJAHATAN"
+	IncidentCategoryFire    IncidentCategory = "KEBAKARAN"
+	IncidentCategoryMedical IncidentCategory = "MEDIS"
+)
+
+func IsValidIncidentCategory(cat string) bool {
+	switch IncidentCategory(strings.ToUpper(strings.TrimSpace(cat))) {
+	case IncidentCategoryCrime, IncidentCategoryFire, IncidentCategoryMedical:
+		return true
+	default:
+		return false
+	}
+}
+
+type IncidentStatus string
+
+const (
+	IncidentStatusActive       IncidentStatus = "ACTIVE"
+	IncidentStatusAcknowledged IncidentStatus = "ACKNOWLEDGED"
+	IncidentStatusResolved     IncidentStatus = "RESOLVED"
+	IncidentStatusCancelled    IncidentStatus = "CANCELLED"
+
+	// Backward-compatible aliases
+	IncidentStatusReported   IncidentStatus = "REPORTED"
+	IncidentStatusResponding IncidentStatus = "RESPONDING"
+)
+
+func IsValidIncidentStatus(status string) bool {
+	switch strings.ToUpper(strings.TrimSpace(status)) {
+	case string(IncidentStatusActive), string(IncidentStatusAcknowledged), string(IncidentStatusResolved),
+		string(IncidentStatusCancelled), string(IncidentStatusReported), string(IncidentStatusResponding):
+		return true
+	default:
+		return false
+	}
+}
+
+type Incident struct {
+	ID                 int64         `json:"id"`
+	Category           string        `json:"category"`
+	ReporterID         int64         `json:"reporter_id"`
+	HouseID            *int64        `json:"house_id,omitempty"`
+	NeighborhoodID     int64         `json:"neighborhood_id"`
+	Title              string        `json:"title"`
+	Description        string        `json:"description"`
+	Latitude           *float64      `json:"latitude,omitempty"`
+	Longitude          *float64      `json:"longitude,omitempty"`
+	LocationSource     *string       `json:"location_source,omitempty"`
+	LocationAccuracy   *float64      `json:"location_accuracy,omitempty"`
+	ReportedAt         time.Time     `json:"reported_at"`
+	Status             string        `json:"status"`
+	AssignedSecurityID *int64        `json:"assigned_security_id,omitempty"`
+	HandlingStartedAt  *time.Time    `json:"handling_started_at,omitempty"`
+	ResolvedAt         *time.Time    `json:"resolved_at,omitempty"`
+	ResolutionNotes    *string       `json:"resolution_notes,omitempty"`
+	CreatedAt          time.Time     `json:"created_at"`
+	UpdatedAt          time.Time     `json:"updated_at"`
+	Reporter           *User         `json:"reporter,omitempty"`
+	House              *House        `json:"house,omitempty"`
+	Neighborhood       *Neighborhood `json:"neighborhood,omitempty"`
+	AssignedSecurity   *User         `json:"assigned_security,omitempty"`
+}
+
+type IncidentLog struct {
+	ID             int64     `json:"id"`
+	IncidentID     int64     `json:"incident_id"`
+	UserID         int64     `json:"user_id"`
+	UserName       string    `json:"user_name,omitempty"`
+	UserRole       string    `json:"user_role,omitempty"`
+	Action         string    `json:"action"` // 'CREATED', 'RESPONDING', 'RESOLVED', 'CANCELLED', 'NOTE_ADDED'
+	PreviousStatus string    `json:"previous_status,omitempty"`
+	NewStatus      string    `json:"new_status,omitempty"`
+	Notes          string    `json:"notes,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type IncidentFilter struct {
+	Category        string
+	Status          string
+	Statuses        []string
+	NeighborhoodID  *int64
+	NeighborhoodIDs []int64
+	ReporterID      *int64
+	SecurityID      *int64
+	StartDate       string
+	EndDate         string
+	Page            int
+	Limit           int
+}
+
+type IncidentListResult struct {
+	Incidents  []Incident `json:"incidents"`
+	Total      int        `json:"total"`
+	Page       int        `json:"page"`
+	Limit      int        `json:"limit"`
+	TotalPages int        `json:"total_pages"`
+}
+
+type IncidentEventType string
+
+const (
+	IncidentEventTypeCreated      IncidentEventType = "INCIDENT_CREATED"
+	IncidentEventTypeAcknowledged IncidentEventType = "INCIDENT_ACKNOWLEDGED"
+	IncidentEventTypeResolved     IncidentEventType = "INCIDENT_RESOLVED"
+	IncidentEventTypeCorrected    IncidentEventType = "INCIDENT_CORRECTED"
+)
+
+type IncidentRealtimeEvent struct {
+	EventID        string            `json:"event_id"`
+	EventType      IncidentEventType `json:"event_type"`
+	Version        string            `json:"version"`
+	Timestamp      time.Time         `json:"timestamp"`
+	NeighborhoodID int64             `json:"neighborhood_id"`
+	Data           IncidentEventData `json:"data"`
+}
+
+type IncidentEventData struct {
+	IncidentID      int64     `json:"incident_id"`
+	Category        string    `json:"category"`
+	Status          string    `json:"status"`
+	PreviousStatus  string    `json:"previous_status,omitempty"`
+	Title           string    `json:"title"`
+	NeighborhoodID  int64     `json:"neighborhood_id"`
+	ReportedAt      time.Time `json:"reported_at"`
+	Latitude        *float64  `json:"latitude,omitempty"`
+	Longitude       *float64  `json:"longitude,omitempty"`
+	SecurityID      *int64    `json:"security_id,omitempty"`
+	ResolutionNotes *string   `json:"resolution_notes,omitempty"`
+}
+
+func NewIncidentRealtimeEvent(eventType IncidentEventType, inc *Incident, prevStatus string) IncidentRealtimeEvent {
+	return IncidentRealtimeEvent{
+		EventID:        "evt_" + uuid.New().String(),
+		EventType:      eventType,
+		Version:        "1.0",
+		Timestamp:      time.Now().UTC(),
+		NeighborhoodID: inc.NeighborhoodID,
+		Data: IncidentEventData{
+			IncidentID:      inc.ID,
+			Category:        inc.Category,
+			Status:          inc.Status,
+			PreviousStatus:  prevStatus,
+			Title:           inc.Title,
+			NeighborhoodID:  inc.NeighborhoodID,
+			ReportedAt:      inc.ReportedAt,
+			Latitude:        inc.Latitude,
+			Longitude:       inc.Longitude,
+			SecurityID:      inc.AssignedSecurityID,
+			ResolutionNotes: inc.ResolutionNotes,
+		},
+	}
+}
+
+type SecurityDeviceToken struct {
+	ID         int64     `json:"id"`
+	UserID     int64     `json:"user_id"`
+	DeviceID   string    `json:"device_id"`
+	DeviceToken string   `json:"device_token"`
+	Platform   string    `json:"platform"`
+	IsActive   bool      `json:"is_active"`
+	LastSeenAt time.Time `json:"last_seen_at"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 
 
 

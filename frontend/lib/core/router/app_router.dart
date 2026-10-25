@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/waiting_verification_screen.dart';
 import '../../features/home/presentation/adaptive_dashboard_screen.dart';
+import '../../features/security/presentation/security_standby_screen.dart';
 import 'refresh_stream.dart';
 
 GoRouter createAppRouter(AuthBloc authBloc) {
@@ -21,9 +22,11 @@ GoRouter createAppRouter(AuthBloc authBloc) {
       final isLogin = currentPath == '/login';
       final isRegister = currentPath == '/register';
       final isWaiting = currentPath == '/waiting-verification';
+      final isSecurityStandby = currentPath == '/security-standby';
 
       // 1. Initial / Loading state -> Stay on Splash screen
-      if (authState.status == AuthStatus.initial || authState.status == AuthStatus.loading) {
+      if (authState.status == AuthStatus.initial ||
+          authState.status == AuthStatus.loading) {
         return isSplash ? null : '/';
       }
 
@@ -43,7 +46,20 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         return isWaiting ? null : '/waiting-verification';
       }
 
-      // 4. User aktif -> Jangan biarkan masuk ke login, register, splash, atau waiting verification
+      // 4. Security user -> Route strictly to /security-standby
+      if (user != null && user.isSecurity) {
+        if (!isSecurityStandby) {
+          return '/security-standby';
+        }
+        return null;
+      }
+
+      // 5. Non-security user trying to access /security-standby -> Deny & bounce to /dashboard
+      if (isSecurityStandby) {
+        return '/dashboard';
+      }
+
+      // 6. User aktif -> Jangan biarkan masuk ke login, register, splash, atau waiting verification
       if (isLogin || isRegister || isSplash || isWaiting) {
         return '/dashboard';
       }
@@ -79,6 +95,12 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         path: '/dashboard',
         builder: (BuildContext context, GoRouterState state) {
           return const AdaptiveDashboardScreen();
+        },
+      ),
+      GoRoute(
+        path: '/security-standby',
+        builder: (BuildContext context, GoRouterState state) {
+          return const SecurityStandbyScreen();
         },
       ),
     ],

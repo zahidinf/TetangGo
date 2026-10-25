@@ -51,6 +51,8 @@ func TestDashboardStatsRBAC(t *testing.T) {
 		dashUC,
 		nil,
 		nil,
+		nil,
+		nil,
 	)
 
 	app := deliveryHttp.SetupRouter(appHandler, authMid)

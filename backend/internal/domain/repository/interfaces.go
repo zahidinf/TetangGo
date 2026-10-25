@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 	"tetanggo-backend/internal/domain/entity"
 )
@@ -96,6 +97,62 @@ type AnnouncementRepository interface {
 	Update(ctx context.Context, a *entity.Announcement) error
 	Delete(ctx context.Context, id int64) error
 }
+
+type SecurityRepository interface {
+	// Neighborhoods
+	GetNeighborhoodByID(ctx context.Context, id int64) (*entity.Neighborhood, error)
+	GetAllNeighborhoods(ctx context.Context) ([]entity.Neighborhood, error)
+	CreateNeighborhood(ctx context.Context, n *entity.Neighborhood) error
+
+	// Security Users
+	GetSecurityUsers(ctx context.Context) ([]entity.User, error)
+
+	// Assignments
+	CreateAssignment(ctx context.Context, a *entity.SecurityAssignment) error
+	GetAssignmentByID(ctx context.Context, id int64) (*entity.SecurityAssignment, error)
+	GetAssignments(ctx context.Context, userID *int64, neighborhoodID *int64, activeOnly *bool) ([]entity.SecurityAssignment, error)
+	UpdateAssignmentStatus(ctx context.Context, id int64, isActive bool, notes string) error
+	RevokeAssignment(ctx context.Context, id int64, revokedBy int64, notes string) error
+	HasActiveAssignmentInNeighborhood(ctx context.Context, userID int64, neighborhoodID int64) (bool, error)
+	GetActiveNeighborhoodIDsForUser(ctx context.Context, userID int64) ([]int64, error)
+}
+
+var (
+	ErrIncidentConflict = errors.New("konflik status insiden: status saat ini tidak mengizinkan aksi ini")
+	ErrIncidentNotFound = errors.New("insiden tidak ditemukan")
+)
+
+type IncidentRepository interface {
+	CreateIncident(ctx context.Context, inc *entity.Incident) error
+	CreateIncidentTx(ctx context.Context, inc *entity.Incident, log *entity.IncidentLog) error
+	GetIncidentByID(ctx context.Context, id int64) (*entity.Incident, error)
+	GetIncidents(ctx context.Context, filter entity.IncidentFilter) (*entity.IncidentListResult, error)
+	GetActiveIncidents(ctx context.Context, neighborhoodIDs []int64) ([]entity.Incident, error)
+	AcknowledgeIncidentTx(ctx context.Context, incidentID int64, securityID int64, startedAt time.Time, log *entity.IncidentLog) error
+	ResolveIncidentTx(ctx context.Context, incidentID int64, actorID int64, resolvedAt time.Time, resolutionNotes string, log *entity.IncidentLog) error
+	UpdateIncidentStatus(ctx context.Context, id int64, status string, securityID *int64, startedAt *time.Time, resolvedAt *time.Time, resolutionNotes *string) error
+	CreateIncidentLog(ctx context.Context, log *entity.IncidentLog) error
+	GetIncidentLogs(ctx context.Context, incidentID int64) ([]entity.IncidentLog, error)
+	CountActiveIncidents(ctx context.Context, neighborhoodIDs []int64) (int64, error)
+	CorrectIncidentTx(ctx context.Context, incidentID int64, adminID int64, newStatus *string, newCategory *string, newTitle *string, newDescription *string, notes string, log *entity.IncidentLog) (*entity.Incident, error)
+}
+
+type IncidentEventPublisher interface {
+	PublishIncidentEvent(ctx context.Context, event entity.IncidentRealtimeEvent) error
+}
+
+type SecurityDeviceTokenRepository interface {
+	UpsertDeviceToken(ctx context.Context, token *entity.SecurityDeviceToken) error
+	RevokeDeviceToken(ctx context.Context, userID int64, deviceID string) error
+	DeactivateTokenByValue(ctx context.Context, tokenValue string) error
+	GetActiveTokensForNeighborhood(ctx context.Context, neighborhoodID int64) ([]entity.SecurityDeviceToken, error)
+	GetActiveTokensForUser(ctx context.Context, userID int64) ([]entity.SecurityDeviceToken, error)
+}
+
+type PushNotificationService interface {
+	SendIncidentPush(ctx context.Context, tokens []entity.SecurityDeviceToken, inc *entity.Incident) error
+}
+
 
 
 

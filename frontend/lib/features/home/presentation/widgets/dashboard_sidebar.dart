@@ -9,6 +9,7 @@ class SidebarItemData {
   final IconData selectedIcon;
   final int index;
   final String? badge;
+  final Color? badgeColor;
 
   const SidebarItemData({
     required this.keyId,
@@ -17,6 +18,7 @@ class SidebarItemData {
     required this.selectedIcon,
     required this.index,
     this.badge,
+    this.badgeColor,
   });
 }
 
@@ -26,6 +28,7 @@ class NavigationItemBuilder {
     int pendingCount = 0,
     int pendingBillsCount = 0,
     int residentUnpaidBillsCount = 0,
+    int? activeIncidentsCount,
   }) {
     final List<SidebarItemData> items = [];
     int index = 0;
@@ -70,7 +73,20 @@ class NavigationItemBuilder {
       );
     }
 
-    // 4. Common Baseline: Profil Hunian & Keluarga
+    // 4. Administrative: Manajemen Satpam (Admin, Chairperson, Vice Chairperson)
+    if (user?.canAccessSecurityAdmin ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'security_management',
+          title: 'Manajemen Satpam',
+          icon: Icons.security_outlined,
+          selectedIcon: Icons.security_rounded,
+          index: index++,
+        ),
+      );
+    }
+
+    // 5. Common Baseline: Profil Hunian & Keluarga
     items.add(
       SidebarItemData(
         keyId: 'profile',
@@ -106,7 +122,9 @@ class NavigationItemBuilder {
           icon: Icons.payments_outlined,
           selectedIcon: Icons.payments_rounded,
           index: index++,
-          badge: residentUnpaidBillsCount > 0 ? '$residentUnpaidBillsCount Belum Bayar' : null,
+          badge: residentUnpaidBillsCount > 0
+              ? '$residentUnpaidBillsCount Belum Bayar'
+              : null,
         ),
       );
     }
@@ -122,26 +140,39 @@ class NavigationItemBuilder {
       ),
     );
 
-    // 8. Common Baseline: Pengumuman RT (Accessible to EVERY resident and admin; editable by leadership)
+    // 8. Common Baseline: Pengumuman Cluster (Accessible to EVERY resident and admin; editable by leadership)
     items.add(
       SidebarItemData(
         keyId: 'announcements',
-        title: 'Pengumuman RT',
+        title: 'Pengumuman Cluster',
         icon: Icons.campaign_outlined,
         selectedIcon: Icons.campaign_rounded,
         index: index++,
       ),
     );
 
-    // 9. Common Baseline: Panic Button (Accessible to EVERY resident and admin)
+    // 9. Common Baseline: Kejadian Darurat (Monitoring & Riwayat; Accessible to EVERY resident, security, and admin)
+    String? emergencyBadge;
+    Color? emergencyBadgeColor;
+    if (activeIncidentsCount != null) {
+      if (activeIncidentsCount > 0) {
+        emergencyBadge = 'Siaga $activeIncidentsCount';
+        emergencyBadgeColor = AppTheme.danger;
+      } else {
+        emergencyBadge = 'Aman';
+        emergencyBadgeColor = AppTheme.success;
+      }
+    }
+
     items.add(
       SidebarItemData(
         keyId: 'panic',
-        title: 'Panic Button',
-        icon: Icons.contact_emergency_outlined,
-        selectedIcon: Icons.contact_emergency_rounded,
+        title: 'Kejadian Darurat',
+        icon: Icons.emergency_outlined,
+        selectedIcon: Icons.emergency_rounded,
         index: index++,
-        badge: 'Siaga',
+        badge: emergencyBadge,
+        badgeColor: emergencyBadgeColor,
       ),
     );
 
@@ -170,6 +201,7 @@ class DashboardSidebar extends StatelessWidget {
   final int pendingCount;
   final int pendingBillsCount;
   final int residentUnpaidBillsCount;
+  final int? activeIncidentsCount;
 
   const DashboardSidebar({
     super.key,
@@ -180,6 +212,7 @@ class DashboardSidebar extends StatelessWidget {
     this.pendingCount = 0,
     this.pendingBillsCount = 0,
     this.residentUnpaidBillsCount = 0,
+    this.activeIncidentsCount,
   });
 
   List<SidebarItemData> get menuItems =>
@@ -188,6 +221,7 @@ class DashboardSidebar extends StatelessWidget {
         pendingCount: pendingCount,
         pendingBillsCount: pendingBillsCount,
         residentUnpaidBillsCount: residentUnpaidBillsCount,
+        activeIncidentsCount: activeIncidentsCount,
       );
 
   @override
@@ -316,7 +350,7 @@ class DashboardSidebar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        user?.displayName ?? 'Pengurus RT',
+                        user?.displayName ?? 'Pengurus Cluster',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -405,7 +439,9 @@ class _SidebarItemTile extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primaryDark : AppTheme.danger,
+                    color: isSelected
+                        ? AppTheme.primaryDark
+                        : (item.badgeColor ?? AppTheme.danger),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
