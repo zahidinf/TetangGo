@@ -25,7 +25,8 @@ class HouseModel extends Equatable {
 
   factory HouseModel.fromJson(Map<String, dynamic> json) {
     final famCount = json['family_count'] as int? ?? 0;
-    final totalOcc = json['total_occupants'] as int? ?? (famCount + (json['resident_name'] != null ? 1 : 0));
+    final totalOcc = json['total_occupants'] as int? ??
+        (famCount + (json['resident_name'] != null ? 1 : 0));
     return HouseModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       block: json['block'] as String? ?? '',

@@ -15,7 +15,8 @@ class SecureStorageService {
     required String refreshToken,
   }) async {
     await _storage.write(key: ApiConstants.tokenKey, value: accessToken);
-    await _storage.write(key: ApiConstants.refreshTokenKey, value: refreshToken);
+    await _storage.write(
+        key: ApiConstants.refreshTokenKey, value: refreshToken);
   }
 
   Future<String?> getAccessToken() async {

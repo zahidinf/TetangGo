@@ -83,7 +83,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
           _houses = result;
           _isLoading = false;
           _selectedHouseIds.removeWhere((id) => !result.any((h) => h.id == id));
-          final maxPage = result.isNotEmpty ? (result.length / _pageSize).ceil() : 1;
+          final maxPage =
+              result.isNotEmpty ? (result.length / _pageSize).ceil() : 1;
           if (_currentPage > maxPage) {
             _currentPage = maxPage;
           }
@@ -131,14 +132,16 @@ class _HousesManagementViewState extends State<HousesManagementView> {
   void _showAddOrEditHouseDialog({HouseModel? house}) {
     final isEdit = house != null;
     final blockController = TextEditingController(text: house?.block ?? '');
-    final numberController = TextEditingController(text: house?.houseNumber ?? '');
+    final numberController =
+        TextEditingController(text: house?.houseNumber ?? '');
     String status = house?.status.toLowerCase() ?? 'kosong';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (dialogCtx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             isEdit ? 'Ubah Data Rumah' : 'Tambah Unit Rumah Baru',
             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -149,39 +152,48 @@ class _HousesManagementViewState extends State<HousesManagementView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Blok Rumah', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Blok Rumah',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: blockController,
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     hintText: 'Contoh: A, B, C, D',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 14),
-
-                const Text('Nomor Rumah', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Nomor Rumah',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: numberController,
                   decoration: InputDecoration(
                     hintText: 'Contoh: 01, 12A, 15',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 14),
-
-                const Text('Status Rumah', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Status Rumah',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: status,
                   decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'milik', child: Text('Dihuni Pemilik')),
-                    DropdownMenuItem(value: 'kontrak', child: Text('Disewa / Kontrak')),
+                    DropdownMenuItem(
+                        value: 'milik', child: Text('Dihuni Pemilik')),
+                    DropdownMenuItem(
+                        value: 'kontrak', child: Text('Disewa / Kontrak')),
                     DropdownMenuItem(value: 'kosong', child: Text('Kosong')),
                   ],
                   onChanged: (val) {
@@ -202,7 +214,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () async {
                 final block = blockController.text.trim();
@@ -222,7 +235,9 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(isEdit ? 'Data rumah diperbarui' : 'Rumah berhasil ditambahkan'),
+                        content: Text(isEdit
+                            ? 'Data rumah diperbarui'
+                            : 'Rumah berhasil ditambahkan'),
                         backgroundColor: AppTheme.success,
                       ),
                     );
@@ -233,7 +248,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(e.toString().replaceFirst('Exception: ', '')),
+                        content:
+                            Text(e.toString().replaceFirst('Exception: ', '')),
                         backgroundColor: AppTheme.danger,
                       ),
                     );
@@ -253,15 +269,18 @@ class _HousesManagementViewState extends State<HousesManagementView> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hapus Unit Rumah', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Hapus Unit Rumah',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Yakin ingin menghapus data hunian ${house.label}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -270,7 +289,9 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                 await repo.deleteHouse(house.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Rumah berhasil dihapus'), backgroundColor: AppTheme.success),
+                    const SnackBar(
+                        content: Text('Rumah berhasil dihapus'),
+                        backgroundColor: AppTheme.success),
                   );
                   _fetchBlocks();
                   _fetchHouses();
@@ -279,7 +300,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(e.toString().replaceFirst('Exception: ', '')),
+                      content:
+                          Text(e.toString().replaceFirst('Exception: ', '')),
                       backgroundColor: AppTheme.danger,
                     ),
                   );
@@ -303,7 +325,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
           children: const [
             Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 24),
             SizedBox(width: 8),
-            Text('Hapus Hunian Terpilih', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Hapus Hunian Terpilih',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
         content: Text(
@@ -319,7 +342,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -327,7 +351,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Menghapus ${idsToDelete.length} data hunian...'),
+                  content:
+                      Text('Menghapus ${idsToDelete.length} data hunian...'),
                   duration: const Duration(seconds: 1),
                 ),
               );
@@ -341,7 +366,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('$deletedCount data hunian berhasil dihapus'),
+                      content:
+                          Text('$deletedCount data hunian berhasil dihapus'),
                       backgroundColor: AppTheme.success,
                     ),
                   );
@@ -352,7 +378,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(e.toString().replaceFirst('Exception: ', '')),
+                      content:
+                          Text(e.toString().replaceFirst('Exception: ', '')),
                       backgroundColor: AppTheme.danger,
                     ),
                   );
@@ -376,7 +403,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
+          const Icon(Icons.check_circle_rounded,
+              color: AppTheme.primary, size: 20),
           const SizedBox(width: 10),
           Text(
             '${_selectedHouseIds.length} hunian dipilih',
@@ -415,7 +443,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
               backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
           ),
         ],
@@ -455,7 +484,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
       ),
       child: Text(
         label,
-        style: TextStyle(color: text, fontWeight: FontWeight.bold, fontSize: 11),
+        style:
+            TextStyle(color: text, fontWeight: FontWeight.bold, fontSize: 11),
       ),
     );
   }
@@ -549,12 +579,16 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                     children: const [
                       Text(
                         'Master Data Hunian & Warga',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'Kelola kavling hunian, nomor rumah, dan data penghuni cluster',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13),
                       ),
                     ],
                   ),
@@ -565,13 +599,17 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                     children: [
                       OutlinedButton.icon(
                         onPressed: _showUnassignedResidentsDialog,
-                        icon: const Icon(Icons.person_search_rounded, size: 18, color: Color(0xFFD97706)),
-                        label: const Text('Warga Belum Terpetakan', style: TextStyle(color: Color(0xFFB45309))),
+                        icon: const Icon(Icons.person_search_rounded,
+                            size: 18, color: Color(0xFFD97706)),
+                        label: const Text('Warga Belum Terpetakan',
+                            style: TextStyle(color: Color(0xFFB45309))),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFFDE68A)),
                           backgroundColor: const Color(0xFFFFFBEB),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                       ElevatedButton.icon(
@@ -581,8 +619,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                     ],
@@ -610,7 +650,8 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: 'Cari nomor rumah atau nama warga...',
-                            prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                            prefixIcon:
+                                const Icon(Icons.search_rounded, size: 20),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear, size: 18),
@@ -621,8 +662,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                                     },
                                   )
                                 : null,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
                           ),
                           onSubmitted: (_) {
                             _currentPage = 1;
@@ -634,17 +677,21 @@ class _HousesManagementViewState extends State<HousesManagementView> {
 
                       // Blok Filter
                       DropdownButton<String?>(
-                        value: _blocks.any((b) => b == _selectedBlock) ? _selectedBlock : null,
+                        value: _blocks.any((b) => b == _selectedBlock)
+                            ? _selectedBlock
+                            : null,
                         underline: const SizedBox(),
                         items: [
                           const DropdownMenuItem<String?>(
                             value: null,
                             child: Text('Semua Blok'),
                           ),
-                          ..._blocks.toSet().map((b) => DropdownMenuItem<String?>(
-                                value: b,
-                                child: Text('Blok $b'),
-                              )),
+                          ..._blocks
+                              .toSet()
+                              .map((b) => DropdownMenuItem<String?>(
+                                    value: b,
+                                    child: Text('Blok $b'),
+                                  )),
                         ],
                         onChanged: (val) {
                           setState(() {
@@ -658,7 +705,10 @@ class _HousesManagementViewState extends State<HousesManagementView> {
 
                       // Status Filter
                       DropdownButton<String?>(
-                        value: const ['milik', 'kontrak', 'kosong'].contains(_selectedStatus) ? _selectedStatus : null,
+                        value: const ['milik', 'kontrak', 'kosong']
+                                .contains(_selectedStatus)
+                            ? _selectedStatus
+                            : null,
                         underline: const SizedBox(),
                         items: const [
                           DropdownMenuItem<String?>(
@@ -710,19 +760,23 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: AppTheme.danger, size: 20),
+                      const Icon(Icons.error_outline,
+                          color: AppTheme.danger, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger)),
+                        child: Text(_errorMessage!,
+                            style: const TextStyle(color: AppTheme.danger)),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.danger,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
                         ),
                         onPressed: _fetchHouses,
-                        child: const Text('Coba Lagi', style: TextStyle(fontSize: 12)),
+                        child: const Text('Coba Lagi',
+                            style: TextStyle(fontSize: 12)),
                       ),
                     ],
                   ),
@@ -753,11 +807,14 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.home_work_outlined, size: 56, color: Colors.grey),
+                                  Icon(Icons.home_work_outlined,
+                                      size: 56, color: Colors.grey),
                                   SizedBox(height: 12),
                                   Text(
                                     'Tidak ada data yang sesuai dengan filter yang dipilih.',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textSecondary),
                                   ),
                                 ],
                               ),
@@ -766,12 +823,17 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                         : Builder(
                             builder: (context) {
                               final totalItems = _houses.length;
-                              final totalPages = totalItems > 0 ? (totalItems / _pageSize).ceil() : 1;
+                              final totalPages = totalItems > 0
+                                  ? (totalItems / _pageSize).ceil()
+                                  : 1;
                               final clampedPage = _currentPage > totalPages
                                   ? totalPages
                                   : (_currentPage < 1 ? 1 : _currentPage);
                               final startIndex = (clampedPage - 1) * _pageSize;
-                              final pagedHouses = _houses.skip(startIndex).take(_pageSize).toList();
+                              final pagedHouses = _houses
+                                  .skip(startIndex)
+                                  .take(_pageSize)
+                                  .toList();
 
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -779,19 +841,49 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                                   SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
                                     child: DataTable(
-                                      headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                                      headingRowColor: WidgetStateProperty.all(
+                                          const Color(0xFFF8FAFC)),
                                       columnSpacing: 28,
                                       columns: const [
-                                        DataColumn(label: Text('No. Rumah', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Status Huni', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Kepala Keluarga', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Anggota Keluarga', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Kendaraan', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('No. Kontak', style: TextStyle(fontWeight: FontWeight.bold))),
-                                        DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataColumn(
+                                            label: Text('No. Rumah',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        DataColumn(
+                                            label: Text('Status Huni',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        DataColumn(
+                                            label: Text('Kepala Keluarga',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        DataColumn(
+                                            label: Text('Anggota Keluarga',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        DataColumn(
+                                            label: Text('Kendaraan',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        DataColumn(
+                                            label: Text('No. Kontak',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        DataColumn(
+                                            label: Text('Aksi',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
                                       ],
                                       rows: pagedHouses.map((h) {
-                                        final isSelected = _selectedHouseIds.contains(h.id);
+                                        final isSelected =
+                                            _selectedHouseIds.contains(h.id);
                                         return DataRow(
                                           selected: isSelected,
                                           onSelectChanged: (bool? selected) {
@@ -808,73 +900,122 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                                               Row(
                                                 children: [
                                                   Container(
-                                                    padding: const EdgeInsets.all(8),
+                                                    padding:
+                                                        const EdgeInsets.all(8),
                                                     decoration: BoxDecoration(
-                                                      color: AppTheme.primary.withOpacity(0.08),
-                                                      borderRadius: BorderRadius.circular(8),
+                                                      color: AppTheme.primary
+                                                          .withOpacity(0.08),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
                                                     ),
-                                                    child: const Icon(Icons.home_rounded, color: AppTheme.primary, size: 18),
+                                                    child: const Icon(
+                                                        Icons.home_rounded,
+                                                        color: AppTheme.primary,
+                                                        size: 18),
                                                   ),
                                                   const SizedBox(width: 10),
                                                   Text(
                                                     'Blok ${h.block} No. ${h.houseNumber}',
-                                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
                                                   ),
                                                 ],
                                               ),
-                                              onTap: () => _showHouseDetailDialog(h),
+                                              onTap: () =>
+                                                  _showHouseDetailDialog(h),
                                             ),
                                             DataCell(
                                               _buildStatusBadge(h.status),
-                                              onTap: () => _showHouseDetailDialog(h),
+                                              onTap: () =>
+                                                  _showHouseDetailDialog(h),
                                             ),
                                             DataCell(
                                               Text(
                                                 h.residentName ?? '—',
                                                 style: TextStyle(
-                                                  fontWeight: h.residentName != null ? FontWeight.w600 : FontWeight.normal,
-                                                  color: h.residentName != null ? AppTheme.textPrimary : Colors.grey,
+                                                  fontWeight:
+                                                      h.residentName != null
+                                                          ? FontWeight.w600
+                                                          : FontWeight.normal,
+                                                  color: h.residentName != null
+                                                      ? AppTheme.textPrimary
+                                                      : Colors.grey,
                                                 ),
                                               ),
-                                              onTap: () => _showHouseDetailDialog(h),
+                                              onTap: () =>
+                                                  _showHouseDetailDialog(h),
                                             ),
                                             DataCell(
                                               Text(
                                                 '${h.totalOccupants} Jiwa',
-                                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w600),
                                               ),
-                                              onTap: () => _showHouseDetailDialog(h),
+                                              onTap: () =>
+                                                  _showHouseDetailDialog(h),
                                             ),
                                             DataCell(
                                               Text('${h.vehicleCount} Unit'),
-                                              onTap: () => _showHouseDetailDialog(h),
+                                              onTap: () =>
+                                                  _showHouseDetailDialog(h),
                                             ),
                                             DataCell(
                                               Text(h.residentPhone ?? '—'),
-                                              onTap: () => _showHouseDetailDialog(h),
+                                              onTap: () =>
+                                                  _showHouseDetailDialog(h),
                                             ),
                                             DataCell(
                                               Row(
                                                 children: [
                                                   IconButton(
-                                                    icon: const Icon(Icons.visibility_outlined, size: 18, color: AppTheme.primary),
-                                                    tooltip: 'Detail Hunian Lengkap',
-                                                    onPressed: () => _showHouseDetailDialog(h),
+                                                    icon: const Icon(
+                                                        Icons
+                                                            .visibility_outlined,
+                                                        size: 18,
+                                                        color:
+                                                            AppTheme.primary),
+                                                    tooltip:
+                                                        'Detail Hunian Lengkap',
+                                                    onPressed: () =>
+                                                        _showHouseDetailDialog(
+                                                            h),
                                                   ),
                                                   IconButton(
-                                                    icon: const Icon(Icons.people_alt_outlined, size: 18, color: Color(0xFF6366F1)),
-                                                    tooltip: 'Kelola Pemetaan Warga',
-                                                    onPressed: () => _showHouseOccupantsDialog(h),
+                                                    icon: const Icon(
+                                                        Icons
+                                                            .people_alt_outlined,
+                                                        size: 18,
+                                                        color:
+                                                            Color(0xFF6366F1)),
+                                                    tooltip:
+                                                        'Kelola Pemetaan Warga',
+                                                    onPressed: () =>
+                                                        _showHouseOccupantsDialog(
+                                                            h),
                                                   ),
                                                   IconButton(
-                                                    icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.textSecondary),
+                                                    icon: const Icon(
+                                                        Icons.edit_outlined,
+                                                        size: 18,
+                                                        color: AppTheme
+                                                            .textSecondary),
                                                     tooltip: 'Ubah Data Rumah',
-                                                    onPressed: () => _showAddOrEditHouseDialog(house: h),
+                                                    onPressed: () =>
+                                                        _showAddOrEditHouseDialog(
+                                                            house: h),
                                                   ),
                                                   IconButton(
-                                                    icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
+                                                    icon: const Icon(
+                                                        Icons
+                                                            .delete_outline_rounded,
+                                                        size: 18,
+                                                        color: AppTheme.danger),
                                                     tooltip: 'Hapus Rumah',
-                                                    onPressed: () => _showDeleteConfirm(h),
+                                                    onPressed: () =>
+                                                        _showDeleteConfirm(h),
                                                   ),
                                                 ],
                                               ),
@@ -889,7 +1030,9 @@ class _HousesManagementViewState extends State<HousesManagementView> {
                                     totalItems: totalItems,
                                     pageSize: _pageSize,
                                     keyPrefix: 'houses_pagination',
-                                    isDesktop: MediaQuery.of(context).size.width >= 768,
+                                    isDesktop:
+                                        MediaQuery.of(context).size.width >=
+                                            768,
                                     onPageChanged: (newPage) {
                                       setState(() => _currentPage = newPage);
                                     },

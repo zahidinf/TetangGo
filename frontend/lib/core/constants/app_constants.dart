@@ -3,7 +3,7 @@ class AppConstants {
   static const String appTagline = 'Tetangga Kompak, Lingkungan Terjaga';
   static const String appVersion = '0.1.0';
   static const String appDescription =
-      'Platform digitalisasi lingkungan perumahan/cluster yang mengedepankan kekompakan warga, transparansi kas RT, dan keamanan lingkungan terpadu.';
+      'Platform digitalisasi lingkungan perumahan/cluster yang mengedepankan kekompakan warga, transparansi kas Cluster, dan keamanan lingkungan terpadu.';
 
   /// Dynamic maintainable copyright notice.
   /// Sourced with base year 2026.

@@ -63,41 +63,48 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Ubah Profil Saya', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Ubah Profil Saya',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: 380,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Nama Lengkap', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Nama Lengkap',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               TextField(
                 controller: nameCtrl,
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
               ),
               const SizedBox(height: 14),
-              const Text('Nomor WhatsApp / HP', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Nomor WhatsApp / HP',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               final name = nameCtrl.text.trim();
@@ -110,7 +117,9 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                 await repo.updateProfile(name: name, phone: phone);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profil berhasil diperbarui'), backgroundColor: AppTheme.success),
+                    const SnackBar(
+                        content: Text('Profil berhasil diperbarui'),
+                        backgroundColor: AppTheme.success),
                   );
                   _fetchProfile();
                   context.read<AuthBloc>().add(AuthCheckRequested());
@@ -118,7 +127,10 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.danger),
+                    SnackBar(
+                        content:
+                            Text(e.toString().replaceFirst('Exception: ', '')),
+                        backgroundColor: AppTheme.danger),
                   );
                 }
               }
@@ -139,37 +151,45 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (dialogCtx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Tambah Anggota Keluarga', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Tambah Anggota Keluarga',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           content: SizedBox(
             width: 380,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Nama Lengkap', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Nama Lengkap',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: nameCtrl,
                   decoration: InputDecoration(
                     hintText: 'Contoh: Siti Rahma',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 14),
-
-                const Text('Hubungan Keluarga', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Hubungan Keluarga',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: relation,
                   decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'istri', child: Text('Istri')),
                     DropdownMenuItem(value: 'suami', child: Text('Suami')),
                     DropdownMenuItem(value: 'anak', child: Text('Anak')),
-                    DropdownMenuItem(value: 'orang_tua', child: Text('Orang Tua')),
+                    DropdownMenuItem(
+                        value: 'orang_tua', child: Text('Orang Tua')),
                     DropdownMenuItem(value: 'famili', child: Text('Famili')),
                     DropdownMenuItem(value: 'lainnya', child: Text('Lainnya')),
                   ],
@@ -178,27 +198,32 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   },
                 ),
                 const SizedBox(height: 14),
-
-                const Text('Nomor HP (Opsional)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Nomor HP (Opsional)',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     hintText: 'Contoh: 081234567890',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Batal')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogCtx),
+                child: const Text('Batal')),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () async {
                 final name = nameCtrl.text.trim();
@@ -210,18 +235,25 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   await repo.addFamilyMember(
                     name: name,
                     relation: relation,
-                    phone: phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
+                    phone: phoneCtrl.text.trim().isEmpty
+                        ? null
+                        : phoneCtrl.text.trim(),
                   );
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Anggota keluarga ditambahkan'), backgroundColor: AppTheme.success),
+                      const SnackBar(
+                          content: Text('Anggota keluarga ditambahkan'),
+                          backgroundColor: AppTheme.success),
                     );
                     _fetchProfile();
                   }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.danger),
+                      SnackBar(
+                          content: Text(
+                              e.toString().replaceFirst('Exception: ', '')),
+                          backgroundColor: AppTheme.danger),
                     );
                   }
                 }
@@ -243,32 +275,39 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (dialogCtx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Daftarkan Kendaraan', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Daftarkan Kendaraan',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           content: SizedBox(
             width: 380,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Plat Nomor Kendaraan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Plat Nomor Kendaraan',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: plateCtrl,
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     hintText: 'Contoh: B 1234 ABC',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 14),
-
-                const Text('Jenis Kendaraan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Jenis Kendaraan',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: vehicleType,
                   decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'mobil', child: Text('Mobil')),
@@ -279,26 +318,31 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   },
                 ),
                 const SizedBox(height: 14),
-
-                const Text('Merk / Model & Warna (Opsional)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Merk / Model & Warna (Opsional)',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: modelCtrl,
                   decoration: InputDecoration(
                     hintText: 'Contoh: Avanza Hitam, Vario Merah',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Batal')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogCtx),
+                child: const Text('Batal')),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () async {
                 final plate = plateCtrl.text.trim();
@@ -310,18 +354,25 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   await repo.addVehicle(
                     plateNumber: plate,
                     vehicleType: vehicleType,
-                    brandModel: modelCtrl.text.trim().isEmpty ? null : modelCtrl.text.trim(),
+                    brandModel: modelCtrl.text.trim().isEmpty
+                        ? null
+                        : modelCtrl.text.trim(),
                   );
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Kendaraan berhasil didaftarkan'), backgroundColor: AppTheme.success),
+                      const SnackBar(
+                          content: Text('Kendaraan berhasil didaftarkan'),
+                          backgroundColor: AppTheme.success),
                     );
                     _fetchProfile();
                   }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.danger),
+                      SnackBar(
+                          content: Text(
+                              e.toString().replaceFirst('Exception: ', '')),
+                          backgroundColor: AppTheme.danger),
                     );
                   }
                 }
@@ -340,14 +391,18 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
       await repo.deleteFamilyMember(member.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Anggota keluarga dihapus'), backgroundColor: AppTheme.success),
+          const SnackBar(
+              content: Text('Anggota keluarga dihapus'),
+              backgroundColor: AppTheme.success),
         );
         _fetchProfile();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.danger),
+          SnackBar(
+              content: Text(e.toString().replaceFirst('Exception: ', '')),
+              backgroundColor: AppTheme.danger),
         );
       }
     }
@@ -359,14 +414,18 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
       await repo.deleteVehicle(vehicle.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kendaraan dihapus'), backgroundColor: AppTheme.success),
+          const SnackBar(
+              content: Text('Kendaraan dihapus'),
+              backgroundColor: AppTheme.success),
         );
         _fetchProfile();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.danger),
+          SnackBar(
+              content: Text(e.toString().replaceFirst('Exception: ', '')),
+              backgroundColor: AppTheme.danger),
         );
       }
     }
@@ -377,12 +436,17 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Keluar dari Aplikasi', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun TetangGo?'),
+        title: const Text('Keluar dari Aplikasi',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content:
+            const Text('Apakah Anda yakin ingin keluar dari akun TetangGo?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.danger,
+                foregroundColor: Colors.white),
             onPressed: () {
               Navigator.pop(ctx);
               context.read<AuthBloc>().add(AuthLogoutRequested());
@@ -407,11 +471,15 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded, color: AppTheme.danger, size: 48),
+              const Icon(Icons.error_outline_rounded,
+                  color: AppTheme.danger, size: 48),
               const SizedBox(height: 12),
-              Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.danger)),
+              Text(_errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppTheme.danger)),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _fetchProfile, child: const Text('Coba Lagi')),
+              ElevatedButton(
+                  onPressed: _fetchProfile, child: const Text('Coba Lagi')),
             ],
           ),
         ),
@@ -426,7 +494,9 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
     final houseTitle = house != null
         ? 'Blok ${house.block} No. ${house.houseNumber}'
         : (user?.houseDisplay ?? 'Hunian Belum Terdaftar');
-    final ownershipText = user?.ownershipStatus.toLowerCase() == 'pengontrak' ? 'Penyewa / Kontrak' : 'Pemilik Rumah';
+    final ownershipText = user?.ownershipStatus.toLowerCase() == 'pengontrak'
+        ? 'Penyewa / Kontrak'
+        : 'Pemilik Rumah';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -452,8 +522,13 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                         radius: 34,
                         backgroundColor: AppTheme.primary.withOpacity(0.12),
                         child: Text(
-                          (user?.name.isNotEmpty ?? false) ? user!.name[0].toUpperCase() : 'W',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                          (user?.name.isNotEmpty ?? false)
+                              ? user!.name[0].toUpperCase()
+                              : 'W',
+                          style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primary),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -463,23 +538,31 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                           children: [
                             Text(
                               user?.displayName ?? 'Nama Warga',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '${user?.phone ?? '-'} • ${user?.email ?? '-'}',
-                              style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppTheme.textSecondary),
                             ),
                             const SizedBox(height: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFDCFCE7),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 user?.roleDisplay ?? 'Warga Cluster',
-                                style: const TextStyle(color: Color(0xFF15803D), fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    color: Color(0xFF15803D),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -487,7 +570,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                       ),
                       IconButton(
                         tooltip: 'Ubah Data Profil',
-                        icon: const Icon(Icons.edit_outlined, color: AppTheme.primary),
+                        icon: const Icon(Icons.edit_outlined,
+                            color: AppTheme.primary),
                         onPressed: _showEditProfileDialog,
                       ),
                     ],
@@ -522,23 +606,31 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                       children: [
                         Row(
                           children: const [
-                            Icon(Icons.cottage_rounded, color: Colors.white, size: 22),
+                            Icon(Icons.cottage_rounded,
+                                color: Colors.white, size: 22),
                             SizedBox(width: 8),
                             Text(
                               'Identitas Hunian',
-                              style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             'Status: $ownershipText',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11),
                           ),
                         ),
                       ],
@@ -546,12 +638,16 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                     const SizedBox(height: 16),
                     Text(
                       houseTitle,
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Cluster TetangGo • Lingkungan Aman & Terjaga',
-                      style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12),
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.85), fontSize: 12),
                     ),
                   ],
                 ),
@@ -566,18 +662,25 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                     children: [
                       const Text(
                         'Anggota Keluarga',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${family.length} Orang',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textSecondary),
                         ),
                       ),
                     ],
@@ -585,7 +688,9 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   TextButton.icon(
                     onPressed: _showAddFamilyDialog,
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Tambah Anggota', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    label: const Text('Tambah Anggota',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
@@ -605,7 +710,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                       child: Text(
                         'Belum ada anggota keluarga terdaftar. Klik "+ Tambah Anggota" untuk mendaftarkan keluarga serumah.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13),
                       ),
                     ),
                   ),
@@ -622,29 +728,38 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: const Color(0xFFF0FDF4),
-                          child: const Icon(Icons.person_rounded, color: AppTheme.success, size: 20),
+                          child: const Icon(Icons.person_rounded,
+                              color: AppTheme.success, size: 20),
                         ),
-                        title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        title: Text(m.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 14)),
                         subtitle: m.phone != null && m.phone!.isNotEmpty
-                            ? Text('No. HP: ${m.phone}', style: const TextStyle(fontSize: 12))
+                            ? Text('No. HP: ${m.phone}',
+                                style: const TextStyle(fontSize: 12))
                             : null,
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 m.relationDisplay,
-                                style: const TextStyle(color: Color(0xFF1D4ED8), fontWeight: FontWeight.bold, fontSize: 11),
+                                style: const TextStyle(
+                                    color: Color(0xFF1D4ED8),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11),
                               ),
                             ),
                             const SizedBox(width: 4),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.grey),
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  size: 18, color: Colors.grey),
                               onPressed: () => _deleteFamilyMember(m),
                             ),
                           ],
@@ -661,18 +776,25 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                     children: [
                       const Text(
                         'Kendaraan Terdaftar',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${vehicles.length} Unit',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textSecondary),
                         ),
                       ),
                     ],
@@ -680,7 +802,9 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   TextButton.icon(
                     onPressed: _showAddVehicleDialog,
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Tambah Kendaraan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    label: const Text('Tambah Kendaraan',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),
@@ -700,7 +824,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                       child: Text(
                         'Belum ada kendaraan terdaftar. Daftarkan plat nomor mobil/motor Anda untuk mempermudah akses di pos satpam.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13),
                       ),
                     ),
                   ),
@@ -718,35 +843,47 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                         leading: CircleAvatar(
                           backgroundColor: const Color(0xFFFFFBEB),
                           child: Icon(
-                            v.isCar ? Icons.directions_car_rounded : Icons.two_wheeler_rounded,
+                            v.isCar
+                                ? Icons.directions_car_rounded
+                                : Icons.two_wheeler_rounded,
                             color: const Color(0xFFD97706),
                             size: 20,
                           ),
                         ),
                         title: Text(
                           v.plateNumber,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.8),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                              letterSpacing: 0.8),
                         ),
-                        subtitle: v.brandModel != null && v.brandModel!.isNotEmpty
-                            ? Text(v.brandModel!, style: const TextStyle(fontSize: 12))
-                            : null,
+                        subtitle:
+                            v.brandModel != null && v.brandModel!.isNotEmpty
+                                ? Text(v.brandModel!,
+                                    style: const TextStyle(fontSize: 12))
+                                : null,
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 v.typeDisplay,
-                                style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 11),
+                                style: const TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11),
                               ),
                             ),
                             const SizedBox(width: 4),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.grey),
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  size: 18, color: Colors.grey),
                               onPressed: () => _deleteVehicle(v),
                             ),
                           ],
@@ -762,10 +899,12 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   foregroundColor: AppTheme.danger,
                   side: const BorderSide(color: Color(0xFFFECACA)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Keluar dari Akun', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text('Keluar dari Akun',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 24),
             ],

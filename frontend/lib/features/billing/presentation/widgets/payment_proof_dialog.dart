@@ -37,12 +37,16 @@ class PaymentProofDialog extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.receipt_long_rounded, color: AppTheme.primary, size: 20),
+                  const Icon(Icons.receipt_long_rounded,
+                      color: AppTheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textPrimary),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: AppTheme.textPrimary),
                     ),
                   ),
                   IconButton(
@@ -73,9 +77,11 @@ class PaymentProofDialog extends StatelessWidget {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.grey),
+                              Icon(Icons.image_not_supported_outlined,
+                                  size: 48, color: Colors.grey),
                               SizedBox(height: 8),
-                              Text('Belum ada gambar bukti transfer', style: TextStyle(color: Colors.grey)),
+                              Text('Belum ada gambar bukti transfer',
+                                  style: TextStyle(color: Colors.grey)),
                             ],
                           ),
                         ),
@@ -93,7 +99,8 @@ class PaymentProofDialog extends StatelessWidget {
                             child: Image.network(
                               fullUrl,
                               fit: BoxFit.contain,
-                              loadingBuilder: (context, child, loadingProgress) {
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return const Center(
                                   child: Padding(
@@ -110,9 +117,11 @@ class PaymentProofDialog extends StatelessWidget {
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                        Icon(Icons.broken_image,
+                                            size: 48, color: Colors.grey),
                                         SizedBox(height: 8),
-                                        Text('Gagal memuat gambar bukti transfer'),
+                                        Text(
+                                            'Gagal memuat gambar bukti transfer'),
                                       ],
                                     ),
                                   ),
@@ -122,8 +131,9 @@ class PaymentProofDialog extends StatelessWidget {
                           ),
                         ),
                       ),
-
-                    if (senderBank != null || senderName != null || amount != null) ...[
+                    if (senderBank != null ||
+                        senderName != null ||
+                        amount != null) ...[
                       const SizedBox(height: 14),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -139,7 +149,8 @@ class PaymentProofDialog extends StatelessWidget {
                             if (senderName != null && senderName!.isNotEmpty)
                               _buildMetaRow('Nama Pengirim', senderName!),
                             if (amount != null)
-                              _buildMetaRow('Nominal', 'Rp ${amount!.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'),
+                              _buildMetaRow('Nominal',
+                                  'Rp ${amount!.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'),
                           ],
                         ),
                       ),
@@ -160,8 +171,13 @@ class PaymentProofDialog extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+          Text(label,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary)),
         ],
       ),
     );

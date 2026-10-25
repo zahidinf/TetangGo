@@ -40,9 +40,12 @@ class _StatCardState extends State<StatCard> {
     final d = widget.data;
 
     return MouseRegion(
-      cursor: d.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: d.onTap != null ? (_) => setState(() => _isHovered = true) : null,
-      onExit: d.onTap != null ? (_) => setState(() => _isHovered = false) : null,
+      cursor:
+          d.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter:
+          d.onTap != null ? (_) => setState(() => _isHovered = true) : null,
+      onExit:
+          d.onTap != null ? (_) => setState(() => _isHovered = false) : null,
       child: GestureDetector(
         onTap: d.onTap,
         child: AnimatedContainer(
@@ -114,9 +117,11 @@ class _StatCardState extends State<StatCard> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: (d.isPositive ? AppTheme.primary : AppTheme.danger).withOpacity(0.12),
+                      color: (d.isPositive ? AppTheme.primary : AppTheme.danger)
+                          .withOpacity(0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -124,7 +129,9 @@ class _StatCardState extends State<StatCard> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: d.isPositive ? AppTheme.primaryDark : AppTheme.danger,
+                        color: d.isPositive
+                            ? AppTheme.primaryDark
+                            : AppTheme.danger,
                       ),
                     ),
                   ),

@@ -38,7 +38,8 @@ class FakeBulkBillingRepository extends Fake implements BillingRepository {
   }
 
   @override
-  Future<BillingSummaryModel> getBillingSummary({String? period, String? block}) async {
+  Future<BillingSummaryModel> getBillingSummary(
+      {String? period, String? block}) async {
     return mockSummary ??
         BillingSummaryModel(
           period: period ?? '2026-10',
@@ -91,7 +92,9 @@ class FakeBulkBillingRepository extends Fake implements BillingRepository {
                     houseNumber: '$id',
                     residentName: 'Warga $id',
                     success: true,
-                    status: paymentMethod == 'CASH' ? 'paid' : 'pending_verification',
+                    status: paymentMethod == 'CASH'
+                        ? 'paid'
+                        : 'pending_verification',
                     message: 'Success',
                     amount: 50000.0,
                   ))
@@ -227,7 +230,8 @@ void main() {
       ];
     });
 
-    testWidgets('Displays all unpaid bills and allows toggling selection and payment methods',
+    testWidgets(
+        'Displays all unpaid bills and allows toggling selection and payment methods',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1024, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -291,7 +295,8 @@ void main() {
       expect(find.text('Total'), findsOneWidget);
     });
 
-    testWidgets('Submits CASH method and calls repository with selected IDs', (WidgetTester tester) async {
+    testWidgets('Submits CASH method and calls repository with selected IDs',
+        (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1024, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -333,7 +338,8 @@ void main() {
       fakeRepo = FakeBulkBillingRepository();
     });
 
-    testWidgets('Shows unissued warning banner and hides bulk pay button when isPeriodGenerated is false',
+    testWidgets(
+        'Shows unissued warning banner and hides bulk pay button when isPeriodGenerated is false',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -385,7 +391,8 @@ void main() {
       expect(find.byKey(const Key('bulkPayBtn')), findsNothing);
     });
 
-    testWidgets('Shows bulk pay button and no warning banner when isPeriodGenerated is true',
+    testWidgets(
+        'Shows bulk pay button and no warning banner when isPeriodGenerated is true',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 900);
       tester.view.devicePixelRatio = 1.0;

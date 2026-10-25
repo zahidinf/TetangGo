@@ -39,12 +39,12 @@ class PaymentModel {
   final String paymentMethod;
   final double amountPaid;
   final String proofImageUrl;
-  final String? senderBank;       // WAJIB NULLABLE
-  final String? senderName;       // WAJIB NULLABLE
-  final String? notes;            // WAJIB NULLABLE
-  final String? rejectionReason;  // WAJIB NULLABLE
-  final String? verifiedAt;       // WAJIB NULLABLE
-  final int? verifiedBy;          // WAJIB NULLABLE
+  final String? senderBank; // WAJIB NULLABLE
+  final String? senderName; // WAJIB NULLABLE
+  final String? notes; // WAJIB NULLABLE
+  final String? rejectionReason; // WAJIB NULLABLE
+  final String? verifiedAt; // WAJIB NULLABLE
+  final int? verifiedBy; // WAJIB NULLABLE
   final String? verifiedByName;
   final int? userId;
   final DateTime? createdAt;
@@ -69,7 +69,8 @@ class PaymentModel {
   bool get isCash => paymentMethod.toUpperCase() == 'CASH';
   bool get isTransfer => paymentMethod.toUpperCase() == 'TRANSFER';
 
-  DateTime? get verifiedAtDateTime => verifiedAt != null ? DateTime.tryParse(verifiedAt!) : null;
+  DateTime? get verifiedAtDateTime =>
+      verifiedAt != null ? DateTime.tryParse(verifiedAt!) : null;
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
@@ -86,7 +87,9 @@ class PaymentModel {
       verifiedBy: (json['verified_by'] as num?)?.toInt(),
       verifiedByName: json['verified_by_name'] as String?,
       userId: (json['user_id'] as num?)?.toInt(),
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
     );
   }
 }
@@ -135,11 +138,17 @@ class BillModel {
       billingPeriod: json['billing_period'] as String? ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String? ?? 'unpaid',
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now() : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       block: b,
       houseNumber: hn,
-      payment: json['payment'] is Map<String, dynamic> ? PaymentModel.fromJson(json['payment'] as Map<String, dynamic>) : null,
+      payment: json['payment'] is Map<String, dynamic>
+          ? PaymentModel.fromJson(json['payment'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
@@ -200,7 +209,9 @@ class PendingPaymentModel {
       senderName: json['sender_name'] as String?,
       proofImageUrl: json['proof_image_url'] as String? ?? '',
       notes: json['notes'] as String?,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 }
@@ -240,7 +251,8 @@ class HouseBillStatusModel {
       status: json['status'] as String? ?? 'unpaid',
       billId: json['bill_id'] as int?,
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      paidAt: json['paid_at'] != null ? DateTime.tryParse(json['paid_at']) : null,
+      paidAt:
+          json['paid_at'] != null ? DateTime.tryParse(json['paid_at']) : null,
       proofImageUrl: json['proof_image_url'] as String?,
     );
   }
@@ -280,12 +292,19 @@ class BillingSummaryModel {
       block: json['block'] as String?,
       isPeriodGenerated: json['is_period_generated'] as bool? ?? true,
       totalHouses: (json['total_houses'] as num?)?.toInt() ?? 0,
-      paidHouses: ((json['paid_houses'] ?? json['total_paid_houses']) as num?)?.toInt() ?? 0,
-      unpaidHouses: ((json['unpaid_houses'] ?? json['total_unpaid_houses']) as num?)?.toInt() ?? 0,
+      paidHouses: ((json['paid_houses'] ?? json['total_paid_houses']) as num?)
+              ?.toInt() ??
+          0,
+      unpaidHouses:
+          ((json['unpaid_houses'] ?? json['total_unpaid_houses']) as num?)
+                  ?.toInt() ??
+              0,
       totalPaidAmount: (json['total_paid_amount'] as num?)?.toDouble() ?? 0.0,
-      totalUnpaidAmount: (json['total_unpaid_amount'] as num?)?.toDouble() ?? 0.0,
+      totalUnpaidAmount:
+          (json['total_unpaid_amount'] as num?)?.toDouble() ?? 0.0,
       houseBills: list
-              ?.map((e) => HouseBillStatusModel.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  HouseBillStatusModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -356,7 +375,8 @@ class BulkProcessResultModel {
       successCount: (json['success_count'] as num?)?.toInt() ?? 0,
       failedCount: (json['failed_count'] as num?)?.toInt() ?? 0,
       results: list
-              ?.map((e) => BulkProcessItemResultModel.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => BulkProcessItemResultModel.fromJson(
+                  e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -390,7 +410,8 @@ class EligibleDuesPeriodModel {
       billingPeriod: json['billing_period'] as String? ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       status: s,
-      isEligible: json['is_eligible'] as bool? ?? (s == 'unpaid' || s == 'rejected'),
+      isEligible:
+          json['is_eligible'] as bool? ?? (s == 'unpaid' || s == 'rejected'),
     );
   }
 }
@@ -415,7 +436,9 @@ class ResidentBillingOptionModel {
   String get occupancyIdentifier {
     final cleanBlock = houseBlock.trim();
     if (cleanBlock.isEmpty && houseNumber.isEmpty) return '';
-    final blockDisplay = cleanBlock.toLowerCase().startsWith('blok') ? cleanBlock : 'Blok $cleanBlock';
+    final blockDisplay = cleanBlock.toLowerCase().startsWith('blok')
+        ? cleanBlock
+        : 'Blok $cleanBlock';
     return houseNumber.isNotEmpty ? '$blockDisplay/$houseNumber' : blockDisplay;
   }
 
@@ -426,7 +449,8 @@ class ResidentBillingOptionModel {
 
   factory ResidentBillingOptionModel.fromJson(Map<String, dynamic> json) {
     return ResidentBillingOptionModel(
-      residentId: (json['resident_id'] ?? json['user_id'] as num?)?.toInt() ?? 0,
+      residentId:
+          (json['resident_id'] ?? json['user_id'] as num?)?.toInt() ?? 0,
       residentName: (json['resident_name'] ?? json['name'] as String?) ?? '',
       residentPhone: (json['resident_phone'] ?? json['phone'] as String?) ?? '',
       houseId: (json['house_id'] as num?)?.toInt() ?? 0,

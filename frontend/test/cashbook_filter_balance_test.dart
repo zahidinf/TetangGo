@@ -3,7 +3,8 @@ import 'package:tetanggo_frontend/features/cashbook/domain/models/cashbook_model
 
 void main() {
   group('Cashbook Filter & Balance Model Tests', () {
-    test('CashTransactionsResultModel accurately parses period and balances', () {
+    test('CashTransactionsResultModel accurately parses period and balances',
+        () {
       final json = {
         'success': true,
         'data': [
@@ -57,7 +58,9 @@ void main() {
       );
     });
 
-    test('CashTransactionsResultModel handles empty period or zero initial balances correctly', () {
+    test(
+        'CashTransactionsResultModel handles empty period or zero initial balances correctly',
+        () {
       final json = {
         'success': true,
         'data': [],

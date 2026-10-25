@@ -12,7 +12,7 @@ class DigitalReceiptDialog extends StatelessWidget {
   const DigitalReceiptDialog({
     super.key,
     required this.bill,
-    this.residentName = 'Warga RT',
+    this.residentName = 'Warga Cluster',
     this.residentPhone,
   });
 
@@ -55,10 +55,14 @@ class DigitalReceiptDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final payment = bill.payment;
-    final houseInfo = (bill.block != null && bill.block!.isNotEmpty && bill.houseNumber != null && bill.houseNumber!.isNotEmpty)
+    final houseInfo = (bill.block != null &&
+            bill.block!.isNotEmpty &&
+            bill.houseNumber != null &&
+            bill.houseNumber!.isNotEmpty)
         ? 'Blok ${bill.block} No. ${bill.houseNumber}'
         : (bill.houseId > 0 ? 'Rumah ID #${bill.houseId}' : '-');
-    final receiptNumber = 'KW-${bill.id}-${bill.billingPeriod.replaceAll('-', '')}';
+    final receiptNumber =
+        'KW-${bill.id}-${bill.billingPeriod.replaceAll('-', '')}';
 
     final senderBank = payment?.senderBank;
     final senderName = payment?.senderName;
@@ -87,7 +91,8 @@ class DigitalReceiptDialog extends StatelessWidget {
                         color: AppTheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.receipt_long_rounded, color: AppTheme.primary, size: 28),
+                      child: const Icon(Icons.receipt_long_rounded,
+                          color: AppTheme.primary, size: 28),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -115,7 +120,8 @@ class DigitalReceiptDialog extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.grey, size: 20),
+                      icon:
+                          const Icon(Icons.close, color: Colors.grey, size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -126,7 +132,8 @@ class DigitalReceiptDialog extends StatelessWidget {
 
                 // No Kuitansi
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(8),
@@ -134,10 +141,15 @@ class DigitalReceiptDialog extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('No. Kuitansi:', style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                      Text('No. Kuitansi:',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade700)),
                       Text(
                         receiptNumber,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace'),
                       ),
                     ],
                   ),
@@ -145,22 +157,28 @@ class DigitalReceiptDialog extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Rincian Data
-                _buildRow('Warga / Pembayar', residentName.isNotEmpty ? residentName : 'Warga RT'),
+                _buildRow('Warga / Pembayar',
+                    residentName.isNotEmpty ? residentName : 'Warga Cluster'),
                 if (residentPhone != null && residentPhone!.isNotEmpty)
                   _buildRow('No. Telepon', residentPhone!),
                 _buildRow('Unit Hunian', houseInfo),
-                _buildRow('Periode Tagihan', bill.billingPeriod.isNotEmpty ? bill.billingPeriod : '-'),
+                _buildRow('Periode Tagihan',
+                    bill.billingPeriod.isNotEmpty ? bill.billingPeriod : '-'),
                 _buildRow(
                   'Metode Pembayaran',
                   payment?.isCash == true ? 'TUNAI (CASH)' : 'TRANSFER BANK',
-                  valueColor: payment?.isCash == true ? Colors.green.shade800 : AppTheme.primary,
+                  valueColor: payment?.isCash == true
+                      ? Colors.green.shade800
+                      : AppTheme.primary,
                 ),
                 _buildRow('Status', 'LUNAS', valueColor: AppTheme.success),
                 if (senderBank != null && senderBank.isNotEmpty)
-                  _buildRow('Bank Pengirim', '$senderBank${(senderName != null && senderName.isNotEmpty) ? " a.n $senderName" : ""}'),
+                  _buildRow('Bank Pengirim',
+                      '$senderBank${(senderName != null && senderName.isNotEmpty) ? " a.n $senderName" : ""}'),
                 if (payment?.notes != null && payment!.notes!.isNotEmpty)
                   _buildRow('Catatan', payment.notes!),
-                _buildRow('Tanggal Lunas', _formatDate(payment?.verifiedAt ?? bill.updatedAt)),
+                _buildRow('Tanggal Lunas',
+                    _formatDate(payment?.verifiedAt ?? bill.updatedAt)),
                 if (verifiedByName != null && verifiedByName.isNotEmpty)
                   _buildRow('Diterima / Diverifikasi Oleh', verifiedByName),
 
@@ -173,7 +191,9 @@ class DigitalReceiptDialog extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Expanded(
-                      child: Text('Total Iuran Lunas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      child: Text('Total Iuran Lunas',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600)),
                     ),
                     Text(
                       _formatCurrency(bill.amount),
@@ -190,10 +210,12 @@ class DigitalReceiptDialog extends StatelessWidget {
                 // Digital Stamp "LUNAS - DIVERIFIKASI PENGURUS RT"
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
-                      border: Border.all(color: Colors.green.shade600, width: 2),
+                      border:
+                          Border.all(color: Colors.green.shade600, width: 2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -201,7 +223,8 @@ class DigitalReceiptDialog extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.verified_rounded, color: Colors.green.shade700, size: 20),
+                            Icon(Icons.verified_rounded,
+                                color: Colors.green.shade700, size: 20),
                             const SizedBox(width: 8),
                             Text(
                               'LUNAS',
@@ -216,7 +239,7 @@ class DigitalReceiptDialog extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'DIVERIFIKASI PENGURUS RT',
+                          'DIVERIFIKASI PENGURUS CLUSTER',
                           style: TextStyle(
                             color: Colors.green.shade700,
                             fontWeight: FontWeight.bold,
@@ -238,7 +261,8 @@ class DigitalReceiptDialog extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppTheme.primary,
                             side: const BorderSide(color: AppTheme.primary),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           onPressed: () {
@@ -249,12 +273,17 @@ class DigitalReceiptDialog extends StatelessWidget {
                                 title: 'Bukti Transfer - ${bill.billingPeriod}',
                                 senderBank: senderBank,
                                 senderName: senderName,
-                                amount: (payment != null && payment.amountPaid > 0) ? payment.amountPaid : bill.amount,
+                                amount:
+                                    (payment != null && payment.amountPaid > 0)
+                                        ? payment.amountPaid
+                                        : bill.amount,
                               ),
                             );
                           },
                           icon: const Icon(Icons.image_outlined, size: 18),
-                          label: const Text('Lihat Bukti Transfer', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                          label: const Text('Lihat Bukti Transfer',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 13)),
                         ),
                       ),
                     if (proofUrl != null && proofUrl.isNotEmpty)
@@ -264,12 +293,14 @@ class DigitalReceiptDialog extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                        label: const Text('Tutup',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],

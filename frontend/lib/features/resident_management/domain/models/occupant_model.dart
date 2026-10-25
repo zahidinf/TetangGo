@@ -54,7 +54,8 @@ class HouseOccupantModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, salutation, name, phone, email, role, ownershipStatus, createdAt];
+  List<Object?> get props =>
+      [id, salutation, name, phone, email, role, ownershipStatus, createdAt];
 }
 
 class UnassignedResidentModel extends Equatable {
@@ -98,5 +99,6 @@ class UnassignedResidentModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, salutation, name, phone, email, role, status, createdAt];
+  List<Object?> get props =>
+      [id, salutation, name, phone, email, role, status, createdAt];
 }

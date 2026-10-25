@@ -46,7 +46,8 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Kata sandi untuk "${widget.user.displayName}" berhasil direset.'),
+            content: Text(
+                'Kata sandi untuk "${widget.user.displayName}" berhasil direset.'),
             backgroundColor: AppTheme.success,
           ),
         );
@@ -77,7 +78,8 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               color: Colors.amber.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.key_rounded, color: Color(0xFFD97706), size: 20),
+            child: const Icon(Icons.key_rounded,
+                color: Color(0xFFD97706), size: 20),
           ),
           const SizedBox(width: 10),
           const Expanded(
@@ -98,7 +100,8 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
             children: [
               Text(
                 'Masukkan kata sandi baru untuk akun ${widget.user.displayName} (${widget.user.phone}):',
-                style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                style: const TextStyle(
+                    fontSize: 13, color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -109,13 +112,18 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
                   prefixIcon: const Icon(Icons.lock_outline, size: 20),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      _isPasswordVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       size: 18,
                     ),
-                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                    onPressed: () => setState(
+                        () => _isPasswordVisible = !_isPasswordVisible),
                   ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 6) {
@@ -137,14 +145,16 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFD97706),
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: _isLoading ? null : _submit,
           child: _isLoading
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
                 )
               : const Text('Reset Password'),
         ),

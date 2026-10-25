@@ -87,7 +87,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
 
   void _goToPage(int page) {
     if (page < 1) return;
-    if (_transactionsResult != null && page > _transactionsResult!.totalPages) return;
+    if (_transactionsResult != null && page > _transactionsResult!.totalPages)
+      return;
     if (page == _currentPage) return;
     setState(() {
       _currentPage = page;
@@ -154,8 +155,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hapus Transaksi Kas', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Apakah Anda yakin ingin menghapus mutasi "${tx.description}" (${_formatCurrency(tx.amount)})?'),
+        title: const Text('Hapus Transaksi Kas',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(
+            'Apakah Anda yakin ingin menghapus mutasi "${tx.description}" (${_formatCurrency(tx.amount)})?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
@@ -173,7 +176,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
                 await repo.deleteManualTransaction(tx.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Transaksi kas berhasil dihapus')),
+                    const SnackBar(
+                        content: Text('Transaksi kas berhasil dihapus')),
                   );
                   _loadData();
                 }
@@ -239,16 +243,19 @@ class _CashbookScreenState extends State<CashbookScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.danger.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.danger.withOpacity(0.3)),
+                        border:
+                            Border.all(color: AppTheme.danger.withOpacity(0.3)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: AppTheme.danger),
+                          const Icon(Icons.error_outline_rounded,
+                              color: AppTheme.danger),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(color: AppTheme.danger, fontSize: 13),
+                              style: const TextStyle(
+                                  color: AppTheme.danger, fontSize: 13),
                             ),
                           ),
                           TextButton(
@@ -279,7 +286,9 @@ class _CashbookScreenState extends State<CashbookScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.isAdmin ? 'Kelola Kas Transparan Lingkungan' : 'Buku Kas Transparan RT',
+                widget.isAdmin
+                    ? 'Kelola Kas Transparan Lingkungan'
+                    : 'Buku Kas Transparan Cluster',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -288,7 +297,7 @@ class _CashbookScreenState extends State<CashbookScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Pantau aliran dana masuk dan keluar lingkungan RT secara terbuka dan akuntabel.',
+                'Pantau aliran dana masuk dan keluar lingkungan Cluster secara terbuka dan akuntabel.',
                 style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
               ),
             ],
@@ -307,7 +316,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
               ),
               OutlinedButton.icon(
                 onPressed: () => _openRecordDialog('income'),
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: AppTheme.primary),
+                icon: const Icon(Icons.add_circle_outline_rounded,
+                    size: 16, color: AppTheme.primary),
                 label: const Text('+ Donasi / Masuk'),
               ),
               ElevatedButton.icon(
@@ -363,7 +373,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
                       color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 22),
+                    child: const Icon(Icons.account_balance_wallet_rounded,
+                        color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 10),
                   const Text(
@@ -377,7 +388,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -389,7 +401,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                     SizedBox(width: 4),
                     Text(
                       'Live Real-Time',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -420,7 +435,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
                         color: Colors.white.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.arrow_downward_rounded, color: Color(0xFF6EE7B7), size: 18),
+                      child: const Icon(Icons.arrow_downward_rounded,
+                          color: Color(0xFF6EE7B7), size: 18),
                     ),
                     const SizedBox(width: 10),
                     Column(
@@ -433,7 +449,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                         const SizedBox(height: 2),
                         Text(
                           _formatCurrency(income),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15),
                         ),
                       ],
                     ),
@@ -451,7 +470,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
                         color: Colors.white.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.arrow_upward_rounded, color: Color(0xFFFCA5A5), size: 18),
+                      child: const Icon(Icons.arrow_upward_rounded,
+                          color: Color(0xFFFCA5A5), size: 18),
                     ),
                     const SizedBox(width: 10),
                     Column(
@@ -464,7 +484,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                         const SizedBox(height: 2),
                         Text(
                           _formatCurrency(expense),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15),
                         ),
                       ],
                     ),
@@ -509,11 +532,15 @@ class _CashbookScreenState extends State<CashbookScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_month_rounded, size: 18, color: AppTheme.primary),
+              const Icon(Icons.calendar_month_rounded,
+                  size: 18, color: AppTheme.primary),
               const SizedBox(width: 8),
               const Text(
                 'Filter Periode Buku Kas:',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary),
               ),
               const Spacer(),
               // Month dropdown
@@ -528,7 +555,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                   child: DropdownButton<int>(
                     value: _selectedMonth,
                     isDense: true,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary),
                     items: months.map((m) {
                       return DropdownMenuItem<int>(
                         value: m['val'] as int,
@@ -560,7 +590,10 @@ class _CashbookScreenState extends State<CashbookScreen> {
                   child: DropdownButton<int>(
                     value: _selectedYear,
                     isDense: true,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary),
                     items: years.map((y) {
                       return DropdownMenuItem<int>(
                         value: y,
@@ -589,7 +622,11 @@ class _CashbookScreenState extends State<CashbookScreen> {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Text('Tipe Transaksi:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const Text('Tipe Transaksi:',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textSecondary)),
               ChoiceChip(
                 label: const Text('Semua'),
                 selected: _selectedTypeFilter == 'all',
@@ -655,7 +692,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.swap_vert_rounded, color: AppTheme.primary, size: 20),
+                    const Icon(Icons.swap_vert_rounded,
+                        color: AppTheme.primary, size: 20),
                     const SizedBox(width: 8),
                     const Text(
                       'Riwayat & Mutasi Buku Kas',
@@ -667,14 +705,18 @@ class _CashbookScreenState extends State<CashbookScreen> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '${_transactionsResult?.total ?? _transactions.length} Mutasi',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryDark),
                       ),
                     ),
                   ],
@@ -700,17 +742,21 @@ class _CashbookScreenState extends State<CashbookScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.shade400),
+                    Icon(Icons.receipt_long_outlined,
+                        size: 48, color: Colors.grey.shade400),
                     const SizedBox(height: 12),
                     const Text(
                       'Belum ada transaksi kas yang dicatat',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Mutasi kas dari iuran yang disetujui atau pengeluaran manual akan muncul di sini.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                      style: TextStyle(
+                          fontSize: 12, color: AppTheme.textSecondary),
                     ),
                   ],
                 ),
@@ -721,14 +767,17 @@ class _CashbookScreenState extends State<CashbookScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _transactions.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
               itemBuilder: (context, i) {
                 final tx = _transactions[i];
                 final isIncome = tx.isIncome;
-                final amountColor = isIncome ? const Color(0xFF10B981) : AppTheme.danger;
+                final amountColor =
+                    isIncome ? const Color(0xFF10B981) : AppTheme.danger;
 
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -741,7 +790,9 @@ class _CashbookScreenState extends State<CashbookScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                          isIncome
+                              ? Icons.arrow_downward_rounded
+                              : Icons.arrow_upward_rounded,
                           color: amountColor,
                           size: 20,
                         ),
@@ -768,25 +819,34 @@ class _CashbookScreenState extends State<CashbookScreen> {
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade100,
                                     borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.grey.shade300),
+                                    border:
+                                        Border.all(color: Colors.grey.shade300),
                                   ),
                                   child: Text(
                                     tx.categoryDisplay,
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey.shade800),
                                   ),
                                 ),
                                 Text(
                                   _formatDate(tx.transactionDate),
-                                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textSecondary),
                                 ),
                                 if (tx.creatorName.isNotEmpty)
                                   Text(
                                     '• Pencatat: ${tx.creatorName}',
-                                    style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary),
                                   ),
                               ],
                             ),
@@ -810,31 +870,42 @@ class _CashbookScreenState extends State<CashbookScreen> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (tx.proofImageUrl != null && tx.proofImageUrl!.isNotEmpty)
+                              if (tx.proofImageUrl != null &&
+                                  tx.proofImageUrl!.isNotEmpty)
                                 OutlinedButton.icon(
                                   style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
                                     minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    side: const BorderSide(color: AppTheme.primary),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    side: const BorderSide(
+                                        color: AppTheme.primary),
                                   ),
                                   onPressed: () {
                                     showDialog(
                                       context: context,
-                                      builder: (ctx) => CashProofDialog(transaction: tx),
+                                      builder: (ctx) =>
+                                          CashProofDialog(transaction: tx),
                                     );
                                   },
-                                  icon: const Icon(Icons.receipt_rounded, size: 12, color: AppTheme.primary),
-                                  label: const Text('Lihat Nota', style: TextStyle(fontSize: 10, color: AppTheme.primary)),
+                                  icon: const Icon(Icons.receipt_rounded,
+                                      size: 12, color: AppTheme.primary),
+                                  label: const Text('Lihat Nota',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: AppTheme.primary)),
                                 ),
                               if (widget.isAdmin && !tx.isFromBill) ...[
                                 const SizedBox(width: 6),
                                 IconButton(
-                                  icon: const Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.danger),
+                                  icon: const Icon(Icons.delete_outline_rounded,
+                                      size: 16, color: AppTheme.danger),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                   tooltip: 'Hapus Transaksi',
-                                  onPressed: () => _confirmDeleteTransaction(tx),
+                                  onPressed: () =>
+                                      _confirmDeleteTransaction(tx),
                                 ),
                               ],
                             ],
@@ -848,7 +919,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
             ),
 
           // Navigasi Paginasi (tampil jika total data > 20 record atau totalPages > 1)
-          if (_transactionsResult != null && _transactionsResult!.total > _pageSize)
+          if (_transactionsResult != null &&
+              _transactionsResult!.total > _pageSize)
             _buildPaginationControls(isDesktop),
 
           // Rekap Mutasi Periode & Saldo Sebelumnya (Requirement 3)
@@ -959,8 +1031,12 @@ class _CashbookScreenState extends State<CashbookScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            side: BorderSide(color: canPrev ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
-            foregroundColor: canPrev ? AppTheme.textPrimary : Colors.grey.shade400,
+            side: BorderSide(
+                color: canPrev
+                    ? const Color(0xFFCBD5E1)
+                    : const Color(0xFFE2E8F0)),
+            foregroundColor:
+                canPrev ? AppTheme.textPrimary : Colors.grey.shade400,
           ),
           onPressed: canPrev ? () => _goToPage(page - 1) : null,
           child: const Row(
@@ -979,7 +1055,9 @@ class _CashbookScreenState extends State<CashbookScreen> {
           if (p == -1)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Text('...', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+              child: Text('...',
+                  style:
+                      TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
             )
           else ...[
             InkWell(
@@ -993,7 +1071,8 @@ class _CashbookScreenState extends State<CashbookScreen> {
                   color: p == page ? AppTheme.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: p == page ? AppTheme.primary : const Color(0xFFE2E8F0),
+                    color:
+                        p == page ? AppTheme.primary : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Text(
@@ -1018,8 +1097,12 @@ class _CashbookScreenState extends State<CashbookScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            side: BorderSide(color: canNext ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
-            foregroundColor: canNext ? AppTheme.textPrimary : Colors.grey.shade400,
+            side: BorderSide(
+                color: canNext
+                    ? const Color(0xFFCBD5E1)
+                    : const Color(0xFFE2E8F0)),
+            foregroundColor:
+                canNext ? AppTheme.textPrimary : Colors.grey.shade400,
           ),
           onPressed: canNext ? () => _goToPage(page + 1) : null,
           child: const Row(
@@ -1051,17 +1134,22 @@ class _CashbookScreenState extends State<CashbookScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.analytics_outlined, size: 16, color: AppTheme.primary),
+              const Icon(Icons.analytics_outlined,
+                  size: 16, color: AppTheme.primary),
               const SizedBox(width: 6),
               Text(
                 'Rekapitulasi Mutasi Kas Periode ${res.period.isNotEmpty ? res.period : "$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}"}',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary),
               ),
               const Spacer(),
               if (res.startDate.isNotEmpty && res.endDate.isNotEmpty)
                 Text(
                   '${res.startDate} s/d ${res.endDate}',
-                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                  style: const TextStyle(
+                      fontSize: 11, color: AppTheme.textSecondary),
                 ),
             ],
           ),

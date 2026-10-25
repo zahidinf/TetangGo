@@ -22,9 +22,12 @@ class DashboardRepository {
       if (response.data['success'] == true) {
         return DashboardStatsModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat statistik dashboard');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat statistik dashboard');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat statistik dashboard';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat statistik dashboard';
       throw Exception(msg);
     }
   }

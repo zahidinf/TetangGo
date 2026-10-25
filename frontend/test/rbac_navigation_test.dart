@@ -6,7 +6,9 @@ import 'package:tetanggo_frontend/features/home/presentation/widgets/dashboard_s
 
 void main() {
   group('RBAC Navigation and Housing-based Iuran Tests', () {
-    test('1. RESIDENT with housing association gets resident menus and resident billing', () {
+    test(
+        '1. RESIDENT with housing association gets resident menus and resident billing',
+        () {
       const user = UserModel(
         id: 10,
         name: 'Warga Berumah',
@@ -41,7 +43,9 @@ void main() {
       expect(keys, isNot(contains('guestbook')));
     });
 
-    test('2. RESIDENT without housing association does NOT get resident billing', () {
+    test(
+        '2. RESIDENT without housing association does NOT get resident billing',
+        () {
       const user = UserModel(
         id: 11,
         name: 'Warga Tanpa Rumah',
@@ -69,7 +73,9 @@ void main() {
       expect(keys, isNot(contains('resident_billing')));
     });
 
-    test('3. CHAIRPERSON with housing association gets resident menus + all chairperson admin menus', () {
+    test(
+        '3. CHAIRPERSON with housing association gets resident menus + all chairperson admin menus',
+        () {
       const user = UserModel(
         id: 2,
         name: 'Ketua RT',
@@ -136,7 +142,8 @@ void main() {
       expect(keys, contains('guestbook'));
     });
 
-    test('5. TREASURER with housing gets resident menus + billing admin only', () {
+    test('5. TREASURER with housing gets resident menus + billing admin only',
+        () {
       const user = UserModel(
         id: 4,
         name: 'Bendahara RT',
@@ -176,7 +183,9 @@ void main() {
       expect(keys, isNot(contains('guestbook')));
     });
 
-    test('6. SECRETARY with housing gets resident menus + verification, houses, guestbook admin', () {
+    test(
+        '6. SECRETARY with housing gets resident menus + verification, houses, guestbook admin',
+        () {
       const user = UserModel(
         id: 5,
         name: 'Sekretaris RT',
@@ -259,8 +268,17 @@ void main() {
       expect(keys, contains('billing'));
     });
 
-    test('9. Profile menu is titled "Profil Hunian & Keluarga" across all roles', () {
-      final roles = ['ADMIN', 'CHAIRPERSON', 'VICE_CHAIRPERSON', 'TREASURER', 'SECRETARY', 'RESIDENT'];
+    test(
+        '9. Profile menu is titled "Profil Hunian & Keluarga" across all roles',
+        () {
+      final roles = [
+        'ADMIN',
+        'CHAIRPERSON',
+        'VICE_CHAIRPERSON',
+        'TREASURER',
+        'SECRETARY',
+        'RESIDENT'
+      ];
 
       for (final role in roles) {
         final user = UserModel(
@@ -285,7 +303,9 @@ void main() {
       }
     });
 
-    testWidgets('10. DashboardSidebar widget test: renders "Profil Hunian & Keluarga", no "Profil Pengurus RT", and no copyright section', (tester) async {
+    testWidgets(
+        '10. DashboardSidebar widget test: renders "Profil Hunian & Keluarga", no "Profil Pengurus RT", and no copyright section',
+        (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -329,6 +349,88 @@ void main() {
       // Footer elements check
       expect(find.text('Bapak Ketua RT Teladan'), findsOneWidget);
       expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
+    });
+
+    test(
+        '11. SECURITY without housing association does NOT get resident billing',
+        () {
+      const securityUser = UserModel(
+        id: 8,
+        name: 'Satpam Komplek',
+        email: 'security@tetanggo.id',
+        phone: '081234567800',
+        roleId: 7,
+        role: 'SECURITY',
+        status: 'active',
+        houseId: null,
+      );
+
+      expect(securityUser.hasHousingAssociation, isFalse);
+      expect(securityUser.canAccessResidentIuran, isFalse);
+      expect(securityUser.canAccessSecurityStandby, isTrue);
+
+      final items = NavigationItemBuilder.buildNavigationItems(securityUser);
+      final keys = items.map((it) => it.keyId).toList();
+
+      expect(keys, isNot(contains('resident_billing')));
+      expect(keys, isNot(contains('billing')));
+      expect(keys, isNot(contains('verification')));
+      expect(keys, isNot(contains('houses')));
+      expect(keys, isNot(contains('security_management')));
+    });
+
+    test(
+        '12. Ketua and Bendahara with housing association get resident billing titled "Iuran Pribadi Warga"',
+        () {
+      const ketua = UserModel(
+        id: 2,
+        name: 'Ketua RT',
+        email: 'ketua@tetanggo.id',
+        phone: '08123456781',
+        roleId: 2,
+        role: 'CHAIRPERSON',
+        status: 'active',
+        houseId: 102,
+      );
+
+      final ketuaItems = NavigationItemBuilder.buildNavigationItems(ketua);
+      final ketuaBillingItem =
+          ketuaItems.firstWhere((it) => it.keyId == 'resident_billing');
+      expect(ketuaBillingItem.title, equals('Iuran Pribadi Warga'));
+
+      const bendahara = UserModel(
+        id: 4,
+        name: 'Bendahara RT',
+        email: 'bendahara@tetanggo.id',
+        phone: '08123456783',
+        roleId: 4,
+        role: 'TREASURER',
+        status: 'active',
+        houseId: 104,
+      );
+
+      final bendaharaItems =
+          NavigationItemBuilder.buildNavigationItems(bendahara);
+      final bendaharaBillingItem =
+          bendaharaItems.firstWhere((it) => it.keyId == 'resident_billing');
+      expect(bendaharaBillingItem.title, equals('Iuran Pribadi Warga'));
+
+      const regularResident = UserModel(
+        id: 10,
+        name: 'Warga Biasa',
+        email: 'warga@tetanggo.id',
+        phone: '08123456789',
+        roleId: 6,
+        role: 'RESIDENT',
+        status: 'active',
+        houseId: 101,
+      );
+
+      final residentItems =
+          NavigationItemBuilder.buildNavigationItems(regularResident);
+      final residentBillingItem =
+          residentItems.firstWhere((it) => it.keyId == 'resident_billing');
+      expect(residentBillingItem.title, equals('Iuran Warga'));
     });
   });
 }

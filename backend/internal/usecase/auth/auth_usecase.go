@@ -110,7 +110,7 @@ func (uc *AuthUseCase) Login(ctx context.Context, input LoginInput) (*AuthRespon
 	}
 
 	if user.Status == string(entity.UserStatusRejected) {
-		reason := "Pendaftaran akun Anda ditolak oleh Pengurus RT"
+		reason := "Pendaftaran akun Anda ditolak oleh Pengurus Cluster"
 		if user.RejectionReason != nil && *user.RejectionReason != "" {
 			reason += fmt.Sprintf(": %s", *user.RejectionReason)
 		}
@@ -261,7 +261,7 @@ func (uc *AuthUseCase) RejectUser(ctx context.Context, userID int64, reason stri
 
 	cleanReason := strings.TrimSpace(reason)
 	if cleanReason == "" {
-		cleanReason = "Data tidak sesuai ketentuan RT"
+		cleanReason = "Data tidak sesuai ketentuan Cluster"
 	}
 
 	return uc.userRepo.UpdateStatus(ctx, userID, string(entity.UserStatusRejected), &cleanReason)

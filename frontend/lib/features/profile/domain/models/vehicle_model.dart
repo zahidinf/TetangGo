@@ -35,5 +35,6 @@ class VehicleModel extends Equatable {
   String get typeDisplay => isCar ? 'Mobil' : 'Motor';
 
   @override
-  List<Object?> get props => [id, houseId, plateNumber, vehicleType, brandModel, createdAt];
+  List<Object?> get props =>
+      [id, houseId, plateNumber, vehicleType, brandModel, createdAt];
 }

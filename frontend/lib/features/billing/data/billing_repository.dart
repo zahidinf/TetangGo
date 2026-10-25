@@ -14,9 +14,12 @@ class BillingRepository {
       if (response.data['success'] == true) {
         return PaymentSettingModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat pengaturan pembayaran');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat pengaturan pembayaran');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat pengaturan pembayaran';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat pengaturan pembayaran';
       throw Exception(msg);
     }
   }
@@ -40,9 +43,12 @@ class BillingRepository {
       if (response.data['success'] == true) {
         return PaymentSettingModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memperbarui pengaturan pembayaran');
+      throw Exception(response.data['message'] ??
+          'Gagal memperbarui pengaturan pembayaran');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memperbarui pengaturan pembayaran';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memperbarui pengaturan pembayaran';
       throw Exception(msg);
     }
   }
@@ -58,7 +64,9 @@ class BillingRepository {
       }
       throw Exception(response.data['message'] ?? 'Gagal menerbitkan tagihan');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal menerbitkan tagihan';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal menerbitkan tagihan';
       throw Exception(msg);
     }
   }
@@ -75,9 +83,12 @@ class BillingRepository {
       if (response.data['success'] == true) {
         return;
       }
-      throw Exception(response.data['message'] ?? 'Gagal menerbitkan tagihan individual');
+      throw Exception(
+          response.data['message'] ?? 'Gagal menerbitkan tagihan individual');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal menerbitkan tagihan individual';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal menerbitkan tagihan individual';
       throw Exception(msg);
     }
   }
@@ -94,11 +105,16 @@ class BillingRepository {
       );
       if (response.data['success'] == true) {
         final List list = response.data['data'] ?? [];
-        return list.map((e) => BillModel.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) => BillModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat daftar tagihan');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat daftar tagihan');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat daftar tagihan';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat daftar tagihan';
       throw Exception(msg);
     }
   }
@@ -112,22 +128,29 @@ class BillingRepository {
       if (response.data['success'] == true) {
         return BillModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal menginisiasi tagihan periode $period');
+      throw Exception(response.data['message'] ??
+          'Gagal menginisiasi tagihan periode $period');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal menginisiasi tagihan periode $period';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal menginisiasi tagihan periode $period';
       throw Exception(msg);
     }
   }
 
   Future<BillModel> getResidentBillDetail(int id) async {
     try {
-      final response = await _dioClient.dio.get(ApiConstants.residentBillDetail(id));
+      final response =
+          await _dioClient.dio.get(ApiConstants.residentBillDetail(id));
       if (response.data['success'] == true) {
         return BillModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat detail tagihan');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat detail tagihan');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat detail tagihan';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat detail tagihan';
       throw Exception(msg);
     }
   }
@@ -169,29 +192,39 @@ class BillingRepository {
       );
 
       if (response.data['success'] != true) {
-        throw Exception(response.data['message'] ?? 'Gagal mengirim pembayaran');
+        throw Exception(
+            response.data['message'] ?? 'Gagal mengirim pembayaran');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal mengirim pembayaran';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal mengirim pembayaran';
       throw Exception(msg);
     }
   }
 
   Future<List<ResidentBillingOptionModel>> getEligibleResidents() async {
     try {
-      final response = await _dioClient.dio.get(ApiConstants.adminEligibleResidents);
+      final response =
+          await _dioClient.dio.get(ApiConstants.adminEligibleResidents);
       if (response.data['success'] == true) {
         final List list = response.data['data'] ?? [];
-        return list.map((e) => ResidentBillingOptionModel.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) =>
+                ResidentBillingOptionModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
       throw Exception(response.data['message'] ?? 'Gagal memuat daftar warga');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat daftar warga';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat daftar warga';
       throw Exception(msg);
     }
   }
 
-  Future<List<EligibleDuesPeriodModel>> getResidentEligiblePeriods(int residentId) async {
+  Future<List<EligibleDuesPeriodModel>> getResidentEligiblePeriods(
+      int residentId) async {
     try {
       final response = await _dioClient.dio.get(
         ApiConstants.adminResidentPeriods,
@@ -199,11 +232,17 @@ class BillingRepository {
       );
       if (response.data['success'] == true) {
         final List list = response.data['data'] ?? [];
-        return list.map((e) => EligibleDuesPeriodModel.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) =>
+                EligibleDuesPeriodModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat periode iuran warga');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat periode iuran warga');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat periode iuran warga';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat periode iuran warga';
       throw Exception(msg);
     }
   }
@@ -222,17 +261,22 @@ class BillingRepository {
           'resident_id': residentId,
           'bill_id': billId,
           'amount': amount,
-          if (paymentDate != null) 'payment_date': paymentDate.toUtc().toIso8601String(),
+          if (paymentDate != null)
+            'payment_date': paymentDate.toUtc().toIso8601String(),
           if (notes != null && notes.isNotEmpty) 'notes': notes,
         },
       );
 
       if (response.data['success'] == true) {
-        return PaymentModel.fromJson(response.data['data'] as Map<String, dynamic>);
+        return PaymentModel.fromJson(
+            response.data['data'] as Map<String, dynamic>);
       }
-      throw Exception(response.data['message'] ?? 'Gagal mencatat pembayaran tunai');
+      throw Exception(
+          response.data['message'] ?? 'Gagal mencatat pembayaran tunai');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal mencatat pembayaran tunai';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal mencatat pembayaran tunai';
       throw Exception(msg);
     }
   }
@@ -242,11 +286,16 @@ class BillingRepository {
       final response = await _dioClient.dio.get(ApiConstants.adminPendingBills);
       if (response.data['success'] == true) {
         final List list = response.data['data'] ?? [];
-        return list.map((e) => PendingPaymentModel.fromJson(e as Map<String, dynamic>)).toList();
+        return list
+            .map((e) => PendingPaymentModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat antrean pembayaran');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat antrean pembayaran');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat antrean pembayaran';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat antrean pembayaran';
       throw Exception(msg);
     }
   }
@@ -266,10 +315,13 @@ class BillingRepository {
         },
       );
       if (response.data['success'] != true) {
-        throw Exception(response.data['message'] ?? 'Gagal memverifikasi pembayaran');
+        throw Exception(
+            response.data['message'] ?? 'Gagal memverifikasi pembayaran');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memverifikasi pembayaran';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memverifikasi pembayaran';
       throw Exception(msg);
     }
   }
@@ -283,16 +335,20 @@ class BillingRepository {
       }
       throw Exception(response.data['message'] ?? 'Gagal memuat daftar blok');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat daftar blok';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat daftar blok';
       throw Exception(msg);
     }
   }
 
-  Future<BillingSummaryModel> getBillingSummary({String? period, String? block}) async {
+  Future<BillingSummaryModel> getBillingSummary(
+      {String? period, String? block}) async {
     try {
       final Map<String, dynamic> query = {};
       if (period != null && period.isNotEmpty) query['period'] = period;
-      if (block != null && block.isNotEmpty && block != 'Semua') query['block'] = block;
+      if (block != null && block.isNotEmpty && block != 'Semua')
+        query['block'] = block;
 
       final response = await _dioClient.dio.get(
         ApiConstants.adminBillsSummary,
@@ -301,9 +357,12 @@ class BillingRepository {
       if (response.data['success'] == true) {
         return BillingSummaryModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat rekapitulasi iuran');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat rekapitulasi iuran');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat rekapitulasi iuran';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat rekapitulasi iuran';
       throw Exception(msg);
     }
   }
@@ -325,11 +384,15 @@ class BillingRepository {
         },
       );
       if (response.data['success'] == true) {
-        return BulkProcessResultModel.fromJson(response.data['data'] as Map<String, dynamic>);
+        return BulkProcessResultModel.fromJson(
+            response.data['data'] as Map<String, dynamic>);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memproses pembayaran massal');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memproses pembayaran massal');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memproses pembayaran massal';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memproses pembayaran massal';
       throw Exception(msg);
     }
   }

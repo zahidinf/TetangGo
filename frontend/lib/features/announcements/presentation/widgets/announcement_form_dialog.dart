@@ -150,7 +150,9 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isEditing ? 'Edit Pengumuman Resmi' : 'Publikasikan Pengumuman Baru',
+                      isEditing
+                          ? 'Edit Pengumuman Resmi'
+                          : 'Publikasikan Pengumuman Baru',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -172,9 +174,12 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                     decoration: BoxDecoration(
                       color: AppTheme.danger.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.danger.withOpacity(0.3)),
+                      border:
+                          Border.all(color: AppTheme.danger.withOpacity(0.3)),
                     ),
-                    child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger, fontSize: 12)),
+                    child: Text(_errorMessage!,
+                        style: const TextStyle(
+                            color: AppTheme.danger, fontSize: 12)),
                   ),
 
                 // Judul
@@ -182,11 +187,13 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                   controller: _titleController,
                   decoration: const InputDecoration(
                     labelText: 'Judul Pengumuman',
-                    hintText: 'Contoh: Jadwal Kerja Bakti & Pembersihan Selokan',
+                    hintText:
+                        'Contoh: Jadwal Kerja Bakti & Pembersihan Selokan',
                     prefixIcon: Icon(Icons.campaign_outlined),
                   ),
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Judul wajib diisi';
+                    if (val == null || val.trim().isEmpty)
+                      return 'Judul wajib diisi';
                     return null;
                   },
                 ),
@@ -200,9 +207,14 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                     prefixIcon: Icon(Icons.flag_outlined),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'biasa', child: Text('Biasa (Informasi Umum)')),
-                    DropdownMenuItem(value: 'penting', child: Text('Penting (Perhatian Khusus)')),
-                    DropdownMenuItem(value: 'darurat', child: Text('Darurat / Mendesak (Segera)')),
+                    DropdownMenuItem(
+                        value: 'biasa', child: Text('Biasa (Informasi Umum)')),
+                    DropdownMenuItem(
+                        value: 'penting',
+                        child: Text('Penting (Perhatian Khusus)')),
+                    DropdownMenuItem(
+                        value: 'darurat',
+                        child: Text('Darurat / Mendesak (Segera)')),
                   ],
                   onChanged: (val) {
                     if (val != null) setState(() => _category = val);
@@ -216,7 +228,8 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                   maxLines: 5,
                   decoration: const InputDecoration(
                     labelText: 'Isi Lengkap Pengumuman',
-                    hintText: 'Tuliskan rincian kegiatan, lokasi, waktu, dan instruksi bagi warga...',
+                    hintText:
+                        'Tuliskan rincian kegiatan, lokasi, waktu, dan instruksi bagi warga...',
                     alignLabelWithHint: true,
                     prefixIcon: Padding(
                       padding: EdgeInsets.only(bottom: 80),
@@ -224,7 +237,8 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                     ),
                   ),
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Isi pengumuman wajib diisi';
+                    if (val == null || val.trim().isEmpty)
+                      return 'Isi pengumuman wajib diisi';
                     return null;
                   },
                 ),
@@ -233,7 +247,10 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                 // Upload Gambar Poster
                 const Text(
                   'Lampiran Gambar / Poster Kegiatan (Opsional):',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 8),
 
@@ -256,21 +273,27 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                      border:
+                          Border.all(color: AppTheme.primary.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.image_rounded, color: AppTheme.primary),
+                        const Icon(Icons.image_rounded,
+                            color: AppTheme.primary),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _pickedFileName ?? 'Poster terpilih',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDark),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 18, color: AppTheme.danger),
+                          icon: const Icon(Icons.close_rounded,
+                              size: 18, color: AppTheme.danger),
                           onPressed: () => setState(() {
                             _pickedFileBytes = null;
                             _pickedFileName = null;
@@ -283,7 +306,8 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
 
                 // Switch Pin
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(12),
@@ -294,18 +318,24 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.push_pin_outlined, color: AppTheme.danger, size: 20),
+                          Icon(Icons.push_pin_outlined,
+                              color: AppTheme.danger, size: 20),
                           SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Sematkan di Atas (Pin Pengumuman)',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary),
                               ),
                               Text(
                                 'Akan selalu tampil di paling atas feed warga',
-                                style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary),
                               ),
                             ],
                           ),
@@ -326,7 +356,8 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      onPressed:
+                          _isLoading ? null : () => Navigator.pop(context),
                       child: const Text('Batal'),
                     ),
                     const SizedBox(width: 12),
@@ -336,9 +367,11 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
                             )
-                          : Text(isEditing ? 'Simpan Perubahan' : 'Publikasikan'),
+                          : Text(
+                              isEditing ? 'Simpan Perubahan' : 'Publikasikan'),
                     ),
                   ],
                 ),

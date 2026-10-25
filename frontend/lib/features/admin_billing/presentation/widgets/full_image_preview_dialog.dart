@@ -14,7 +14,8 @@ class FullImagePreviewDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fullUrl = getFullImageUrl(imageUrl);
-    final TransformationController transformController = TransformationController();
+    final TransformationController transformController =
+        TransformationController();
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -32,22 +33,28 @@ class FullImagePreviewDialog extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  const Icon(Icons.image_outlined, color: Colors.white70, size: 20),
+                  const Icon(Icons.image_outlined,
+                      color: Colors.white70, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     title,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.zoom_out_map, color: Colors.white70, size: 20),
+                    icon: const Icon(Icons.zoom_out_map,
+                        color: Colors.white70, size: 20),
                     tooltip: 'Reset Zoom',
                     onPressed: () {
                       transformController.value = Matrix4.identity();
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 22),
+                    icon:
+                        const Icon(Icons.close, color: Colors.white, size: 22),
                     tooltip: 'Tutup',
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -59,7 +66,8 @@ class FullImagePreviewDialog extends StatelessWidget {
             // Zoomable Image
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(16)),
                 child: InteractiveViewer(
                   transformationController: transformController,
                   panEnabled: true,
@@ -71,7 +79,8 @@ class FullImagePreviewDialog extends StatelessWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.broken_image_rounded, size: 48, color: Colors.white54),
+                                Icon(Icons.broken_image_rounded,
+                                    size: 48, color: Colors.white54),
                                 SizedBox(height: 8),
                                 Text(
                                   'Gambar tidak tersedia',
@@ -86,7 +95,8 @@ class FullImagePreviewDialog extends StatelessWidget {
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return const Center(
-                                child: CircularProgressIndicator(color: Colors.white),
+                                child: CircularProgressIndicator(
+                                    color: Colors.white),
                               );
                             },
                             errorBuilder: (context, error, stackTrace) {
@@ -94,7 +104,8 @@ class FullImagePreviewDialog extends StatelessWidget {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: const [
-                                    Icon(Icons.broken_image_rounded, size: 48, color: Colors.white54),
+                                    Icon(Icons.broken_image_rounded,
+                                        size: 48, color: Colors.white54),
                                     SizedBox(height: 8),
                                     Text(
                                       'Gagal memuat gambar bukti transfer',

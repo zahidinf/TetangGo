@@ -84,8 +84,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hapus Pengumuman', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Apakah Anda yakin ingin menghapus pengumuman "${a.title}"?'),
+        title: const Text('Hapus Pengumuman',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content:
+            Text('Apakah Anda yakin ingin menghapus pengumuman "${a.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
@@ -103,14 +105,17 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 await repo.deleteAnnouncement(a.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pengumuman berhasil dihapus')),
+                    const SnackBar(
+                        content: Text('Pengumuman berhasil dihapus')),
                   );
                   _loadAnnouncements();
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(backgroundColor: AppTheme.danger, content: Text('Gagal menghapus: $e')),
+                    SnackBar(
+                        backgroundColor: AppTheme.danger,
+                        content: Text('Gagal menghapus: $e')),
                   );
                 }
               }
@@ -143,8 +148,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     final isDesktop = Responsive.isDesktop(context);
 
     // Separate pinned / emergency announcements for top highlight banner
-    final pinnedOrUrgent = _announcements.where((a) => a.isPinned || a.isUrgent).toList();
-    final regularList = _announcements.where((a) => !a.isPinned && !a.isUrgent).toList();
+    final pinnedOrUrgent =
+        _announcements.where((a) => a.isPinned || a.isUrgent).toList();
+    final regularList =
+        _announcements.where((a) => !a.isPinned && !a.isUrgent).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -175,16 +182,19 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.danger.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.danger.withOpacity(0.3)),
+                        border:
+                            Border.all(color: AppTheme.danger.withOpacity(0.3)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: AppTheme.danger),
+                          const Icon(Icons.error_outline_rounded,
+                              color: AppTheme.danger),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(color: AppTheme.danger, fontSize: 13),
+                              style: const TextStyle(
+                                  color: AppTheme.danger, fontSize: 13),
                             ),
                           ),
                           TextButton(
@@ -207,7 +217,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     if (pinnedOrUrgent.isNotEmpty) ...[
                       Row(
                         children: [
-                          const Icon(Icons.push_pin_rounded, color: AppTheme.danger, size: 20),
+                          const Icon(Icons.push_pin_rounded,
+                              color: AppTheme.danger, size: 20),
                           const SizedBox(width: 8),
                           Text(
                             'PENGUMUMAN PENTING & DISMATKAN (${pinnedOrUrgent.length})',
@@ -221,7 +232,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      ...pinnedOrUrgent.map((a) => _buildAnnouncementCard(a, isHighlight: true)),
+                      ...pinnedOrUrgent.map(
+                          (a) => _buildAnnouncementCard(a, isHighlight: true)),
                       const SizedBox(height: 20),
                     ],
 
@@ -236,7 +248,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...regularList.map((a) => _buildAnnouncementCard(a, isHighlight: false)),
+                      ...regularList.map(
+                          (a) => _buildAnnouncementCard(a, isHighlight: false)),
                     ],
                   ],
                 ],
@@ -257,7 +270,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Papan Pengumuman Resmi RT',
+                'Papan Pengumuman Resmi Cluster',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -314,7 +327,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                           )
                         : null,
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -336,7 +350,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Text('Kategori:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const Text('Kategori:',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textSecondary)),
               ChoiceChip(
                 label: const Text('Semua'),
                 selected: _selectedCategory == 'all',
@@ -402,11 +420,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           const SizedBox(height: 14),
           const Text(
             'Belum ada pengumuman resmi',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 4),
           const Text(
-            'Pengumuman resmi dari pengurus RT akan muncul di papan ini.',
+            'Pengumuman resmi dari pengurus Cluster akan muncul di papan ini.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
@@ -415,7 +436,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     );
   }
 
-  Widget _buildAnnouncementCard(AnnouncementModel a, {required bool isHighlight}) {
+  Widget _buildAnnouncementCard(AnnouncementModel a,
+      {required bool isHighlight}) {
     final catColor = _getCategoryColor(a.category);
     final fullImageUrl = a.imageUrl != null ? getFullImageUrl(a.imageUrl!) : '';
 
@@ -425,7 +447,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isHighlight ? catColor.withOpacity(0.5) : const Color(0xFFE2E8F0),
+          color:
+              isHighlight ? catColor.withOpacity(0.5) : const Color(0xFFE2E8F0),
           width: isHighlight ? 1.5 : 1.0,
         ),
         boxShadow: isHighlight
@@ -465,7 +488,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       child: Image.network(
                         fullImageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_rounded, color: Colors.grey),
+                        errorBuilder: (_, __, ___) => const Icon(
+                            Icons.image_not_supported_rounded,
+                            color: Colors.grey),
                       ),
                     ),
                   ),
@@ -482,7 +507,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         children: [
                           if (a.isPinned) ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               margin: const EdgeInsets.only(right: 6),
                               decoration: BoxDecoration(
                                 color: AppTheme.danger.withOpacity(0.1),
@@ -491,15 +517,21 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.push_pin_rounded, size: 10, color: AppTheme.danger),
+                                  Icon(Icons.push_pin_rounded,
+                                      size: 10, color: AppTheme.danger),
                                   SizedBox(width: 2),
-                                  Text('PIN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.danger)),
+                                  Text('PIN',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.danger)),
                                 ],
                               ),
                             ),
                           ],
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: catColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
@@ -516,7 +548,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                           const Spacer(),
                           Text(
                             _formatDate(a.createdAt),
-                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                            style: const TextStyle(
+                                fontSize: 11, color: AppTheme.textSecondary),
                           ),
                         ],
                       ),
@@ -552,16 +585,21 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         children: [
                           Text(
                             'Dipublikasikan oleh: ${a.authorName}',
-                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                            style: const TextStyle(
+                                fontSize: 11, color: AppTheme.textSecondary),
                           ),
                           const Row(
                             children: [
                               Text(
                                 'Baca Selengkapnya',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primary),
                               ),
                               SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_rounded, size: 14, color: AppTheme.primary),
+                              Icon(Icons.arrow_forward_rounded,
+                                  size: 14, color: AppTheme.primary),
                             ],
                           ),
                         ],
@@ -576,12 +614,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   Column(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primary),
+                        icon: const Icon(Icons.edit_outlined,
+                            size: 18, color: AppTheme.primary),
                         tooltip: 'Edit Pengumuman',
                         onPressed: () => _openCreateOrEditDialog(a),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
+                        icon: const Icon(Icons.delete_outline_rounded,
+                            size: 18, color: AppTheme.danger),
                         tooltip: 'Hapus Pengumuman',
                         onPressed: () => _confirmDelete(a),
                       ),

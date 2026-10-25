@@ -72,7 +72,8 @@ class DashboardStatsModel {
       targetAmount: (json['target_amount'] as num?)?.toDouble() ?? 0.0,
       pendingPaymentsCount: json['pending_payments_count'] as int? ?? 0,
       recentActivities: (json['recent_activities'] as List<dynamic>?)
-              ?.map((e) => DashboardRecentActivityModel.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => DashboardRecentActivityModel.fromJson(
+                  e as Map<String, dynamic>))
               .toList() ??
           [],
     );

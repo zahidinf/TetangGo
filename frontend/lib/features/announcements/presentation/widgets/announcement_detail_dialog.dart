@@ -28,7 +28,9 @@ class AnnouncementDetailDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final catColor = _getCategoryColor(announcement.category);
-    final fullImageUrl = announcement.imageUrl != null ? getFullImageUrl(announcement.imageUrl!) : '';
+    final fullImageUrl = announcement.imageUrl != null
+        ? getFullImageUrl(announcement.imageUrl!)
+        : '';
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -42,7 +44,8 @@ class AnnouncementDetailDialog extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: catColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -52,7 +55,8 @@ class AnnouncementDetailDialog extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (announcement.isPinned) ...[
-                          const Icon(Icons.push_pin_rounded, size: 12, color: AppTheme.danger),
+                          const Icon(Icons.push_pin_rounded,
+                              size: 12, color: AppTheme.danger),
                           const SizedBox(width: 4),
                         ],
                         Text(
@@ -101,7 +105,8 @@ class AnnouncementDetailDialog extends StatelessWidget {
                         CircleAvatar(
                           radius: 14,
                           backgroundColor: AppTheme.primary.withOpacity(0.1),
-                          child: const Icon(Icons.person, size: 16, color: AppTheme.primary),
+                          child: const Icon(Icons.person,
+                              size: 16, color: AppTheme.primary),
                         ),
                         const SizedBox(width: 8),
                         Expanded(

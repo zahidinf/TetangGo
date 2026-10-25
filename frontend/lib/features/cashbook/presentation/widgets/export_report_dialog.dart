@@ -27,22 +27,27 @@ class ExportReportDialog extends StatelessWidget {
     buffer.writeln('ID,Tanggal,Tipe,Kategori,Nominal,Keterangan,Pencatat');
     for (final tx in transactions) {
       final cleanDesc = tx.description.replaceAll('"', '""');
-      buffer.writeln('${tx.id},${tx.transactionDate},${tx.type},${tx.category},${tx.amount},"$cleanDesc",${tx.creatorName}');
+      buffer.writeln(
+          '${tx.id},${tx.transactionDate},${tx.type},${tx.category},${tx.amount},"$cleanDesc",${tx.creatorName}');
     }
     return buffer.toString();
   }
 
   String _generateTextReport() {
     final buffer = StringBuffer();
-    final nowStr = DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(DateTime.now());
+    final nowStr =
+        DateFormat('d MMMM yyyy, HH:mm', 'id_ID').format(DateTime.now());
     buffer.writeln('==============================================');
     buffer.writeln('   LAPORAN REKAPITULASI BUKU KAS TETANGGO    ');
     buffer.writeln('    "Tetangga Kompak, Lingkungan Terjaga"     ');
     buffer.writeln('==============================================');
     buffer.writeln('Waktu Cetak       : $nowStr');
-    buffer.writeln('Saldo Kas Saat Ini: ${_formatCurrency(summary.currentBalance)}');
-    buffer.writeln('Total Pemasukan   : ${_formatCurrency(summary.totalIncome)}');
-    buffer.writeln('Total Pengeluaran : ${_formatCurrency(summary.totalExpense)}');
+    buffer.writeln(
+        'Saldo Kas Saat Ini: ${_formatCurrency(summary.currentBalance)}');
+    buffer
+        .writeln('Total Pemasukan   : ${_formatCurrency(summary.totalIncome)}');
+    buffer.writeln(
+        'Total Pengeluaran : ${_formatCurrency(summary.totalExpense)}');
     buffer.writeln('----------------------------------------------');
     buffer.writeln('RINCIAN MUTASI TRANSAKSI:');
     buffer.writeln('');
@@ -105,12 +110,14 @@ class ExportReportDialog extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, size: 20, color: Colors.blue.shade700),
+                    Icon(Icons.info_outline,
+                        size: 20, color: Colors.blue.shade700),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Total ${transactions.length} mutasi siap diekspor ke format CSV (Excel) atau teks rekap resmi.',
-                        style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.blue.shade900),
                       ),
                     ),
                   ],
@@ -148,7 +155,9 @@ class ExportReportDialog extends StatelessWidget {
                       final csv = _generateCSV();
                       Clipboard.setData(ClipboardData(text: csv));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Data CSV disalin ke clipboard! Siap di-paste ke Excel.')),
+                        const SnackBar(
+                            content: Text(
+                                'Data CSV disalin ke clipboard! Siap di-paste ke Excel.')),
                       );
                     },
                     icon: const Icon(Icons.table_chart_rounded, size: 16),
@@ -163,7 +172,9 @@ class ExportReportDialog extends StatelessWidget {
                       final textReport = _generateTextReport();
                       Clipboard.setData(ClipboardData(text: textReport));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Laporan lengkap disalin ke clipboard!')),
+                        const SnackBar(
+                            content:
+                                Text('Laporan lengkap disalin ke clipboard!')),
                       );
                     },
                     icon: const Icon(Icons.copy_rounded, size: 16),

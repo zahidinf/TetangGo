@@ -23,7 +23,8 @@ class ResidentRepository {
           .toList();
       return list;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat antrean verifikasi warga');
     }
   }
@@ -32,7 +33,8 @@ class ResidentRepository {
     try {
       await _dio.post(ApiConstants.approveUser(id));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menyetujui warga');
     }
   }
@@ -44,12 +46,14 @@ class ResidentRepository {
         data: {'reason': reason},
       );
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menolak pendaftaran warga');
     }
   }
 
-  Future<List<HouseModel>> getHouses({String? block, String? status, String? search}) async {
+  Future<List<HouseModel>> getHouses(
+      {String? block, String? status, String? search}) async {
     try {
       final queryParams = <String, dynamic>{};
       if (block != null && block.isNotEmpty && block != 'Semua Blok') {
@@ -62,14 +66,16 @@ class ResidentRepository {
         queryParams['search'] = search;
       }
 
-      final res = await _dio.get(ApiConstants.houses, queryParameters: queryParams);
+      final res =
+          await _dio.get(ApiConstants.houses, queryParameters: queryParams);
       final data = res.data as Map<String, dynamic>;
       final list = (data['data'] as List<dynamic>? ?? [])
           .map((e) => HouseModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return list;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat master data rumah');
     }
   }
@@ -78,10 +84,13 @@ class ResidentRepository {
     try {
       final res = await _dio.get(ApiConstants.houseBlocks);
       final data = res.data as Map<String, dynamic>;
-      final list = (data['data'] as List<dynamic>? ?? []).map((e) => e.toString()).toList();
+      final list = (data['data'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList();
       return list;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat daftar blok');
     }
   }
@@ -95,12 +104,14 @@ class ResidentRepository {
           .toList();
       return list;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat daftar rumah tersedia');
     }
   }
 
-  Future<HouseModel> createHouse(String block, String houseNumber, String status) async {
+  Future<HouseModel> createHouse(
+      String block, String houseNumber, String status) async {
     try {
       final res = await _dio.post(
         ApiConstants.houses,
@@ -113,12 +124,14 @@ class ResidentRepository {
       final data = res.data as Map<String, dynamic>;
       return HouseModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menambah rumah baru');
     }
   }
 
-  Future<HouseModel> updateHouse(int id, String block, String houseNumber, String status) async {
+  Future<HouseModel> updateHouse(
+      int id, String block, String houseNumber, String status) async {
     try {
       final res = await _dio.put(
         ApiConstants.houseDetail(id),
@@ -131,7 +144,8 @@ class ResidentRepository {
       final data = res.data as Map<String, dynamic>;
       return HouseModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memperbarui data rumah');
     }
   }
@@ -140,7 +154,8 @@ class ResidentRepository {
     try {
       await _dio.delete(ApiConstants.houseDetail(id));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menghapus rumah (masih terikat penghuni)');
     }
   }
@@ -155,7 +170,8 @@ class ResidentRepository {
       final payload = data['data'] as Map<String, dynamic>?;
       return (payload?['deleted_count'] as int?) ?? houseIds.length;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menghapus data hunian massal');
     }
   }
@@ -170,25 +186,30 @@ class ResidentRepository {
           .toList();
       return occupantsList;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat penghuni rumah');
     }
   }
 
-  Future<List<UnassignedResidentModel>> getUnassignedResidents({String? search}) async {
+  Future<List<UnassignedResidentModel>> getUnassignedResidents(
+      {String? search}) async {
     try {
       final queryParams = <String, dynamic>{};
       if (search != null && search.isNotEmpty) {
         queryParams['search'] = search;
       }
-      final res = await _dio.get(ApiConstants.unassignedResidents, queryParameters: queryParams);
+      final res = await _dio.get(ApiConstants.unassignedResidents,
+          queryParameters: queryParams);
       final data = res.data as Map<String, dynamic>;
       final list = (data['data'] as List<dynamic>? ?? [])
-          .map((e) => UnassignedResidentModel.fromJson(e as Map<String, dynamic>))
+          .map((e) =>
+              UnassignedResidentModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return list;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat warga belum terpetakan');
     }
   }
@@ -207,7 +228,8 @@ class ResidentRepository {
         },
       );
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memetakan warga ke rumah');
     }
   }
@@ -219,7 +241,8 @@ class ResidentRepository {
     try {
       await _dio.delete(ApiConstants.removeResident(houseId, userId));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal melepas warga dari rumah');
     }
   }
@@ -236,7 +259,8 @@ class ResidentRepository {
         },
       );
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memindahkan warga ke rumah baru');
     }
   }
@@ -245,9 +269,11 @@ class ResidentRepository {
     try {
       final res = await _dio.get(ApiConstants.houseDetails(houseId));
       final data = res.data as Map<String, dynamic>;
-      return HouseDetailFullModel.fromJson(data['data'] as Map<String, dynamic>);
+      return HouseDetailFullModel.fromJson(
+          data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat rincian hunian');
     }
   }
@@ -270,7 +296,8 @@ class ResidentRepository {
       final data = res.data as Map<String, dynamic>;
       return FamilyMemberModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menambahkan anggota keluarga');
     }
   }
@@ -282,7 +309,8 @@ class ResidentRepository {
     try {
       await _dio.delete(ApiConstants.adminDeleteHouseFamily(houseId, familyId));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menghapus anggota keluarga');
     }
   }
@@ -299,13 +327,15 @@ class ResidentRepository {
         data: {
           'plate_number': plateNumber.trim().toUpperCase(),
           'vehicle_type': vehicleType.trim().toLowerCase(),
-          if (brandModel != null && brandModel.isNotEmpty) 'brand_model': brandModel.trim(),
+          if (brandModel != null && brandModel.isNotEmpty)
+            'brand_model': brandModel.trim(),
         },
       );
       final data = res.data as Map<String, dynamic>;
       return VehicleModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menambahkan kendaraan');
     }
   }
@@ -315,9 +345,11 @@ class ResidentRepository {
     required int vehicleId,
   }) async {
     try {
-      await _dio.delete(ApiConstants.adminDeleteHouseVehicle(houseId, vehicleId));
+      await _dio
+          .delete(ApiConstants.adminDeleteHouseVehicle(houseId, vehicleId));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menghapus kendaraan');
     }
   }
@@ -335,14 +367,16 @@ class ResidentRepository {
       if (role != null && role.isNotEmpty) queryParams['role'] = role;
       if (houseId != null) queryParams['house_id'] = houseId;
 
-      final res = await _dio.get(ApiConstants.adminUsers, queryParameters: queryParams);
+      final res =
+          await _dio.get(ApiConstants.adminUsers, queryParameters: queryParams);
       final data = res.data as Map<String, dynamic>;
       final list = (data['data'] as List<dynamic>? ?? [])
           .map((e) => ResidentUserModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return list;
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat data warga');
     }
   }
@@ -376,7 +410,8 @@ class ResidentRepository {
       final data = res.data as Map<String, dynamic>;
       return ResidentUserModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal mendaftarkan warga baru');
     }
   }
@@ -409,7 +444,8 @@ class ResidentRepository {
       final data = res.data as Map<String, dynamic>;
       return ResidentUserModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memperbarui data warga');
     }
   }
@@ -418,7 +454,8 @@ class ResidentRepository {
     try {
       await _dio.delete(ApiConstants.adminUserDetail(userId));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menghapus warga');
     }
   }
@@ -433,7 +470,8 @@ class ResidentRepository {
         data: {'new_password': newPassword.trim()},
       );
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal mereset kata sandi');
     }
   }
@@ -448,7 +486,8 @@ class ResidentRepository {
         data: {'role': role.trim().toUpperCase()},
       );
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memperbarui peran organisasi');
     }
   }

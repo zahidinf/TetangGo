@@ -189,7 +189,7 @@ func (r *PostgresCashbookRepository) GetTransactions(ctx context.Context, filter
 			ct.id, ct.type, ct.category, ct.amount, 
 			TO_CHAR(ct.transaction_date, 'YYYY-MM-DD') AS transaction_date,
 			ct.description, ct.proof_image_url, ct.bill_id, ct.created_by,
-			COALESCE(u.name, 'Admin RT') AS creator_name,
+			COALESCE(u.name, 'Admin Cluster') AS creator_name,
 			ct.created_at
 		FROM cash_transactions ct
 		LEFT JOIN users u ON ct.created_by = u.id
@@ -248,7 +248,7 @@ func (r *PostgresCashbookRepository) GetTransactionByID(ctx context.Context, id 
 			ct.id, ct.type, ct.category, ct.amount, 
 			TO_CHAR(ct.transaction_date, 'YYYY-MM-DD') AS transaction_date,
 			ct.description, ct.proof_image_url, ct.bill_id, ct.created_by,
-			COALESCE(u.name, 'Admin RT') AS creator_name,
+			COALESCE(u.name, 'Admin Cluster') AS creator_name,
 			ct.created_at
 		FROM cash_transactions ct
 		LEFT JOIN users u ON ct.created_by = u.id

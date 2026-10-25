@@ -61,7 +61,9 @@ void main() {
       expect(rejected.payment?.rejectionReason, equals('Nominal kurang'));
     });
 
-    test('2. Multiple bills on the same period filter only one active payment allowed', () {
+    test(
+        '2. Multiple bills on the same period filter only one active payment allowed',
+        () {
       final bills = [
         BillModel.fromJson({
           'id': 10,

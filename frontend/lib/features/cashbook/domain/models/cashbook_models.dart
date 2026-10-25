@@ -33,7 +33,8 @@ class CashbookSummaryModel {
 
   factory CashbookSummaryModel.fromJson(Map<String, dynamic> json) {
     final list = (json['monthly_summary'] as List<dynamic>?)
-            ?.map((e) => MonthlyCashFlowModel.fromJson(e as Map<String, dynamic>))
+            ?.map(
+                (e) => MonthlyCashFlowModel.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
 
@@ -92,7 +93,7 @@ class CashTransactionModel {
       case 'kegiatan_sosial':
         return 'Kegiatan Sosial / Warga';
       case 'operasional':
-        return 'Operasional RT';
+        return 'Operasional Cluster';
       default:
         return category.replaceAll('_', ' ').toUpperCase();
     }
@@ -100,16 +101,22 @@ class CashTransactionModel {
 
   factory CashTransactionModel.fromJson(Map<String, dynamic> json) {
     return CashTransactionModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id'].toString()) ?? 0,
       type: json['type'] ?? 'income',
       category: json['category'] ?? 'lainnya',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       transactionDate: json['transaction_date'] ?? '',
       description: json['description'] ?? '',
       proofImageUrl: json['proof_image_url'],
-      billId: json['bill_id'] is int ? json['bill_id'] : int.tryParse(json['bill_id']?.toString() ?? ''),
-      createdBy: json['created_by'] is int ? json['created_by'] : int.tryParse(json['created_by']?.toString() ?? ''),
-      creatorName: json['creator_name'] ?? 'Admin RT',
+      billId: json['bill_id'] is int
+          ? json['bill_id']
+          : int.tryParse(json['bill_id']?.toString() ?? ''),
+      createdBy: json['created_by'] is int
+          ? json['created_by']
+          : int.tryParse(json['created_by']?.toString() ?? ''),
+      creatorName: json['creator_name'] ?? 'Admin Cluster',
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -147,21 +154,30 @@ class CashTransactionsResultModel {
     required this.periodIncome,
     required this.periodExpense,
     required this.endingBalance,
-  }) : totalPages = totalPages ?? (limit > 0 && total > 0 ? (total / limit).ceil() : 0);
+  }) : totalPages =
+            totalPages ?? (limit > 0 && total > 0 ? (total / limit).ceil() : 0);
 
   factory CashTransactionsResultModel.fromJson(Map<String, dynamic> json) {
     final list = (json['data'] as List<dynamic>?)
-            ?.map((e) => CashTransactionModel.fromJson(e as Map<String, dynamic>))
+            ?.map(
+                (e) => CashTransactionModel.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
 
-    final total = json['total'] is int ? json['total'] : int.tryParse(json['total']?.toString() ?? '0') ?? 0;
-    final page = json['page'] is int ? json['page'] : int.tryParse(json['page']?.toString() ?? '1') ?? 1;
-    final limit = json['limit'] is int ? json['limit'] : int.tryParse(json['limit']?.toString() ?? '20') ?? 20;
+    final total = json['total'] is int
+        ? json['total']
+        : int.tryParse(json['total']?.toString() ?? '0') ?? 0;
+    final page = json['page'] is int
+        ? json['page']
+        : int.tryParse(json['page']?.toString() ?? '1') ?? 1;
+    final limit = json['limit'] is int
+        ? json['limit']
+        : int.tryParse(json['limit']?.toString() ?? '20') ?? 20;
     final computedPages = limit > 0 && total > 0 ? (total / limit).ceil() : 0;
     final totalPages = json['total_pages'] is int
         ? json['total_pages'] as int
-        : (int.tryParse(json['total_pages']?.toString() ?? '') ?? computedPages);
+        : (int.tryParse(json['total_pages']?.toString() ?? '') ??
+            computedPages);
 
     return CashTransactionsResultModel(
       transactions: list,

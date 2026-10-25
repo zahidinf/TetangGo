@@ -107,7 +107,8 @@ class AuthRepository {
       final rawUser = await _storageService.getUserRaw();
       if (rawUser != null && rawUser.isNotEmpty) {
         try {
-          return UserModel.fromJson(jsonDecode(rawUser) as Map<String, dynamic>);
+          return UserModel.fromJson(
+              jsonDecode(rawUser) as Map<String, dynamic>);
         } catch (_) {}
       }
       await logout();

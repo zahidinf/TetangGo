@@ -18,7 +18,8 @@ class RecordTransactionDialog extends StatefulWidget {
   });
 
   @override
-  State<RecordTransactionDialog> createState() => _RecordTransactionDialogState();
+  State<RecordTransactionDialog> createState() =>
+      _RecordTransactionDialogState();
 }
 
 class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
@@ -40,7 +41,7 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
     {'value': 'keamanan', 'label': 'Keamanan & Pos Ronda'},
     {'value': 'perbaikan_fasilitas', 'label': 'Perbaikan Fasilitas Lingkungan'},
     {'value': 'kegiatan_sosial', 'label': 'Kegiatan Sosial / Kerja Bakti'},
-    {'value': 'operasional', 'label': 'Operasional RT / ATK'},
+    {'value': 'operasional', 'label': 'Operasional Cluster / ATK'},
     {'value': 'lainnya', 'label': 'Lain-lain'},
   ];
 
@@ -111,7 +112,8 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final cleanAmountStr = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanAmountStr =
+        _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
     final amount = double.tryParse(cleanAmountStr);
     if (amount == null || amount <= 0) {
       setState(() => _errorMessage = 'Nominal harus lebih besar dari Rp 0');
@@ -141,7 +143,9 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppTheme.primary,
-            content: Text(_type == 'expense' ? 'Pengeluaran kas berhasil dicatat' : 'Pemasukan kas berhasil dicatat'),
+            content: Text(_type == 'expense'
+                ? 'Pengeluaran kas berhasil dicatat'
+                : 'Pemasukan kas berhasil dicatat'),
           ),
         );
       }
@@ -157,7 +161,8 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = _type == 'expense' ? _expenseCategories : _incomeCategories;
+    final categories =
+        _type == 'expense' ? _expenseCategories : _incomeCategories;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -176,7 +181,9 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _type == 'expense' ? 'Catat Pengeluaran Kas' : 'Catat Pemasukan / Donasi',
+                      _type == 'expense'
+                          ? 'Catat Pengeluaran Kas'
+                          : 'Catat Pemasukan / Donasi',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -206,21 +213,29 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: _type == 'expense' ? AppTheme.danger : Colors.transparent,
+                              color: _type == 'expense'
+                                  ? AppTheme.danger
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             alignment: Alignment.center,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.arrow_upward_rounded, size: 16, color: _type == 'expense' ? Colors.white : Colors.grey.shade700),
+                                Icon(Icons.arrow_upward_rounded,
+                                    size: 16,
+                                    color: _type == 'expense'
+                                        ? Colors.white
+                                        : Colors.grey.shade700),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Kas Keluar (Pengeluaran)',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
-                                    color: _type == 'expense' ? Colors.white : Colors.grey.shade700,
+                                    color: _type == 'expense'
+                                        ? Colors.white
+                                        : Colors.grey.shade700,
                                   ),
                                 ),
                               ],
@@ -234,21 +249,29 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: _type == 'income' ? AppTheme.primary : Colors.transparent,
+                              color: _type == 'income'
+                                  ? AppTheme.primary
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             alignment: Alignment.center,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.arrow_downward_rounded, size: 16, color: _type == 'income' ? Colors.white : Colors.grey.shade700),
+                                Icon(Icons.arrow_downward_rounded,
+                                    size: 16,
+                                    color: _type == 'income'
+                                        ? Colors.white
+                                        : Colors.grey.shade700),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Kas Masuk (Pemasukan)',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
-                                    color: _type == 'income' ? Colors.white : Colors.grey.shade700,
+                                    color: _type == 'income'
+                                        ? Colors.white
+                                        : Colors.grey.shade700,
                                   ),
                                 ),
                               ],
@@ -268,9 +291,12 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                     decoration: BoxDecoration(
                       color: AppTheme.danger.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.danger.withOpacity(0.3)),
+                      border:
+                          Border.all(color: AppTheme.danger.withOpacity(0.3)),
                     ),
-                    child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger, fontSize: 12)),
+                    child: Text(_errorMessage!,
+                        style: const TextStyle(
+                            color: AppTheme.danger, fontSize: 12)),
                   ),
 
                 // Kategori Dropdown
@@ -304,7 +330,8 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                     hintText: '50000',
                   ),
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Nominal wajib diisi';
+                    if (val == null || val.trim().isEmpty)
+                      return 'Nominal wajib diisi';
                     return null;
                   },
                 ),
@@ -321,7 +348,8 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                       suffixIcon: Icon(Icons.edit_calendar_rounded, size: 18),
                     ),
                     child: Text(
-                      DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(_selectedDate),
+                      DateFormat('EEEE, d MMMM yyyy', 'id_ID')
+                          .format(_selectedDate),
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
@@ -344,7 +372,8 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                     ),
                   ),
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Deskripsi wajib diisi';
+                    if (val == null || val.trim().isEmpty)
+                      return 'Deskripsi wajib diisi';
                     return null;
                   },
                 ),
@@ -353,7 +382,10 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                 // Bukti Nota / Foto Upload
                 const Text(
                   'Foto Nota / Kuitansi Belanja (Opsional):',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 8),
 
@@ -361,10 +393,13 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                   OutlinedButton.icon(
                     onPressed: _pickImage,
                     icon: const Icon(Icons.upload_file_rounded),
-                    label: const Text('Pilih Foto Nota / Struk (JPG, PNG, PDF)'),
+                    label:
+                        const Text('Pilih Foto Nota / Struk (JPG, PNG, PDF)'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: Colors.grey.shade400, style: BorderStyle.solid),
+                      side: BorderSide(
+                          color: Colors.grey.shade400,
+                          style: BorderStyle.solid),
                     ),
                   )
                 else
@@ -373,21 +408,27 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                      border:
+                          Border.all(color: AppTheme.primary.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.receipt_long_rounded, color: AppTheme.primary),
+                        const Icon(Icons.receipt_long_rounded,
+                            color: AppTheme.primary),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _pickedFileName ?? 'File nota terpilih',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDark),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 18, color: AppTheme.danger),
+                          icon: const Icon(Icons.close_rounded,
+                              size: 18, color: AppTheme.danger),
                           onPressed: () => setState(() {
                             _pickedFileBytes = null;
                             _pickedFileName = null;
@@ -403,24 +444,31 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      onPressed:
+                          _isLoading ? null : () => Navigator.pop(context),
                       child: const Text('Batal'),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _type == 'expense' ? AppTheme.danger : AppTheme.primary,
+                        backgroundColor: _type == 'expense'
+                            ? AppTheme.danger
+                            : AppTheme.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
                       ),
                       onPressed: _isLoading ? null : _submit,
                       child: _isLoading
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
                             )
-                          : Text(_type == 'expense' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan'),
+                          : Text(_type == 'expense'
+                              ? 'Simpan Pengeluaran'
+                              : 'Simpan Pemasukan'),
                     ),
                   ],
                 ),

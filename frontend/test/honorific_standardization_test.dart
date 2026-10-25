@@ -56,7 +56,9 @@ class FakeResidentRepository extends ResidentRepository {
 
 void main() {
   group('Honorific Normalization Rule Tests', () {
-    test('Rule A: Map Mba, Mbak, Mama, Mamah (and case/space variations) to Ibu', () {
+    test(
+        'Rule A: Map Mba, Mbak, Mama, Mamah (and case/space variations) to Ibu',
+        () {
       expect(HonorificHelper.normalize('Ibu'), equals('Ibu'));
       expect(HonorificHelper.normalize('ibu'), equals('Ibu'));
       expect(HonorificHelper.normalize('IBU'), equals('Ibu'));
@@ -101,7 +103,8 @@ void main() {
       expect(HonorificHelper.normalize('random_string'), equals('Bapak'));
     });
 
-    test('Canonical options list contains exactly two choices: Bapak and Ibu', () {
+    test('Canonical options list contains exactly two choices: Bapak and Ibu',
+        () {
       expect(HonorificHelper.canonicalOptions, equals(['Bapak', 'Ibu']));
       expect(HonorificHelper.canonicalOptions.length, equals(2));
       expect(HonorificHelper.canonicalOptions.contains('Pak'), isFalse);
@@ -111,19 +114,28 @@ void main() {
     });
 
     test('formatDisplayName standardizes prefix and handles empty names', () {
-      expect(HonorificHelper.formatDisplayName('Pak', 'Farhan'), equals('Bapak Farhan'));
-      expect(HonorificHelper.formatDisplayName('Mba', 'Ica'), equals('Ibu Ica'));
-      expect(HonorificHelper.formatDisplayName('Mama', 'Rizki'), equals('Ibu Rizki'));
-      expect(HonorificHelper.formatDisplayName('Mamah', 'Siti'), equals('Ibu Siti'));
-      expect(HonorificHelper.formatDisplayName('Bp', 'Budi'), equals('Bapak Budi'));
-      expect(HonorificHelper.formatDisplayName('', 'Farhan'), equals('Bapak Farhan'));
-      expect(HonorificHelper.formatDisplayName(null, 'Farhan'), equals('Bapak Farhan'));
+      expect(HonorificHelper.formatDisplayName('Pak', 'Farhan'),
+          equals('Bapak Farhan'));
+      expect(
+          HonorificHelper.formatDisplayName('Mba', 'Ica'), equals('Ibu Ica'));
+      expect(HonorificHelper.formatDisplayName('Mama', 'Rizki'),
+          equals('Ibu Rizki'));
+      expect(HonorificHelper.formatDisplayName('Mamah', 'Siti'),
+          equals('Ibu Siti'));
+      expect(HonorificHelper.formatDisplayName('Bp', 'Budi'),
+          equals('Bapak Budi'));
+      expect(HonorificHelper.formatDisplayName('', 'Farhan'),
+          equals('Bapak Farhan'));
+      expect(HonorificHelper.formatDisplayName(null, 'Farhan'),
+          equals('Bapak Farhan'));
       expect(HonorificHelper.formatDisplayName('Bapak', ''), equals('Bapak'));
     });
   });
 
   group('Model Normalization and Display Name Tests', () {
-    test('UserModel normalizes legacy values and formats displayName as Bapak/Ibu', () {
+    test(
+        'UserModel normalizes legacy values and formats displayName as Bapak/Ibu',
+        () {
       final userPak = UserModel.fromJson({
         'id': 1,
         'salutation': 'Pak',
@@ -177,7 +189,9 @@ void main() {
       expect(userEmpty.displayName, equals('Bapak Yani'));
     });
 
-    test('ResidentUserModel normalizes salutation and generates correct displayName', () {
+    test(
+        'ResidentUserModel normalizes salutation and generates correct displayName',
+        () {
       final residentMbak = ResidentUserModel.fromJson({
         'id': 10,
         'salutation': 'Mbak',
@@ -205,7 +219,9 @@ void main() {
       expect(residentBp.displayName, equals('Bapak Budi'));
     });
 
-    test('HouseOccupantModel and PendingUserModel normalize honorifics properly', () {
+    test(
+        'HouseOccupantModel and PendingUserModel normalize honorifics properly',
+        () {
       final occupant = HouseOccupantModel.fromJson({
         'id': 20,
         'salutation': 'Mamah',
@@ -256,7 +272,9 @@ void main() {
       );
     }
 
-    testWidgets('Opening resident with legacy "Pak" selects "Bapak" without crash', (tester) async {
+    testWidgets(
+        'Opening resident with legacy "Pak" selects "Bapak" without crash',
+        (tester) async {
       final user = ResidentUserModel.fromJson({
         'id': 100,
         'salutation': 'Pak',
@@ -274,10 +292,13 @@ void main() {
       // Dropdown must display Bapak
       expect(find.text('Bapak'), findsWidgets);
       // "Pak" must NOT be rendered as a dropdown item value
-      expect(find.widgetWithText(DropdownMenuItem<String>, 'Pak'), findsNothing);
+      expect(
+          find.widgetWithText(DropdownMenuItem<String>, 'Pak'), findsNothing);
     });
 
-    testWidgets('Opening resident with legacy "Mba", "Mbak", "Mama", "Mamah" selects "Ibu"', (tester) async {
+    testWidgets(
+        'Opening resident with legacy "Mba", "Mbak", "Mama", "Mamah" selects "Ibu"',
+        (tester) async {
       for (final legacy in ['Mba', 'Mbak', 'Mama', 'Mamah']) {
         final user = ResidentUserModel.fromJson({
           'id': 101,
@@ -294,11 +315,13 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Ibu'), findsWidgets);
-        expect(find.widgetWithText(DropdownMenuItem<String>, legacy), findsNothing);
+        expect(find.widgetWithText(DropdownMenuItem<String>, legacy),
+            findsNothing);
       }
     });
 
-    testWidgets('Dropdown contains exactly two options: Bapak and Ibu', (tester) async {
+    testWidgets('Dropdown contains exactly two options: Bapak and Ibu',
+        (tester) async {
       await tester.pumpWidget(createTestWidget(null));
       await tester.pumpAndSettle();
 
@@ -315,14 +338,21 @@ void main() {
       expect(ibuItems, findsWidgets);
 
       // Verify no other honorifics exist in dropdown
-      expect(find.widgetWithText(DropdownMenuItem<String>, 'Pak'), findsNothing);
-      expect(find.widgetWithText(DropdownMenuItem<String>, 'Mba'), findsNothing);
-      expect(find.widgetWithText(DropdownMenuItem<String>, 'Mbak'), findsNothing);
-      expect(find.widgetWithText(DropdownMenuItem<String>, 'Mama'), findsNothing);
-      expect(find.widgetWithText(DropdownMenuItem<String>, 'Mamah'), findsNothing);
+      expect(
+          find.widgetWithText(DropdownMenuItem<String>, 'Pak'), findsNothing);
+      expect(
+          find.widgetWithText(DropdownMenuItem<String>, 'Mba'), findsNothing);
+      expect(
+          find.widgetWithText(DropdownMenuItem<String>, 'Mbak'), findsNothing);
+      expect(
+          find.widgetWithText(DropdownMenuItem<String>, 'Mama'), findsNothing);
+      expect(
+          find.widgetWithText(DropdownMenuItem<String>, 'Mamah'), findsNothing);
     });
 
-    testWidgets('Updating resident from Bapak to Ibu and saving preserves unrelated fields', (tester) async {
+    testWidgets(
+        'Updating resident from Bapak to Ibu and saving preserves unrelated fields',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 1024);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -347,12 +377,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap 'Ibu' text inside the opened popup menu
-      final ibuItemFinder = find.widgetWithText(DropdownMenuItem<String>, 'Ibu').last;
+      final ibuItemFinder =
+          find.widgetWithText(DropdownMenuItem<String>, 'Ibu').last;
       await tester.tap(ibuItemFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       // Submit form
-      final saveButton = find.widgetWithText(ElevatedButton, 'Simpan Perubahan');
+      final saveButton =
+          find.widgetWithText(ElevatedButton, 'Simpan Perubahan');
       expect(saveButton, findsOneWidget);
       await tester.ensureVisible(saveButton);
       await tester.pumpAndSettle();
@@ -365,10 +397,12 @@ void main() {
       expect(fakeRepo.lastUpdatedPayload!['salutation'], equals('Ibu'));
       expect(fakeRepo.lastUpdatedPayload!['name'], equals('Farhan'));
       expect(fakeRepo.lastUpdatedPayload!['phone'], equals('081381471120'));
-      expect(fakeRepo.lastUpdatedPayload!['email'], equals('farhan@tetanggo.id'));
+      expect(
+          fakeRepo.lastUpdatedPayload!['email'], equals('farhan@tetanggo.id'));
       expect(fakeRepo.lastUpdatedPayload!['role'], equals('ADMIN'));
       expect(fakeRepo.lastUpdatedPayload!['status'], equals('active'));
-      expect(fakeRepo.lastUpdatedPayload!['ownershipStatus'], equals('pemilik'));
+      expect(
+          fakeRepo.lastUpdatedPayload!['ownershipStatus'], equals('pemilik'));
     });
   });
 }

@@ -9,7 +9,8 @@ class WaitingVerificationScreen extends StatefulWidget {
   const WaitingVerificationScreen({super.key});
 
   @override
-  State<WaitingVerificationScreen> createState() => _WaitingVerificationScreenState();
+  State<WaitingVerificationScreen> createState() =>
+      _WaitingVerificationScreenState();
 }
 
 class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
@@ -37,7 +38,8 @@ class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
         elevation: 0,
         title: const Text(
           'Status Pendaftaran',
-          style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
         ),
         actions: [
           IconButton(
@@ -75,7 +77,8 @@ class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFFBEB),
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFFDE68A), width: 2),
+                            border: Border.all(
+                                color: const Color(0xFFFDE68A), width: 2),
                           ),
                           child: const Icon(
                             Icons.hourglass_top_rounded,
@@ -97,7 +100,7 @@ class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
                         const SizedBox(height: 12),
 
                         Text(
-                          'Pendaftaran Anda sedang diverifikasi oleh Pengurus RT. '
+                          'Pendaftaran Anda sedang diverifikasi oleh Pengurus Cluster. '
                           'Mohon menunggu konfirmasi pengurus melalui WhatsApp.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -118,11 +121,14 @@ class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
                           ),
                           child: Column(
                             children: [
-                              _buildRowInfo('Nama Warga', user?.displayName ?? '-'),
+                              _buildRowInfo(
+                                  'Nama Warga', user?.displayName ?? '-'),
                               const Divider(height: 16),
-                              _buildRowInfo('Nomor WhatsApp', user?.phone ?? '-'),
+                              _buildRowInfo(
+                                  'Nomor WhatsApp', user?.phone ?? '-'),
                               const Divider(height: 16),
-                              _buildRowInfo('Hunian Diajukan', user?.houseDisplay ?? 'Hunian Dipilih'),
+                              _buildRowInfo('Hunian Diajukan',
+                                  user?.houseDisplay ?? 'Hunian Dipilih'),
                               const Divider(height: 16),
                               _buildRowInfo(
                                 'Status Verifikasi',
@@ -141,17 +147,21 @@ class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
                             backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
                             minimumSize: const Size.fromHeight(48),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
                           icon: _isChecking
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white),
                                 )
                               : const Icon(Icons.refresh_rounded, size: 20),
                           label: Text(
-                            _isChecking ? 'Memeriksa...' : 'Periksa Status Terkini',
+                            _isChecking
+                                ? 'Memeriksa...'
+                                : 'Periksa Status Terkini',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -163,7 +173,8 @@ class _WaitingVerificationScreenState extends State<WaitingVerificationScreen> {
                             foregroundColor: AppTheme.danger,
                             side: const BorderSide(color: Color(0xFFFECACA)),
                             minimumSize: const Size.fromHeight(44),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
                           icon: const Icon(Icons.logout_rounded, size: 18),
                           label: const Text('Keluar Akun'),

@@ -83,10 +83,12 @@ class FakeCashbookRepo extends CashbookRepository {
 }
 
 class FakeAnnouncementsRepo extends AnnouncementsRepository {
-  FakeAnnouncementsRepo() : super(DioClient(storageService: SecureStorageService()));
+  FakeAnnouncementsRepo()
+      : super(DioClient(storageService: SecureStorageService()));
 
   @override
-  Future<List<AnnouncementModel>> getAnnouncements({String? category, String? search}) async {
+  Future<List<AnnouncementModel>> getAnnouncements(
+      {String? category, String? search}) async {
     return [];
   }
 }
@@ -96,13 +98,15 @@ void main() {
   final fakeCashbookRepo = FakeCashbookRepo();
   final fakeAnnouncementsRepo = FakeAnnouncementsRepo();
 
-  Widget createWidget({required UserModel user, required BillingRepository billingRepo}) {
+  Widget createWidget(
+      {required UserModel user, required BillingRepository billingRepo}) {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<DashboardRepository>.value(value: fakeDashRepo),
         RepositoryProvider<BillingRepository>.value(value: billingRepo),
         RepositoryProvider<CashbookRepository>.value(value: fakeCashbookRepo),
-        RepositoryProvider<AnnouncementsRepository>.value(value: fakeAnnouncementsRepo),
+        RepositoryProvider<AnnouncementsRepository>.value(
+            value: fakeAnnouncementsRepo),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -116,7 +120,9 @@ void main() {
   }
 
   group('Dashboard Recent Activity Card Enhancement Tests', () {
-    testWidgets('1. Bendahara (TREASURER) sees all residents payment activities', (tester) async {
+    testWidgets(
+        '1. Bendahara (TREASURER) sees all residents payment activities',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -136,7 +142,8 @@ void main() {
 
       final fakeBilling = FakeBillingRepo();
 
-      await tester.pumpWidget(createWidget(user: treasurerUser, billingRepo: fakeBilling));
+      await tester.pumpWidget(
+          createWidget(user: treasurerUser, billingRepo: fakeBilling));
       await tester.pumpAndSettle();
 
       // Card heading
@@ -152,7 +159,9 @@ void main() {
       expect(find.text('Periode: September 2026'), findsOneWidget);
     });
 
-    testWidgets('2. Sekretaris (SECRETARY) sees all residents payment activities with billing period', (tester) async {
+    testWidgets(
+        '2. Sekretaris (SECRETARY) sees all residents payment activities with billing period',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -172,7 +181,8 @@ void main() {
 
       final fakeBilling = FakeBillingRepo();
 
-      await tester.pumpWidget(createWidget(user: secretaryUser, billingRepo: fakeBilling));
+      await tester.pumpWidget(
+          createWidget(user: secretaryUser, billingRepo: fakeBilling));
       await tester.pumpAndSettle();
 
       expect(find.text('Aktivitas Pembayaran Iuran Terkini'), findsOneWidget);
@@ -184,7 +194,9 @@ void main() {
       expect(find.text('Periode: September 2026'), findsOneWidget);
     });
 
-    testWidgets('3. Warga (RESIDENT) sees only own dues activities, including UNPAID without payments', (tester) async {
+    testWidgets(
+        '3. Warga (RESIDENT) sees only own dues activities, including UNPAID without payments',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -260,7 +272,8 @@ void main() {
 
       final fakeBilling = FakeBillingRepo(residentBills: residentBills);
 
-      await tester.pumpWidget(createWidget(user: residentUser, billingRepo: fakeBilling));
+      await tester.pumpWidget(
+          createWidget(user: residentUser, billingRepo: fakeBilling));
       await tester.pumpAndSettle();
 
       // Card heading
@@ -273,7 +286,11 @@ void main() {
       // MUST see own status badges: Belum Bayar, Menunggu Verifikasi, Lunas
       expect(find.text('Belum Bayar'), findsOneWidget);
       // "Menunggu Verifikasi" ada di ringkasan status iuran dan di baris aktivitas
-      expect(find.descendant(of: find.byType(ListView), matching: find.text('Menunggu Verifikasi')), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byType(ListView),
+              matching: find.text('Menunggu Verifikasi')),
+          findsOneWidget);
       expect(find.text('Lunas'), findsOneWidget);
 
       // Verify resident billing periods: Oktober 2026 (unpaid), September 2026 (pending), Agustus 2026 (paid)
@@ -283,10 +300,14 @@ void main() {
 
       // Verify resident name & address displayed for own dues
       expect(find.text('Bapak Budi Santoso'), findsNWidgets(3));
-      expect(find.textContaining('Blok E No. 10'), findsNWidgets(4)); // 1 di stat card hunian + 3 di baris aktivitas tagihan
+      expect(
+          find.textContaining('Blok E No. 10'),
+          findsNWidgets(
+              4)); // 1 di stat card hunian + 3 di baris aktivitas tagihan
     });
 
-    testWidgets('4. Warga without dues activities shows friendly empty state', (tester) async {
+    testWidgets('4. Warga without dues activities shows friendly empty state',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -303,14 +324,18 @@ void main() {
 
       final fakeBilling = FakeBillingRepo(residentBills: []);
 
-      await tester.pumpWidget(createWidget(user: residentUser, billingRepo: fakeBilling));
+      await tester.pumpWidget(
+          createWidget(user: residentUser, billingRepo: fakeBilling));
       await tester.pumpAndSettle();
 
       expect(find.text('Aktivitas Pembayaran Iuran Terkini'), findsOneWidget);
-      expect(find.text('Belum ada aktivitas pembayaran iuran baru-baru ini.'), findsOneWidget);
+      expect(find.text('Belum ada aktivitas pembayaran iuran baru-baru ini.'),
+          findsOneWidget);
     });
 
-    testWidgets('5. Handles items without billing period gracefully without errors or corrupt text', (tester) async {
+    testWidgets(
+        '5. Handles items without billing period gracefully without errors or corrupt text',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -344,7 +369,8 @@ void main() {
 
       final fakeBilling = FakeBillingRepo(residentBills: billsWithoutPeriod);
 
-      await tester.pumpWidget(createWidget(user: residentUser, billingRepo: fakeBilling));
+      await tester.pumpWidget(
+          createWidget(user: residentUser, billingRepo: fakeBilling));
       await tester.pumpAndSettle();
 
       expect(find.text('Aktivitas Pembayaran Iuran Terkini'), findsOneWidget);
@@ -354,7 +380,9 @@ void main() {
       expect(find.textContaining('Periode:'), findsNothing);
     });
 
-    testWidgets('6. Warga sorting: strictly prioritizes status (Unpaid -> Pending -> Rejected -> Paid -> Other) and newest time within status', (tester) async {
+    testWidgets(
+        '6. Warga sorting: strictly prioritizes status (Unpaid -> Pending -> Rejected -> Paid -> Other) and newest time within status',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -460,7 +488,8 @@ void main() {
 
       final fakeBilling = FakeBillingRepo(residentBills: residentBills);
 
-      await tester.pumpWidget(createWidget(user: residentUser, billingRepo: fakeBilling));
+      await tester.pumpWidget(
+          createWidget(user: residentUser, billingRepo: fakeBilling));
       await tester.pumpAndSettle();
 
       // Card must be present
@@ -472,19 +501,27 @@ void main() {
       // Item 3: Pending verification (Juli 2026) -> Periode: Juli 2026
       // Item 4: Rejected (Juni 2026) -> Periode: Juni 2026
       // Item 5: Paid (Oktober 2026) -> Periode: Oktober 2026
-      final periodTexts = tester.widgetList<Text>(find.byWidgetPredicate(
-        (w) => w is Text && (w.data?.startsWith('Periode: ') ?? false),
-      )).map((t) => t.data!).toList();
+      final periodTexts = tester
+          .widgetList<Text>(find.byWidgetPredicate(
+            (w) => w is Text && (w.data?.startsWith('Periode: ') ?? false),
+          ))
+          .map((t) => t.data!)
+          .toList();
 
       expect(periodTexts.length, equals(5));
-      expect(periodTexts[0], equals('Periode: September 2026')); // Unpaid terbaru
-      expect(periodTexts[1], equals('Periode: Agustus 2026'));   // Unpaid lebih lama
-      expect(periodTexts[2], equals('Periode: Juli 2026'));      // Pending verification
-      expect(periodTexts[3], equals('Periode: Juni 2026'));      // Rejected
-      expect(periodTexts[4], equals('Periode: Oktober 2026'));   // Paid
+      expect(
+          periodTexts[0], equals('Periode: September 2026')); // Unpaid terbaru
+      expect(
+          periodTexts[1], equals('Periode: Agustus 2026')); // Unpaid lebih lama
+      expect(
+          periodTexts[2], equals('Periode: Juli 2026')); // Pending verification
+      expect(periodTexts[3], equals('Periode: Juni 2026')); // Rejected
+      expect(periodTexts[4], equals('Periode: Oktober 2026')); // Paid
     });
 
-    testWidgets('7. Admin and Pengurus sorting: sorts strictly by latest transaction time regardless of status', (tester) async {
+    testWidgets(
+        '7. Admin and Pengurus sorting: sorts strictly by latest transaction time regardless of status',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -501,7 +538,8 @@ void main() {
 
       final fakeBilling = FakeBillingRepo();
 
-      await tester.pumpWidget(createWidget(user: adminUser, billingRepo: fakeBilling));
+      await tester
+          .pumpWidget(createWidget(user: adminUser, billingRepo: fakeBilling));
       await tester.pumpAndSettle();
 
       expect(find.text('Aktivitas Pembayaran Iuran Terkini'), findsOneWidget);

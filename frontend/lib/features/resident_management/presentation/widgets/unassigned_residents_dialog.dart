@@ -11,7 +11,8 @@ class UnassignedResidentsDialog extends StatefulWidget {
   const UnassignedResidentsDialog({super.key, required this.onMapped});
 
   @override
-  State<UnassignedResidentsDialog> createState() => _UnassignedResidentsDialogState();
+  State<UnassignedResidentsDialog> createState() =>
+      _UnassignedResidentsDialogState();
 }
 
 class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
@@ -40,7 +41,8 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
 
     try {
       final repo = context.read<ResidentRepository>();
-      final list = await repo.getUnassignedResidents(search: _searchController.text.trim());
+      final list = await repo.getUnassignedResidents(
+          search: _searchController.text.trim());
       if (mounted) {
         setState(() {
           _residents = list;
@@ -93,7 +95,8 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                       color: const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.person_search_rounded, color: Color(0xFFD97706), size: 28),
+                    child: const Icon(Icons.person_search_rounded,
+                        color: Color(0xFFD97706), size: 28),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -104,18 +107,25 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                           children: [
                             const Text(
                               'Warga Belum Terpetakan',
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary),
                             ),
                             const SizedBox(width: 10),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF3C7),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 '${_residents.length} Warga',
-                                style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.bold, fontSize: 12),
+                                style: const TextStyle(
+                                    color: Color(0xFFB45309),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12),
                               ),
                             ),
                           ],
@@ -123,7 +133,8 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                         const SizedBox(height: 4),
                         const Text(
                           'Daftar akun warga aktif yang belum memiliki atau belum terhubung dengan nomor rumah',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                          style: TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 13),
                         ),
                       ],
                     ),
@@ -154,8 +165,10 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                                 },
                               )
                             : null,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                       ),
                       onSubmitted: (_) => _fetchUnassigned(),
                     ),
@@ -166,8 +179,10 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     child: const Text('Cari'),
                   ),
@@ -183,7 +198,9 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                     color: AppTheme.danger.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger, fontSize: 13)),
+                  child: Text(_errorMessage!,
+                      style: const TextStyle(
+                          color: AppTheme.danger, fontSize: 13)),
                 ),
 
               // List of unassigned
@@ -197,16 +214,22 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
-                                  Icon(Icons.check_circle_outline_rounded, size: 56, color: AppTheme.success),
+                                  Icon(Icons.check_circle_outline_rounded,
+                                      size: 56, color: AppTheme.success),
                                   SizedBox(height: 12),
                                   Text(
                                     'Semua warga sudah terpetakan!',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textPrimary),
                                   ),
                                   SizedBox(height: 4),
                                   Text(
                                     'Tidak ada akun warga aktif yang belum memiliki rumah.',
-                                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                                    style: TextStyle(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -214,25 +237,31 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                           )
                         : ListView.separated(
                             itemCount: _residents.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final resident = _residents[index];
                               return Card(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  side: const BorderSide(
+                                      color: Color(0xFFE2E8F0)),
                                 ),
                                 elevation: 0,
                                 color: Colors.white,
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
                                   child: Row(
                                     children: [
                                       CircleAvatar(
                                         radius: 22,
-                                        backgroundColor: AppTheme.primary.withOpacity(0.12),
+                                        backgroundColor:
+                                            AppTheme.primary.withOpacity(0.12),
                                         child: Text(
-                                          resident.name.isNotEmpty ? resident.name[0].toUpperCase() : 'W',
+                                          resident.name.isNotEmpty
+                                              ? resident.name[0].toUpperCase()
+                                              : 'W',
                                           style: const TextStyle(
                                             color: AppTheme.primaryDark,
                                             fontWeight: FontWeight.bold,
@@ -243,27 +272,38 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Row(
                                               children: [
                                                 Text(
                                                   resident.displayName,
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14),
                                                 ),
                                                 const SizedBox(width: 8),
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
                                                   decoration: BoxDecoration(
-                                                    color: const Color(0xFFFEF3C7),
-                                                    borderRadius: BorderRadius.circular(6),
+                                                    color:
+                                                        const Color(0xFFFEF3C7),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            6),
                                                   ),
                                                   child: const Text(
                                                     'Belum Ada Rumah',
                                                     style: TextStyle(
                                                       color: Color(0xFFB45309),
                                                       fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ),
@@ -272,20 +312,27 @@ class _UnassignedResidentsDialogState extends State<UnassignedResidentsDialog> {
                                             const SizedBox(height: 4),
                                             Text(
                                               '${resident.phone} • ${resident.email}',
-                                              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                                              style: const TextStyle(
+                                                  color: AppTheme.textSecondary,
+                                                  fontSize: 12),
                                             ),
                                           ],
                                         ),
                                       ),
                                       ElevatedButton.icon(
-                                        onPressed: () => _showQuickMapDialog(resident),
-                                        icon: const Icon(Icons.add_home_rounded, size: 16),
+                                        onPressed: () =>
+                                            _showQuickMapDialog(resident),
+                                        icon: const Icon(Icons.add_home_rounded,
+                                            size: 16),
                                         label: const Text('Petakan ke Rumah'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: AppTheme.primary,
                                           foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 10),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
                                           elevation: 0,
                                         ),
                                       ),
@@ -390,7 +437,8 @@ class _QuickMapToHouseDialogState extends State<_QuickMapToHouseDialog> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${widget.resident.name} berhasil dipetakan ke ${_selectedHouse!.label}!'),
+            content: Text(
+                '${widget.resident.name} berhasil dipetakan ke ${_selectedHouse!.label}!'),
             backgroundColor: AppTheme.success,
           ),
         );
@@ -398,7 +446,8 @@ class _QuickMapToHouseDialogState extends State<_QuickMapToHouseDialog> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
+        setState(
+            () => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
       }
     }
   }
@@ -434,22 +483,32 @@ class _QuickMapToHouseDialogState extends State<_QuickMapToHouseDialog> {
                   color: AppTheme.danger.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger, fontSize: 12)),
+                child: Text(_errorMessage!,
+                    style:
+                        const TextStyle(color: AppTheme.danger, fontSize: 12)),
               ),
-
             if (_isLoading)
-              const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+              const Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator()))
             else ...[
               // Step 1: Pilih Blok
-              const Text('1. Pilih Blok Rumah:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('1. Pilih Blok Rumah:',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
                 value: _selectedBlock,
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                items: _blocks.map((b) => DropdownMenuItem(value: b, child: Text('Blok $b'))).toList(),
+                items: _blocks
+                    .map((b) =>
+                        DropdownMenuItem(value: b, child: Text('Blok $b')))
+                    .toList(),
                 onChanged: (val) {
                   setState(() {
                     _selectedBlock = val;
@@ -460,15 +519,18 @@ class _QuickMapToHouseDialogState extends State<_QuickMapToHouseDialog> {
               const SizedBox(height: 12),
 
               // Step 2: Pilih Nomor Rumah
-              const Text('2. Pilih Nomor Rumah:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('2. Pilih Nomor Rumah:',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               DropdownButtonFormField<HouseModel>(
                 value: _selectedHouse,
                 isExpanded: true,
                 hint: const Text('Pilih nomor rumah di blok ini'),
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 items: _filteredHouses.map((h) {
                   return DropdownMenuItem(
@@ -481,18 +543,25 @@ class _QuickMapToHouseDialogState extends State<_QuickMapToHouseDialog> {
               const SizedBox(height: 12),
 
               // Step 3: Status Kepemilikan
-              const Text('3. Status Kepemilikan:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('3. Status Kepemilikan:',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
                 value: _occupantType,
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'pemilik', child: Text('Pemilik Rumah')),
-                  DropdownMenuItem(value: 'pengontrak', child: Text('Penyewa / Kontrak')),
-                  DropdownMenuItem(value: 'anggota_keluarga', child: Text('Anggota Keluarga')),
+                  DropdownMenuItem(
+                      value: 'pemilik', child: Text('Pemilik Rumah')),
+                  DropdownMenuItem(
+                      value: 'pengontrak', child: Text('Penyewa / Kontrak')),
+                  DropdownMenuItem(
+                      value: 'anggota_keluarga',
+                      child: Text('Anggota Keluarga')),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => _occupantType = val);
@@ -503,12 +572,15 @@ class _QuickMapToHouseDialogState extends State<_QuickMapToHouseDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal')),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: _submitMapping,
           child: const Text('Petakan'),

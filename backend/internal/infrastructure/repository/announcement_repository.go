@@ -40,7 +40,7 @@ func (r *PostgresAnnouncementRepository) GetAll(ctx context.Context, category st
 	query := fmt.Sprintf(`
 		SELECT 
 			a.id, a.title, a.content, a.category, a.image_url, a.is_pinned, a.author_id,
-			COALESCE(u.name, 'Pengurus RT') AS author_name,
+			COALESCE(u.name, 'Pengurus Cluster') AS author_name,
 			a.created_at, a.updated_at
 		FROM announcements a
 		LEFT JOIN users u ON a.author_id = u.id
@@ -82,7 +82,7 @@ func (r *PostgresAnnouncementRepository) GetByID(ctx context.Context, id int64) 
 	query := `
 		SELECT 
 			a.id, a.title, a.content, a.category, a.image_url, a.is_pinned, a.author_id,
-			COALESCE(u.name, 'Pengurus RT') AS author_name,
+			COALESCE(u.name, 'Pengurus Cluster') AS author_name,
 			a.created_at, a.updated_at
 		FROM announcements a
 		LEFT JOIN users u ON a.author_id = u.id

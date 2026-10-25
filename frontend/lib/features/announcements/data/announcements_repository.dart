@@ -28,27 +28,35 @@ class AnnouncementsRepository {
 
       if (response.data['success'] == true) {
         final list = (response.data['data'] as List<dynamic>?)
-                ?.map((e) => AnnouncementModel.fromJson(e as Map<String, dynamic>))
+                ?.map((e) =>
+                    AnnouncementModel.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [];
         return list;
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat daftar pengumuman');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat daftar pengumuman');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat daftar pengumuman';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat daftar pengumuman';
       throw Exception(msg);
     }
   }
 
   Future<AnnouncementModel> getAnnouncementDetail(int id) async {
     try {
-      final response = await _dioClient.dio.get(ApiConstants.announcementDetail(id));
+      final response =
+          await _dioClient.dio.get(ApiConstants.announcementDetail(id));
       if (response.data['success'] == true) {
         return AnnouncementModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memuat detail pengumuman');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memuat detail pengumuman');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat detail pengumuman';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat detail pengumuman';
       throw Exception(msg);
     }
   }
@@ -88,7 +96,9 @@ class AnnouncementsRepository {
       }
       throw Exception(response.data['message'] ?? 'Gagal membuat pengumuman');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal membuat pengumuman';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal membuat pengumuman';
       throw Exception(msg);
     }
   }
@@ -127,9 +137,12 @@ class AnnouncementsRepository {
       if (response.data['success'] == true) {
         return AnnouncementModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal memperbarui pengumuman');
+      throw Exception(
+          response.data['message'] ?? 'Gagal memperbarui pengumuman');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memperbarui pengumuman';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memperbarui pengumuman';
       throw Exception(msg);
     }
   }
@@ -140,10 +153,13 @@ class AnnouncementsRepository {
         ApiConstants.adminAnnouncementDetail(id),
       );
       if (response.data['success'] != true) {
-        throw Exception(response.data['message'] ?? 'Gagal menghapus pengumuman');
+        throw Exception(
+            response.data['message'] ?? 'Gagal menghapus pengumuman');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal menghapus pengumuman';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal menghapus pengumuman';
       throw Exception(msg);
     }
   }

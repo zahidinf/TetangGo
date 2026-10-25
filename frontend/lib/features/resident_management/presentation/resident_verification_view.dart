@@ -11,7 +11,8 @@ class ResidentVerificationView extends StatefulWidget {
   const ResidentVerificationView({super.key, this.onQueueUpdated});
 
   @override
-  State<ResidentVerificationView> createState() => _ResidentVerificationViewState();
+  State<ResidentVerificationView> createState() =>
+      _ResidentVerificationViewState();
 }
 
 class _ResidentVerificationViewState extends State<ResidentVerificationView> {
@@ -59,13 +60,16 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.check_circle_outline_rounded, color: AppTheme.success, size: 48),
-        title: const Text('Setujui Pendaftaran Warga', style: TextStyle(fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.check_circle_outline_rounded,
+            color: AppTheme.success, size: 48),
+        title: const Text('Setujui Pendaftaran Warga',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Apakah Anda yakin ingin menyetujui pendaftaran warga berikut?'),
+            Text(
+                'Apakah Anda yakin ingin menyetujui pendaftaran warga berikut?'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -76,8 +80,10 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Nama: ${user.displayName}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('Rumah: ${user.houseDisplay} (${user.ownershipDisplay})'),
+                  Text('Nama: ${user.displayName}',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                      'Rumah: ${user.houseDisplay} (${user.ownershipDisplay})'),
                   Text('No. HP / WA: ${user.phone}'),
                 ],
               ),
@@ -93,7 +99,8 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.success,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -138,21 +145,25 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.cancel_outlined, color: AppTheme.danger, size: 48),
-        title: const Text('Tolak Pendaftaran Warga', style: TextStyle(fontWeight: FontWeight.bold)),
+        icon:
+            const Icon(Icons.cancel_outlined, color: AppTheme.danger, size: 48),
+        title: const Text('Tolak Pendaftaran Warga',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Tolak pendaftaran akun atas nama ${user.displayName}?'),
             const SizedBox(height: 12),
-            const Text('Alasan Penolakan:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            const Text('Alasan Penolakan:',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             TextField(
               controller: reasonController,
               decoration: InputDecoration(
-                hintText: 'Contoh: Bukan warga RT 05 / Rumah salah',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                hintText: 'Contoh: Bukan warga Cluster / Rumah salah',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
               maxLines: 2,
             ),
@@ -167,7 +178,8 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               final reason = reasonController.text.trim();
@@ -227,18 +239,25 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                         children: [
                           const Text(
                             'Verifikasi Warga Baru',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary),
                           ),
                           const SizedBox(width: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFEF3C7),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               '${_pendingUsers.length} Menunggu',
-                              style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.bold, fontSize: 12),
+                              style: const TextStyle(
+                                  color: Color(0xFFB45309),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12),
                             ),
                           ),
                         ],
@@ -246,7 +265,8 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                       const SizedBox(height: 4),
                       const Text(
                         'Tinjau permohonan bergabung warga baru sebelum dapat mengakses layanan cluster',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13),
                       ),
                     ],
                   ),
@@ -261,13 +281,17 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                             ),
                           );
                         },
-                        icon: const Icon(Icons.person_search_rounded, size: 18, color: Color(0xFFD97706)),
-                        label: const Text('Warga Belum Terpetakan', style: TextStyle(color: Color(0xFFB45309))),
+                        icon: const Icon(Icons.person_search_rounded,
+                            size: 18, color: Color(0xFFD97706)),
+                        label: const Text('Warga Belum Terpetakan',
+                            style: TextStyle(color: Color(0xFFB45309))),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFFDE68A)),
                           backgroundColor: const Color(0xFFFFFBEB),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -279,7 +303,8 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                           backgroundColor: Colors.white,
                           foregroundColor: AppTheme.textPrimary,
                           side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                     ],
@@ -297,7 +322,8 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppTheme.danger.withOpacity(0.3)),
                   ),
-                  child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger)),
+                  child: Text(_errorMessage!,
+                      style: const TextStyle(color: AppTheme.danger)),
                 ),
 
               // Table Card
@@ -319,16 +345,22 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.verified_user_outlined, size: 64, color: Colors.grey.shade400),
+                                  Icon(Icons.verified_user_outlined,
+                                      size: 64, color: Colors.grey.shade400),
                                   const SizedBox(height: 16),
                                   const Text(
                                     'Semua pendaftaran telah ditinjau!',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textPrimary),
                                   ),
                                   const SizedBox(height: 6),
                                   const Text(
                                     'Tidak ada antrean verifikasi warga baru saat ini.',
-                                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.textSecondary),
                                   ),
                                 ],
                               ),
@@ -337,16 +369,38 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                         : SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: DataTable(
-                              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+                              headingRowColor: WidgetStateProperty.all(
+                                  const Color(0xFFF8FAFC)),
                               columnSpacing: 24,
                               columns: const [
-                                DataColumn(label: Text('Nama Warga', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('No. WhatsApp / HP', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Email', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Rumah Diklaim', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Status Huni', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Waktu Daftar', style: TextStyle(fontWeight: FontWeight.bold))),
-                                DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
+                                DataColumn(
+                                    label: Text('Nama Warga',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))),
+                                DataColumn(
+                                    label: Text('No. WhatsApp / HP',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))),
+                                DataColumn(
+                                    label: Text('Email',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))),
+                                DataColumn(
+                                    label: Text('Rumah Diklaim',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))),
+                                DataColumn(
+                                    label: Text('Status Huni',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))),
+                                DataColumn(
+                                    label: Text('Waktu Daftar',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))),
+                                DataColumn(
+                                    label: Text('Aksi',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))),
                               ],
                               rows: _pendingUsers.map((u) {
                                 final timeStr =
@@ -358,9 +412,12 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                                         children: [
                                           CircleAvatar(
                                             radius: 16,
-                                            backgroundColor: AppTheme.primary.withOpacity(0.15),
+                                            backgroundColor: AppTheme.primary
+                                                .withOpacity(0.15),
                                             child: Text(
-                                              u.name.isNotEmpty ? u.name[0].toUpperCase() : 'W',
+                                              u.name.isNotEmpty
+                                                  ? u.name[0].toUpperCase()
+                                                  : 'W',
                                               style: const TextStyle(
                                                 color: AppTheme.primary,
                                                 fontWeight: FontWeight.bold,
@@ -369,7 +426,9 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                                             ),
                                           ),
                                           const SizedBox(width: 10),
-                                          Text(u.displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                          Text(u.displayName,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w600)),
                                         ],
                                       ),
                                     ),
@@ -377,14 +436,19 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                                     DataCell(Text(u.email)),
                                     DataCell(
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFEFF6FF),
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
                                         ),
                                         child: Text(
                                           u.houseDisplay,
-                                          style: const TextStyle(color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600, fontSize: 12),
+                                          style: const TextStyle(
+                                              color: Color(0xFF1D4ED8),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 12),
                                         ),
                                       ),
                                     ),
@@ -394,27 +458,44 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                                       Row(
                                         children: [
                                           ElevatedButton.icon(
-                                            onPressed: () => _showApproveDialog(u),
-                                            icon: const Icon(Icons.check, size: 16),
-                                            label: const Text('Setujui', style: TextStyle(fontSize: 12)),
+                                            onPressed: () =>
+                                                _showApproveDialog(u),
+                                            icon: const Icon(Icons.check,
+                                                size: 16),
+                                            label: const Text('Setujui',
+                                                style: TextStyle(fontSize: 12)),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: AppTheme.success,
                                               foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8)),
                                               elevation: 0,
                                             ),
                                           ),
                                           const SizedBox(width: 8),
                                           OutlinedButton.icon(
-                                            onPressed: () => _showRejectDialog(u),
-                                            icon: const Icon(Icons.close, size: 16),
-                                            label: const Text('Tolak', style: TextStyle(fontSize: 12)),
+                                            onPressed: () =>
+                                                _showRejectDialog(u),
+                                            icon: const Icon(Icons.close,
+                                                size: 16),
+                                            label: const Text('Tolak',
+                                                style: TextStyle(fontSize: 12)),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor: AppTheme.danger,
-                                              side: const BorderSide(color: Color(0xFFFECACA)),
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              side: const BorderSide(
+                                                  color: Color(0xFFFECACA)),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8)),
                                             ),
                                           ),
                                         ],

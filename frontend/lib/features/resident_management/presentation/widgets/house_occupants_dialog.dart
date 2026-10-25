@@ -62,18 +62,23 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
 
     try {
       final repo = context.read<ResidentRepository>();
-      await repo.updateHouse(widget.house.id, widget.house.block, widget.house.houseNumber, newStatus);
+      await repo.updateHouse(widget.house.id, widget.house.block,
+          widget.house.houseNumber, newStatus);
       if (mounted) {
         setState(() => _currentStatus = newStatus);
         widget.onDataChanged();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Status rumah diperbarui'), backgroundColor: AppTheme.success),
+          const SnackBar(
+              content: Text('Status rumah diperbarui'),
+              backgroundColor: AppTheme.success),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.danger),
+          SnackBar(
+              content: Text(e.toString().replaceFirst('Exception: ', '')),
+              backgroundColor: AppTheme.danger),
         );
       }
     }
@@ -84,8 +89,10 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.person_remove_rounded, color: AppTheme.danger, size: 48),
-        title: const Text('Lepas Hubungan Warga', style: TextStyle(fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.person_remove_rounded,
+            color: AppTheme.danger, size: 48),
+        title: const Text('Lepas Hubungan Warga',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,21 +109,26 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
               try {
                 final repo = context.read<ResidentRepository>();
-                await repo.removeResident(houseId: widget.house.id, userId: occupant.id);
+                await repo.removeResident(
+                    houseId: widget.house.id, userId: occupant.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Warga berhasil dilepas dari rumah'), backgroundColor: AppTheme.success),
+                    const SnackBar(
+                        content: Text('Warga berhasil dilepas dari rumah'),
+                        backgroundColor: AppTheme.success),
                   );
                   _fetchOccupants();
                   widget.onDataChanged();
@@ -124,7 +136,10 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.danger),
+                    SnackBar(
+                        content:
+                            Text(e.toString().replaceFirst('Exception: ', '')),
+                        backgroundColor: AppTheme.danger),
                   );
                 }
               }
@@ -159,9 +174,14 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: const ['milik', 'kontrak', 'kosong'].contains(_currentStatus) ? _currentStatus : 'kosong',
+          value: const ['milik', 'kontrak', 'kosong'].contains(_currentStatus)
+              ? _currentStatus
+              : 'kosong',
           isDense: true,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary),
           items: const [
             DropdownMenuItem(value: 'milik', child: Text('Dihuni Pemilik')),
             DropdownMenuItem(value: 'kontrak', child: Text('Disewa / Kontrak')),
@@ -198,7 +218,8 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                       color: AppTheme.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.cottage_rounded, color: AppTheme.primary, size: 28),
+                    child: const Icon(Icons.cottage_rounded,
+                        color: AppTheme.primary, size: 28),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -207,12 +228,18 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                       children: [
                         Text(
                           'Detail & Penghuni ${widget.house.label}',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Text('Status Huni: ', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                            const Text('Status Huni: ',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.textSecondary)),
                             const SizedBox(width: 6),
                             _buildStatusDropdown(),
                           ],
@@ -236,18 +263,25 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                     children: [
                       const Text(
                         'Daftar Akun Penghuni',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${_occupants.length} Akun Warga',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textSecondary),
                         ),
                       ),
                     ],
@@ -255,12 +289,15 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                   ElevatedButton.icon(
                     onPressed: _showAssignResidentDialog,
                     icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-                    label: const Text('Petakan Warga', style: TextStyle(fontSize: 13)),
+                    label: const Text('Petakan Warga',
+                        style: TextStyle(fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
                     ),
                   ),
@@ -276,7 +313,9 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                     color: AppTheme.danger.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger, fontSize: 13)),
+                  child: Text(_errorMessage!,
+                      style: const TextStyle(
+                          color: AppTheme.danger, fontSize: 13)),
                 ),
 
               // Occupants List
@@ -290,17 +329,22 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.person_off_outlined, size: 52, color: Colors.grey.shade400),
+                                  Icon(Icons.person_off_outlined,
+                                      size: 52, color: Colors.grey.shade400),
                                   const SizedBox(height: 12),
                                   const Text(
                                     'Belum ada akun warga di rumah ini',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textPrimary),
                                   ),
                                   const SizedBox(height: 6),
                                   const Text(
                                     'Klik tombol "+ Petakan Warga" di atas untuk menambahkan warga terdaftar.',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                                    style: TextStyle(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -308,25 +352,31 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                           )
                         : ListView.separated(
                             itemCount: _occupants.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final occ = _occupants[index];
                               return Card(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  side: const BorderSide(
+                                      color: Color(0xFFE2E8F0)),
                                 ),
                                 elevation: 0,
                                 color: Colors.white,
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
                                   child: Row(
                                     children: [
                                       CircleAvatar(
                                         radius: 20,
-                                        backgroundColor: AppTheme.primary.withOpacity(0.12),
+                                        backgroundColor:
+                                            AppTheme.primary.withOpacity(0.12),
                                         child: Text(
-                                          occ.name.isNotEmpty ? occ.name[0].toUpperCase() : 'W',
+                                          occ.name.isNotEmpty
+                                              ? occ.name[0].toUpperCase()
+                                              : 'W',
                                           style: const TextStyle(
                                             color: AppTheme.primaryDark,
                                             fontWeight: FontWeight.bold,
@@ -336,31 +386,49 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Row(
                                               children: [
                                                 Text(
                                                   occ.displayName,
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14),
                                                 ),
                                                 const SizedBox(width: 8),
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
                                                   decoration: BoxDecoration(
-                                                    color: occ.ownershipStatus == 'pengontrak'
-                                                        ? const Color(0xFFEEF2FF)
-                                                        : const Color(0xFFDCFCE7),
-                                                    borderRadius: BorderRadius.circular(6),
+                                                    color:
+                                                        occ.ownershipStatus ==
+                                                                'pengontrak'
+                                                            ? const Color(
+                                                                0xFFEEF2FF)
+                                                            : const Color(
+                                                                0xFFDCFCE7),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            6),
                                                   ),
                                                   child: Text(
                                                     occ.ownershipDisplay,
                                                     style: TextStyle(
-                                                      color: occ.ownershipStatus == 'pengontrak'
-                                                          ? const Color(0xFF4338CA)
-                                                          : const Color(0xFF15803D),
+                                                      color:
+                                                          occ.ownershipStatus ==
+                                                                  'pengontrak'
+                                                              ? const Color(
+                                                                  0xFF4338CA)
+                                                              : const Color(
+                                                                  0xFF15803D),
                                                       fontSize: 11,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ),
@@ -369,15 +437,19 @@ class _HouseOccupantsDialogState extends State<HouseOccupantsDialog> {
                                             const SizedBox(height: 4),
                                             Text(
                                               '${occ.phone} • ${occ.email}',
-                                              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                                              style: const TextStyle(
+                                                  color: AppTheme.textSecondary,
+                                                  fontSize: 12),
                                             ),
                                           ],
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.link_off_rounded, color: AppTheme.danger, size: 20),
+                                        icon: const Icon(Icons.link_off_rounded,
+                                            color: AppTheme.danger, size: 20),
                                         tooltip: 'Lepas Warga dari Rumah Ini',
-                                        onPressed: () => _showRemoveResidentDialog(occ),
+                                        onPressed: () =>
+                                            _showRemoveResidentDialog(occ),
                                       ),
                                     ],
                                   ),
@@ -412,10 +484,12 @@ class _AssignResidentSubDialog extends StatefulWidget {
   });
 
   @override
-  State<_AssignResidentSubDialog> createState() => _AssignResidentSubDialogState();
+  State<_AssignResidentSubDialog> createState() =>
+      _AssignResidentSubDialogState();
 }
 
-class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with SingleTickerProviderStateMixin {
+class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
 
@@ -452,7 +526,8 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
       if (mounted) {
         setState(() {
           _unassignedResidents = unassigned;
-          _allHouses = houses.where((h) => h.id != widget.currentHouse.id).toList();
+          _allHouses =
+              houses.where((h) => h.id != widget.currentHouse.id).toList();
           _isLoading = false;
         });
       }
@@ -516,13 +591,16 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Warga berhasil dipetakan ke rumah ini'), backgroundColor: AppTheme.success),
+          const SnackBar(
+              content: Text('Warga berhasil dipetakan ke rumah ini'),
+              backgroundColor: AppTheme.success),
         );
         widget.onSuccess();
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
+        setState(
+            () => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
       }
     }
   }
@@ -531,7 +609,8 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text('Petakan Warga ke ${widget.currentHouse.label}', style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text('Petakan Warga ke ${widget.currentHouse.label}',
+          style: const TextStyle(fontWeight: FontWeight.bold)),
       content: SizedBox(
         width: 480,
         child: Column(
@@ -549,7 +628,6 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
               ],
             ),
             const SizedBox(height: 16),
-
             if (_errorMessage != null)
               Container(
                 padding: const EdgeInsets.all(10),
@@ -558,11 +636,15 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
                   color: AppTheme.danger.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger, fontSize: 12)),
+                child: Text(_errorMessage!,
+                    style:
+                        const TextStyle(color: AppTheme.danger, fontSize: 12)),
               ),
-
             _isLoading
-                ? const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+                ? const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator()))
                 : SizedBox(
                     height: 190,
                     child: TabBarView(
@@ -571,37 +653,65 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
                         // Tab 1: Unassigned
                         _unassignedResidents.isEmpty
                             ? const Center(
-                                child: Text('Tidak ada warga berstatus belum terpetakan saat ini.',
-                                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                child: Text(
+                                    'Tidak ada warga berstatus belum terpetakan saat ini.',
+                                    style: TextStyle(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 13)),
                               )
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Pilih Warga:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  const Text('Pilih Warga:',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13)),
                                   const SizedBox(height: 6),
-                                  DropdownButtonFormField<UnassignedResidentModel>(
+                                  DropdownButtonFormField<
+                                      UnassignedResidentModel>(
                                     value: _selectedUnassigned,
                                     isExpanded: true,
-                                    hint: const Text('Pilih dari daftar warga belum terpetakan'),
-                                    decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                                    hint: const Text(
+                                        'Pilih dari daftar warga belum terpetakan'),
+                                    decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8))),
                                     items: _unassignedResidents.map((u) {
-                                      return DropdownMenuItem(value: u, child: Text('${u.displayName} (${u.phone})'));
+                                      return DropdownMenuItem(
+                                          value: u,
+                                          child: Text(
+                                              '${u.displayName} (${u.phone})'));
                                     }).toList(),
-                                    onChanged: (val) => setState(() => _selectedUnassigned = val),
+                                    onChanged: (val) => setState(
+                                        () => _selectedUnassigned = val),
                                   ),
                                   const SizedBox(height: 12),
-                                  const Text('Status Kepemilikan:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  const Text('Status Kepemilikan:',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13)),
                                   const SizedBox(height: 6),
                                   DropdownButtonFormField<String>(
                                     value: _occupantType,
-                                    decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                                    decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8))),
                                     items: const [
-                                      DropdownMenuItem(value: 'pemilik', child: Text('Pemilik Rumah')),
-                                      DropdownMenuItem(value: 'pengontrak', child: Text('Penyewa / Pengontrak')),
-                                      DropdownMenuItem(value: 'anggota_keluarga', child: Text('Anggota Keluarga')),
+                                      DropdownMenuItem(
+                                          value: 'pemilik',
+                                          child: Text('Pemilik Rumah')),
+                                      DropdownMenuItem(
+                                          value: 'pengontrak',
+                                          child: Text('Penyewa / Pengontrak')),
+                                      DropdownMenuItem(
+                                          value: 'anggota_keluarga',
+                                          child: Text('Anggota Keluarga')),
                                     ],
                                     onChanged: (val) {
-                                      if (val != null) setState(() => _occupantType = val);
+                                      if (val != null)
+                                        setState(() => _occupantType = val);
                                     },
                                   ),
                                 ],
@@ -611,30 +721,47 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Pilih Rumah Asal:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            const Text('Pilih Rumah Asal:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 13)),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<HouseModel>(
                               value: _selectedSourceHouse,
                               isExpanded: true,
                               hint: const Text('Pilih nomor rumah asal warga'),
-                              decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                              decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8))),
                               items: _allHouses.map((h) {
-                                return DropdownMenuItem(value: h, child: Text('${h.label} (${h.statusDisplay})'));
+                                return DropdownMenuItem(
+                                    value: h,
+                                    child: Text(
+                                        '${h.label} (${h.statusDisplay})'));
                               }).toList(),
                               onChanged: _onSourceHouseSelected,
                             ),
                             const SizedBox(height: 12),
-                            const Text('Pilih Warga yang Dipindahkan:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            const Text('Pilih Warga yang Dipindahkan:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 13)),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<HouseOccupantModel>(
                               value: _selectedSourceOccupant,
                               isExpanded: true,
-                              hint: Text(_selectedSourceHouse == null ? 'Pilih rumah asal dulu' : 'Pilih warga'),
-                              decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                              hint: Text(_selectedSourceHouse == null
+                                  ? 'Pilih rumah asal dulu'
+                                  : 'Pilih warga'),
+                              decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8))),
                               items: _sourceOccupants.map((o) {
-                                return DropdownMenuItem(value: o, child: Text('${o.displayName} (${o.phone})'));
+                                return DropdownMenuItem(
+                                    value: o,
+                                    child:
+                                        Text('${o.displayName} (${o.phone})'));
                               }).toList(),
-                              onChanged: (val) => setState(() => _selectedSourceOccupant = val),
+                              onChanged: (val) =>
+                                  setState(() => _selectedSourceOccupant = val),
                             ),
                           ],
                         ),
@@ -645,12 +772,15 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog> with
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal')),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: _submitAssignment,
           child: const Text('Simpan Pemetaan'),

@@ -15,7 +15,8 @@ class ResidentsManagementView extends StatefulWidget {
   const ResidentsManagementView({super.key, this.headerWidget});
 
   @override
-  State<ResidentsManagementView> createState() => _ResidentsManagementViewState();
+  State<ResidentsManagementView> createState() =>
+      _ResidentsManagementViewState();
 }
 
 class _ResidentsManagementViewState extends State<ResidentsManagementView> {
@@ -81,7 +82,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
         setState(() {
           _users = users;
           _isLoading = false;
-          final maxPage = users.isNotEmpty ? (users.length / _pageSize).ceil() : 1;
+          final maxPage =
+              users.isNotEmpty ? (users.length / _pageSize).ceil() : 1;
           if (_currentPage > maxPage) {
             _currentPage = maxPage;
           }
@@ -129,17 +131,24 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          icon: const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 40),
-          title: const Text('Belum Terhubung ke Hunian', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.info_outline_rounded,
+              color: Color(0xFFD97706), size: 40),
+          title: const Text('Belum Terhubung ke Hunian',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text(
             'Warga "${user.displayName}" belum dipetakan ke unit hunian manapun.\n\nSilakan edit warga ini dan pilih unit hunian terlebih dahulu untuk mengelola anggota keluarga dan kendaraannya.',
             style: const TextStyle(fontSize: 13),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Tutup')),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white),
               onPressed: () {
                 Navigator.pop(ctx);
                 _showEditUserDialog(user);
@@ -194,7 +203,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
           children: const [
             Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 24),
             SizedBox(width: 8),
-            Text('Hapus Akun Warga', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Hapus Akun Warga',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
         content: Text(
@@ -210,7 +220,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -219,7 +230,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Akun warga "${user.displayName}" berhasil dihapus'),
+                      content: Text(
+                          'Akun warga "${user.displayName}" berhasil dihapus'),
                       backgroundColor: AppTheme.success,
                     ),
                   );
@@ -230,7 +242,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(e.toString().replaceFirst('Exception: ', '')),
+                      content:
+                          Text(e.toString().replaceFirst('Exception: ', '')),
                       backgroundColor: AppTheme.danger,
                     ),
                   );
@@ -281,7 +294,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
       ),
       child: Text(
         label,
-        style: TextStyle(color: text, fontWeight: FontWeight.bold, fontSize: 11),
+        style:
+            TextStyle(color: text, fontWeight: FontWeight.bold, fontSize: 11),
       ),
     );
   }
@@ -323,12 +337,16 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                     children: const [
                       Text(
                         'Manajemen Data Warga',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary),
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Kelola akun seluruh warga RT, perbarui data hunian, reset password, dan status akun',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                        'Kelola akun seluruh warga Cluster, perbarui data hunian, reset password, dan status akun',
+                        style: TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13),
                       ),
                     ],
                   ),
@@ -339,8 +357,10 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ],
@@ -366,7 +386,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: 'Cari Nama, No WhatsApp, atau Email...',
-                            prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                            prefixIcon:
+                                const Icon(Icons.search_rounded, size: 20),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear, size: 18),
@@ -377,8 +398,10 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                                     },
                                   )
                                 : null,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
                           ),
                           onSubmitted: (_) {
                             _currentPage = 1;
@@ -397,14 +420,30 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String?>(
-                            value: const ['active', 'pending_verification', 'inactive'].contains(_selectedStatus)
+                            value: const [
+                              'active',
+                              'pending_verification',
+                              'inactive'
+                            ].contains(_selectedStatus)
                                 ? _selectedStatus
                                 : null,
                             items: const [
-                              DropdownMenuItem<String?>(value: null, child: Text('Semua Status', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem<String?>(value: 'active', child: Text('Status: Aktif', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem<String?>(value: 'pending_verification', child: Text('Status: Menunggu', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem<String?>(value: 'inactive', child: Text('Status: Non-Aktif', style: TextStyle(fontSize: 13))),
+                              DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text('Semua Status',
+                                      style: TextStyle(fontSize: 13))),
+                              DropdownMenuItem<String?>(
+                                  value: 'active',
+                                  child: Text('Status: Aktif',
+                                      style: TextStyle(fontSize: 13))),
+                              DropdownMenuItem<String?>(
+                                  value: 'pending_verification',
+                                  child: Text('Status: Menunggu',
+                                      style: TextStyle(fontSize: 13))),
+                              DropdownMenuItem<String?>(
+                                  value: 'inactive',
+                                  child: Text('Status: Non-Aktif',
+                                      style: TextStyle(fontSize: 13))),
                             ],
                             onChanged: (val) {
                               setState(() {
@@ -425,7 +464,10 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                           uniqueHouses[h.id] = h;
                         }
                         final houseList = uniqueHouses.values.toList();
-                        final currentHouseValue = houseList.any((h) => h.id == _selectedHouseId) ? _selectedHouseId : null;
+                        final currentHouseValue =
+                            houseList.any((h) => h.id == _selectedHouseId)
+                                ? _selectedHouseId
+                                : null;
 
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -439,11 +481,13 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                               items: [
                                 const DropdownMenuItem<int?>(
                                   value: null,
-                                  child: Text('Semua Hunian', style: TextStyle(fontSize: 13)),
+                                  child: Text('Semua Hunian',
+                                      style: TextStyle(fontSize: 13)),
                                 ),
                                 ...houseList.map((h) => DropdownMenuItem<int?>(
                                       value: h.id,
-                                      child: Text(h.label, style: const TextStyle(fontSize: 13)),
+                                      child: Text(h.label,
+                                          style: const TextStyle(fontSize: 13)),
                                     )),
                               ],
                               onChanged: (val) {
@@ -462,7 +506,8 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                       // Refresh button
                       IconButton(
                         tooltip: 'Segarkan Data',
-                        icon: const Icon(Icons.refresh_rounded, color: AppTheme.primary),
+                        icon: const Icon(Icons.refresh_rounded,
+                            color: AppTheme.primary),
                         onPressed: () {
                           _fetchHouses();
                           _fetchUsers();
@@ -488,26 +533,34 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: AppTheme.danger, size: 40),
+                        const Icon(Icons.error_outline_rounded,
+                            color: AppTheme.danger, size: 40),
                         const SizedBox(height: 12),
-                        Text(_errorMessage!, style: const TextStyle(color: AppTheme.danger)),
+                        Text(_errorMessage!,
+                            style: const TextStyle(color: AppTheme.danger)),
                         const SizedBox(height: 12),
-                        ElevatedButton(onPressed: _fetchUsers, child: const Text('Coba Lagi')),
+                        ElevatedButton(
+                            onPressed: _fetchUsers,
+                            child: const Text('Coba Lagi')),
                       ],
                     ),
                   ),
                 )
               else if (_users.isEmpty)
                 Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   child: const Padding(
                     padding: EdgeInsets.all(48.0),
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.people_outline_rounded, size: 48, color: AppTheme.textSecondary),
+                          Icon(Icons.people_outline_rounded,
+                              size: 48, color: AppTheme.textSecondary),
                           SizedBox(height: 12),
-                          Text('Tidak ada data yang sesuai dengan filter yang dipilih.', style: TextStyle(color: AppTheme.textSecondary)),
+                          Text(
+                              'Tidak ada data yang sesuai dengan filter yang dipilih.',
+                              style: TextStyle(color: AppTheme.textSecondary)),
                         ],
                       ),
                     ),
@@ -525,12 +578,14 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                   child: Builder(
                     builder: (context) {
                       final totalItems = _users.length;
-                      final totalPages = totalItems > 0 ? (totalItems / _pageSize).ceil() : 1;
+                      final totalPages =
+                          totalItems > 0 ? (totalItems / _pageSize).ceil() : 1;
                       final clampedPage = _currentPage > totalPages
                           ? totalPages
                           : (_currentPage < 1 ? 1 : _currentPage);
                       final startIndex = (clampedPage - 1) * _pageSize;
-                      final pagedUsers = _users.skip(startIndex).take(_pageSize).toList();
+                      final pagedUsers =
+                          _users.skip(startIndex).take(_pageSize).toList();
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -540,173 +595,235 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(minWidth: 950),
                               child: DataTable(
-                                headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-                        horizontalMargin: 20,
-                        columnSpacing: 24,
-                        headingTextStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                          fontSize: 13,
-                        ),
-                        columns: const [
-                          DataColumn(label: Text('AVATAR')),
-                          DataColumn(label: Text('NAMA LENGKAP')),
-                          DataColumn(label: Text('NO. WHATSAPP')),
-                          DataColumn(label: Text('EMAIL')),
-                          DataColumn(label: Text('HUNIAN (BLOK & NO)')),
-                          DataColumn(label: Text('STATUS')),
-                          DataColumn(label: Text('AKSI')),
-                        ],
-                        rows: pagedUsers.map((user) {
-                          return DataRow(
-                            cells: [
-                              // Avatar
-                              DataCell(
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: AppTheme.primary.withOpacity(0.12),
-                                  child: Text(
-                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                                    style: const TextStyle(
-                                      color: AppTheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
+                                headingRowColor: WidgetStateProperty.all(
+                                    const Color(0xFFF8FAFC)),
+                                horizontalMargin: 20,
+                                columnSpacing: 24,
+                                headingTextStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 13,
                                 ),
-                              ),
-                              // Nama Lengkap
-                              DataCell(
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      user.displayName,
-                                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
-                                    ),
-                                    Text(
-                                      user.roleDisplay,
-                                      style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // No WhatsApp
-                              DataCell(
-                                Text(user.phone, style: const TextStyle(fontSize: 13)),
-                              ),
-                              // Email
-                              DataCell(
-                                Text(user.email, style: const TextStyle(fontSize: 13)),
-                              ),
-                              // Hunian
-                              DataCell(
-                                InkWell(
-                                  onTap: () => _showResidentFamilyAndVehicles(user),
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          user.house != null ? Icons.home_rounded : Icons.home_outlined,
-                                          size: 16,
-                                          color: user.house != null ? AppTheme.primary : AppTheme.textSecondary,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          user.houseDisplay,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: user.house != null ? FontWeight.w600 : FontWeight.normal,
-                                            color: user.house != null ? AppTheme.primary : AppTheme.textSecondary,
-                                            decoration: user.house != null ? TextDecoration.underline : TextDecoration.none,
+                                columns: const [
+                                  DataColumn(label: Text('AVATAR')),
+                                  DataColumn(label: Text('NAMA LENGKAP')),
+                                  DataColumn(label: Text('NO. WHATSAPP')),
+                                  DataColumn(label: Text('EMAIL')),
+                                  DataColumn(label: Text('HUNIAN (BLOK & NO)')),
+                                  DataColumn(label: Text('STATUS')),
+                                  DataColumn(label: Text('AKSI')),
+                                ],
+                                rows: pagedUsers.map((user) {
+                                  return DataRow(
+                                    cells: [
+                                      // Avatar
+                                      DataCell(
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: AppTheme.primary
+                                              .withOpacity(0.12),
+                                          child: Text(
+                                            user.name.isNotEmpty
+                                                ? user.name[0].toUpperCase()
+                                                : '?',
+                                            style: const TextStyle(
+                                              color: AppTheme.primary,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Status Badge
-                              DataCell(_buildStatusBadge(user.status)),
-                                // Aksi: 1. Peran Organisasi, 2. Keluarga & Kendaraan, 3. Edit, 4. Reset Password, 5. Hapus
-                                DataCell(
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // 1. Role Assignment
-                                      Tooltip(
-                                        message: 'Kelola Peran Organisasi',
-                                        child: IconButton(
-                                          icon: const Icon(Icons.badge_outlined, size: 20, color: AppTheme.primary),
-                                          onPressed: () => _showRoleAssignmentDialog(user),
+                                      ),
+                                      // Nama Lengkap
+                                      DataCell(
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              user.displayName,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.textPrimary),
+                                            ),
+                                            Text(
+                                              user.roleDisplay,
+                                              style: const TextStyle(
+                                                  fontSize: 10,
+                                                  color:
+                                                      AppTheme.textSecondary),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      // 2. Kelola Keluarga & Kendaraan
-                                      Tooltip(
-                                        message: 'Kelola Anggota Keluarga & Kendaraan Warga',
-                                        child: IconButton(
-                                          icon: const Icon(Icons.family_restroom_rounded, size: 20, color: Color(0xFF6366F1)),
-                                          onPressed: () => _showResidentFamilyAndVehicles(user),
+                                      // No WhatsApp
+                                      DataCell(
+                                        Text(user.phone,
+                                            style:
+                                                const TextStyle(fontSize: 13)),
+                                      ),
+                                      // Email
+                                      DataCell(
+                                        Text(user.email,
+                                            style:
+                                                const TextStyle(fontSize: 13)),
+                                      ),
+                                      // Hunian
+                                      DataCell(
+                                        InkWell(
+                                          onTap: () =>
+                                              _showResidentFamilyAndVehicles(
+                                                  user),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 4, horizontal: 2),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  user.house != null
+                                                      ? Icons.home_rounded
+                                                      : Icons.home_outlined,
+                                                  size: 16,
+                                                  color: user.house != null
+                                                      ? AppTheme.primary
+                                                      : AppTheme.textSecondary,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  user.houseDisplay,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        user.house != null
+                                                            ? FontWeight.w600
+                                                            : FontWeight.normal,
+                                                    color: user.house != null
+                                                        ? AppTheme.primary
+                                                        : AppTheme
+                                                            .textSecondary,
+                                                    decoration:
+                                                        user.house != null
+                                                            ? TextDecoration
+                                                                .underline
+                                                            : TextDecoration
+                                                                .none,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      // 3. Edit
-                                      Tooltip(
-                                        message: 'Edit Data Warga',
-                                        child: IconButton(
-                                          icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primary),
-                                          onPressed: () => _showEditUserDialog(user),
-                                        ),
-                                      ),
-                                      // 4. Reset Password
-                                      Tooltip(
-                                        message: 'Reset Kata Sandi',
-                                        child: IconButton(
-                                          icon: const Icon(Icons.key_outlined, size: 18, color: Color(0xFFD97706)),
-                                          onPressed: () => _showResetPasswordDialog(user),
-                                        ),
-                                      ),
-                                      // 5. Hapus
-                                      Tooltip(
-                                        message: 'Hapus Akun Warga',
-                                        child: IconButton(
-                                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.danger),
-                                          onPressed: () => _showDeleteUserConfirm(user),
+                                      // Status Badge
+                                      DataCell(_buildStatusBadge(user.status)),
+                                      // Aksi: 1. Peran Organisasi, 2. Keluarga & Kendaraan, 3. Edit, 4. Reset Password, 5. Hapus
+                                      DataCell(
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // 1. Role Assignment
+                                            Tooltip(
+                                              message:
+                                                  'Kelola Peran Organisasi',
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                    Icons.badge_outlined,
+                                                    size: 20,
+                                                    color: AppTheme.primary),
+                                                onPressed: () =>
+                                                    _showRoleAssignmentDialog(
+                                                        user),
+                                              ),
+                                            ),
+                                            // 2. Kelola Keluarga & Kendaraan
+                                            Tooltip(
+                                              message:
+                                                  'Kelola Anggota Keluarga & Kendaraan Warga',
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                    Icons
+                                                        .family_restroom_rounded,
+                                                    size: 20,
+                                                    color: Color(0xFF6366F1)),
+                                                onPressed: () =>
+                                                    _showResidentFamilyAndVehicles(
+                                                        user),
+                                              ),
+                                            ),
+                                            // 3. Edit
+                                            Tooltip(
+                                              message: 'Edit Data Warga',
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                    Icons.edit_outlined,
+                                                    size: 18,
+                                                    color: AppTheme.primary),
+                                                onPressed: () =>
+                                                    _showEditUserDialog(user),
+                                              ),
+                                            ),
+                                            // 4. Reset Password
+                                            Tooltip(
+                                              message: 'Reset Kata Sandi',
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                    Icons.key_outlined,
+                                                    size: 18,
+                                                    color: Color(0xFFD97706)),
+                                                onPressed: () =>
+                                                    _showResetPasswordDialog(
+                                                        user),
+                                              ),
+                                            ),
+                                            // 5. Hapus
+                                            Tooltip(
+                                              message: 'Hapus Akun Warga',
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                    Icons
+                                                        .delete_outline_rounded,
+                                                    size: 18,
+                                                    color: AppTheme.danger),
+                                                onPressed: () =>
+                                                    _showDeleteUserConfirm(
+                                                        user),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
-                                  ),
-                                ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                  TablePaginationControl(
-                    currentPage: clampedPage,
-                    totalItems: totalItems,
-                    pageSize: _pageSize,
-                    keyPrefix: 'residents_pagination',
-                    isDesktop: MediaQuery.of(context).size.width >= 768,
-                    onPageChanged: (newPage) {
-                      setState(() => _currentPage = newPage);
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                          TablePaginationControl(
+                            currentPage: clampedPage,
+                            totalItems: totalItems,
+                            pageSize: _pageSize,
+                            keyPrefix: 'residents_pagination',
+                            isDesktop: MediaQuery.of(context).size.width >= 768,
+                            onPageChanged: (newPage) {
+                              setState(() => _currentPage = newPage);
+                            },
+                            onPageSizeChanged: (newSize) {
+                              setState(() {
+                                _pageSize = newSize;
+                                _currentPage = 1;
+                              });
+                            },
+                          ),
+                        ],
+                      );
                     },
-                    onPageSizeChanged: (newSize) {
-                      setState(() {
-                        _pageSize = newSize;
-                        _currentPage = 1;
-                      });
-                    },
                   ),
-                ],
-              );
-            },
-          ),
-        ),
+                ),
             ],
           ),
         ),

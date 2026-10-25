@@ -82,7 +82,8 @@ class CashProofDialog extends StatelessWidget {
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.broken_image_rounded, size: 48, color: Colors.grey),
+                                      Icon(Icons.broken_image_rounded,
+                                          size: 48, color: Colors.grey),
                                       SizedBox(height: 8),
                                       Text('Gagal memuat gambar nota'),
                                     ],
@@ -106,7 +107,10 @@ class CashProofDialog extends StatelessWidget {
                 children: [
                   Text(
                     'Kategori: ${transaction.categoryDisplay}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textSecondary),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context),

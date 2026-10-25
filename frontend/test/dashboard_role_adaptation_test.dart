@@ -18,7 +18,8 @@ class MockDashboardRepo implements DashboardRepository {
   MockDashboardRepo(this.stats);
 
   @override
-  Future<DashboardStatsModel> getAdminDashboardStats({String? period}) async => stats;
+  Future<DashboardStatsModel> getAdminDashboardStats({String? period}) async =>
+      stats;
 }
 
 class MockBillingRepo implements BillingRepository {
@@ -48,7 +49,8 @@ class MockAnnouncementsRepo implements AnnouncementsRepository {
   MockAnnouncementsRepo(this.announcements);
 
   @override
-  Future<List<AnnouncementModel>> getAnnouncements({String? category, bool? pinnedOnly, String? search}) async =>
+  Future<List<AnnouncementModel>> getAnnouncements(
+          {String? category, bool? pinnedOnly, String? search}) async =>
       announcements;
 
   @override
@@ -111,7 +113,8 @@ void main() {
   }
 
   group('Dashboard WARGA Role Tests', () {
-    testWidgets('Priority 1: Unpaid dues banner & dues summary card rendered', (tester) async {
+    testWidgets('Priority 1: Unpaid dues banner & dues summary card rendered',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -166,7 +169,8 @@ void main() {
       expect(find.textContaining('Rp 150.000'), findsWidgets);
 
       // Summary Card checks
-      expect(find.byKey(const Key('resident_dues_summary_card')), findsOneWidget);
+      expect(
+          find.byKey(const Key('resident_dues_summary_card')), findsOneWidget);
       expect(find.text('Belum Dibayar'), findsOneWidget);
       expect(find.text('1 Tagihan'), findsOneWidget);
       expect(find.text('Perlu Bayar'), findsOneWidget);
@@ -176,7 +180,8 @@ void main() {
       expect(navigatedKey, 'resident_billing');
     });
 
-    testWidgets('Priority 2: Rejected dues banner rendered when no unpaid dues', (tester) async {
+    testWidgets('Priority 2: Rejected dues banner rendered when no unpaid dues',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -206,16 +211,21 @@ void main() {
         ),
       ];
 
-      await tester.pumpWidget(createTestWidget(user: residentUser, bills: bills));
+      await tester
+          .pumpWidget(createTestWidget(user: residentUser, bills: bills));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('resident_rejected_banner')), findsOneWidget);
-      expect(find.text('Pembayaran Anda ditolak. Periksa detail dan tindak lanjuti.'), findsOneWidget);
+      expect(
+          find.text(
+              'Pembayaran Anda ditolak. Periksa detail dan tindak lanjuti.'),
+          findsOneWidget);
       expect(find.text('1 Pembayaran'), findsOneWidget);
       expect(find.text('Tindak Lanjut'), findsOneWidget);
     });
 
-    testWidgets('Priority 3: Pending verification banner rendered', (tester) async {
+    testWidgets('Priority 3: Pending verification banner rendered',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -245,14 +255,18 @@ void main() {
         ),
       ];
 
-      await tester.pumpWidget(createTestWidget(user: residentUser, bills: bills));
+      await tester
+          .pumpWidget(createTestWidget(user: residentUser, bills: bills));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('resident_pending_banner')), findsOneWidget);
-      expect(find.text('Pembayaran Anda sedang menunggu verifikasi.'), findsOneWidget);
+      expect(find.text('Pembayaran Anda sedang menunggu verifikasi.'),
+          findsOneWidget);
     });
 
-    testWidgets('Priority 4: Urgent announcement banner when all dues are clear', (tester) async {
+    testWidgets(
+        'Priority 4: Urgent announcement banner when all dues are clear',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -290,12 +304,15 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('resident_announcement_banner')), findsOneWidget);
+      expect(find.byKey(const Key('resident_announcement_banner')),
+          findsOneWidget);
       expect(find.text('Pengumuman Darurat'), findsOneWidget);
       expect(find.text('Pemadaman Listrik Bergilir'), findsWidgets);
     });
 
-    testWidgets('Normal status banner when all dues paid and no urgent announcements', (tester) async {
+    testWidgets(
+        'Normal status banner when all dues paid and no urgent announcements',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -338,13 +355,16 @@ void main() {
         residentUnpaidBillsCount: 2,
       );
 
-      final billingItem = items.firstWhere((it) => it.keyId == 'resident_billing');
+      final billingItem =
+          items.firstWhere((it) => it.keyId == 'resident_billing');
       expect(billingItem.badge, '2 Belum Bayar');
     });
   });
 
   group('Dashboard ADMIN and Pengurus Role Adaptation Tests', () {
-    testWidgets('ADMIN sees combined "Perlu Ditindaklanjuti" card with pending counts', (tester) async {
+    testWidgets(
+        'ADMIN sees combined "Perlu Ditindaklanjuti" card with pending counts',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -394,7 +414,9 @@ void main() {
       expect(navigatedKey, 'billing');
     });
 
-    testWidgets('BENDAHARA (TREASURER) sees finance-specific cards and actions only', (tester) async {
+    testWidgets(
+        'BENDAHARA (TREASURER) sees finance-specific cards and actions only',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -437,7 +459,8 @@ void main() {
       expect(find.text('Saldo Kas Transparan'), findsOneWidget);
       expect(find.text('Perlu Ditindaklanjuti'), findsOneWidget);
       expect(find.text('3 Transaksi'), findsOneWidget);
-      expect(find.text('Bukti transfer iuran menunggu verifikasi'), findsOneWidget);
+      expect(find.text('Bukti transfer iuran menunggu verifikasi'),
+          findsOneWidget);
       expect(find.text('Iuran Periode Berjalan'), findsOneWidget);
 
       // Bendahara TIDAK melihat card hunian/warga di dashboard utama
@@ -448,7 +471,9 @@ void main() {
       expect(navigatedKey, 'billing');
     });
 
-    testWidgets('SEKRETARIS (SECRETARY) sees resident administration cards only', (tester) async {
+    testWidgets(
+        'SEKRETARIS (SECRETARY) sees resident administration cards only',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -489,7 +514,8 @@ void main() {
 
       expect(find.text('Perlu Ditindaklanjuti'), findsOneWidget);
       expect(find.text('5 Pendaftaran'), findsOneWidget);
-      expect(find.text('Pendaftaran calon warga baru menunggu verifikasi'), findsOneWidget);
+      expect(find.text('Pendaftaran calon warga baru menunggu verifikasi'),
+          findsOneWidget);
       expect(find.text('Warga Terdaftar'), findsOneWidget);
       expect(find.text('Total Hunian'), findsOneWidget);
       expect(find.text('Saldo Kas Transparan'), findsOneWidget);
@@ -498,7 +524,8 @@ void main() {
       expect(navigatedKey, 'verification');
     });
 
-    testWidgets('KETUA (CHAIRPERSON) sees comprehensive governance layout', (tester) async {
+    testWidgets('KETUA (CHAIRPERSON) sees comprehensive governance layout',
+        (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {

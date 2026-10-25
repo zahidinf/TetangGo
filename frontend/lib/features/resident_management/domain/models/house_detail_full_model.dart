@@ -48,7 +48,8 @@ class HouseDetailFullModel extends Equatable {
     return HouseDetailFullModel(
       house: HouseModel.fromJson(json['house'] as Map<String, dynamic>),
       headOfFamily: json['head_of_family'] != null
-          ? HeadOfFamilyModel.fromJson(json['head_of_family'] as Map<String, dynamic>)
+          ? HeadOfFamilyModel.fromJson(
+              json['head_of_family'] as Map<String, dynamic>)
           : null,
       totalMembers: json['total_members'] as int? ?? 0,
       familyMembers: (json['family_members'] as List<dynamic>? ?? [])
@@ -61,5 +62,6 @@ class HouseDetailFullModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [house, headOfFamily, totalMembers, familyMembers, vehicles];
+  List<Object?> get props =>
+      [house, headOfFamily, totalMembers, familyMembers, vehicles];
 }

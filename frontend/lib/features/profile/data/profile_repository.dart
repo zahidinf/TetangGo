@@ -16,7 +16,8 @@ class ProfileRepository {
       final payload = data['data'] as Map<String, dynamic>;
       return ProfileDetailModel.fromJson(payload);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memuat profil');
     }
   }
@@ -36,7 +37,8 @@ class ProfileRepository {
         },
       );
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal memperbarui profil');
     }
   }
@@ -58,7 +60,8 @@ class ProfileRepository {
       final data = res.data as Map<String, dynamic>;
       return FamilyMemberModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menambah anggota keluarga');
     }
   }
@@ -67,7 +70,8 @@ class ProfileRepository {
     try {
       await _dio.delete(ApiConstants.familyDetail(id));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menghapus anggota keluarga');
     }
   }
@@ -89,7 +93,8 @@ class ProfileRepository {
       final data = res.data as Map<String, dynamic>;
       return VehicleModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal mendaftarkan kendaraan');
     }
   }
@@ -98,7 +103,8 @@ class ProfileRepository {
     try {
       await _dio.delete(ApiConstants.vehicleDetail(id));
     } on DioException catch (e) {
-      final msg = e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
+      final msg =
+          e.response?.data is Map ? (e.response?.data as Map)['message'] : null;
       throw Exception(msg ?? 'Gagal menghapus kendaraan');
     }
   }

@@ -40,14 +40,18 @@ class AnnouncementModel {
 
   factory AnnouncementModel.fromJson(Map<String, dynamic> json) {
     return AnnouncementModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id'].toString()) ?? 0,
       title: json['title'] ?? '',
       content: json['content'] ?? '',
       category: json['category'] ?? 'biasa',
       imageUrl: json['image_url'],
       isPinned: json['is_pinned'] == true || json['is_pinned'] == 1,
-      authorId: json['author_id'] is int ? json['author_id'] : int.tryParse(json['author_id']?.toString() ?? ''),
-      authorName: json['author_name'] ?? 'Pengurus RT',
+      authorId: json['author_id'] is int
+          ? json['author_id']
+          : int.tryParse(json['author_id']?.toString() ?? ''),
+      authorName: json['author_name'] ?? 'Pengurus Cluster',
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),

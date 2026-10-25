@@ -44,7 +44,8 @@ class FakeDashboardRepository extends DashboardRepository {
 }
 
 class FakeCashbookRepository extends CashbookRepository {
-  FakeCashbookRepository() : super(DioClient(storageService: SecureStorageService()));
+  FakeCashbookRepository()
+      : super(DioClient(storageService: SecureStorageService()));
 
   @override
   Future<CashbookSummaryModel> getCashbookSummary() async {
@@ -58,10 +59,12 @@ class FakeCashbookRepository extends CashbookRepository {
 }
 
 class FakeAnnouncementsRepository extends AnnouncementsRepository {
-  FakeAnnouncementsRepository() : super(DioClient(storageService: SecureStorageService()));
+  FakeAnnouncementsRepository()
+      : super(DioClient(storageService: SecureStorageService()));
 
   @override
-  Future<List<AnnouncementModel>> getAnnouncements({String? category, String? search}) async {
+  Future<List<AnnouncementModel>> getAnnouncements(
+      {String? category, String? search}) async {
     return [
       AnnouncementModel(
         id: 1,
@@ -78,7 +81,9 @@ class FakeAnnouncementsRepository extends AnnouncementsRepository {
 }
 
 void main() {
-  testWidgets('DashboardContentBody displays real DB data, cashbook balance, and announcements', (tester) async {
+  testWidgets(
+      'DashboardContentBody displays real DB data, cashbook balance, and announcements',
+      (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -102,7 +107,8 @@ void main() {
         providers: [
           RepositoryProvider<DashboardRepository>.value(value: fakeRepo),
           RepositoryProvider<CashbookRepository>.value(value: fakeCashbookRepo),
-          RepositoryProvider<AnnouncementsRepository>.value(value: fakeAnnouncementsRepo),
+          RepositoryProvider<AnnouncementsRepository>.value(
+              value: fakeAnnouncementsRepo),
         ],
         child: const MaterialApp(
           home: Scaffold(
@@ -131,7 +137,8 @@ void main() {
     expect(find.text('Rp 70.000'), findsOneWidget); // Real cashbook balance
     expect(find.textContaining('Masuk: Rp 105.000'), findsOneWidget);
     expect(find.text('Semua Tuntas'), findsOneWidget);
-    expect(find.text('Tidak ada pekerjaan yang perlu ditindaklanjuti'), findsOneWidget);
+    expect(find.text('Tidak ada pekerjaan yang perlu ditindaklanjuti'),
+        findsOneWidget);
 
     // Verify Real Activity Table
     expect(find.text('Farhan Tamtsil Hasanudin'), findsOneWidget);

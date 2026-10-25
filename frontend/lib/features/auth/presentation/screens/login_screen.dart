@@ -354,7 +354,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 6),
           Text(
             isDesktop
-                ? 'Portal Pengurus RT, Petugas Keamanan, & Warga'
+                ? 'Portal Pengurus Cluster, Petugas Keamanan, & Warga'
                 : 'Masuk ke portal lingkungan cluster Anda',
             textAlign: isDesktop ? TextAlign.start : TextAlign.center,
             style: const TextStyle(

@@ -15,7 +15,8 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: const [
-            Icon(Icons.holiday_village_rounded, color: AppTheme.primary, size: 24),
+            Icon(Icons.holiday_village_rounded,
+                color: AppTheme.primary, size: 24),
             SizedBox(width: 8),
             Text(
               'TetangGo',
@@ -203,7 +204,7 @@ class DashboardScreen extends StatelessWidget {
                             _buildFeatureTile(
                               icon: Icons.campaign_outlined,
                               iconColor: Colors.amber.shade800,
-                              title: 'Pengumuman RT',
+                              title: 'Pengumuman Cluster',
                               subtitle: 'Agenda Resmi',
                             ),
                             _buildFeatureTile(
@@ -309,7 +310,8 @@ class DashboardScreen extends StatelessWidget {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Konfirmasi Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar dari aplikasi TetangGo?'),
+        content: const Text(
+            'Apakah Anda yakin ingin keluar dari aplikasi TetangGo?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),

@@ -35,12 +35,16 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
   void initState() {
     super.initState();
     _bankNameController = TextEditingController(text: widget.setting.bankName);
-    _accountNumberController = TextEditingController(text: widget.setting.accountNumber);
-    _accountHolderController = TextEditingController(text: widget.setting.accountHolder);
-    _monthlyFeeController = TextEditingController(text: widget.setting.monthlyFee.toStringAsFixed(0));
+    _accountNumberController =
+        TextEditingController(text: widget.setting.accountNumber);
+    _accountHolderController =
+        TextEditingController(text: widget.setting.accountHolder);
+    _monthlyFeeController = TextEditingController(
+        text: widget.setting.monthlyFee.toStringAsFixed(0));
 
     // Default periode bulan ini
-    _periodController = TextEditingController(text: DateFormat('yyyy-MM').format(DateTime.now()));
+    _periodController = TextEditingController(
+        text: DateFormat('yyyy-MM').format(DateTime.now()));
   }
 
   @override
@@ -59,7 +63,9 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
     final fee = double.tryParse(_monthlyFeeController.text.trim()) ?? 0;
     if (fee <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nominal iuran harus lebih besar dari 0'), backgroundColor: AppTheme.danger),
+        const SnackBar(
+            content: Text('Nominal iuran harus lebih besar dari 0'),
+            backgroundColor: AppTheme.danger),
       );
       return;
     }
@@ -75,7 +81,9 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pengaturan iuran berhasil disimpan!'), backgroundColor: AppTheme.success),
+          const SnackBar(
+              content: Text('Pengaturan iuran berhasil disimpan!'),
+              backgroundColor: AppTheme.success),
         );
         widget.onUpdated();
         Navigator.pop(context);
@@ -83,7 +91,9 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: AppTheme.danger),
+          SnackBar(
+              content: Text(e.toString().replaceAll('Exception: ', '')),
+              backgroundColor: AppTheme.danger),
         );
       }
     } finally {
@@ -99,12 +109,14 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Konfirmasi Penerbitan Tagihan', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Konfirmasi Penerbitan Tagihan',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Apakah Anda yakin ingin menerbitkan tagihan IPL periode $period untuk seluruh rumah berpenghuni?'),
+            Text(
+                'Apakah Anda yakin ingin menerbitkan tagihan IPL periode $period untuk seluruh rumah berpenghuni?'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
@@ -116,12 +128,14 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, size: 18, color: Colors.amber.shade900),
+                  Icon(Icons.info_outline,
+                      size: 18, color: Colors.amber.shade900),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Catatan: Periode yang sudah memiliki pembayaran dari warga akan otomatis terkunci dan tidak dapat diubah.',
-                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.amber.shade900),
                     ),
                   ),
                 ],
@@ -130,9 +144,13 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Batal')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Terbitkan'),
           ),
@@ -148,7 +166,8 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Berhasil menerbitkan $count tagihan baru untuk periode $period!'),
+            content: Text(
+                'Berhasil menerbitkan $count tagihan baru untuk periode $period!'),
             backgroundColor: AppTheme.success,
           ),
         );
@@ -196,13 +215,17 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                         color: AppTheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.tune_rounded, color: AppTheme.primary, size: 24),
+                      child: const Icon(Icons.tune_rounded,
+                          color: AppTheme.primary, size: 24),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
-                        'Pengaturan Iuran & Rekening RT',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        'Pengaturan Iuran & Rekening Cluster',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary),
                       ),
                     ),
                     IconButton(
@@ -215,8 +238,11 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
 
                 // Form Fields Rekening
                 const Text(
-                  'Data Rekening Kas RT',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  'Data Rekening Kas Cluster',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
@@ -225,9 +251,12 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                     labelText: 'Nama Bank / E-Wallet *',
                     hintText: 'Contoh: BCA, Mandiri, BRI',
                     prefixIcon: const Icon(Icons.account_balance, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama bank wajib diisi' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Nama bank wajib diisi'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -236,20 +265,26 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                     labelText: 'Nomor Rekening *',
                     hintText: 'Contoh: 8830192831',
                     prefixIcon: const Icon(Icons.credit_card, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Nomor rekening wajib diisi' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Nomor rekening wajib diisi'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _accountHolderController,
                   decoration: InputDecoration(
                     labelText: 'Atas Nama Rekening *',
-                    hintText: 'Contoh: Kas RT 05 RW 01',
+                    hintText: 'Contoh: Kas Cluster Lavender',
                     prefixIcon: const Icon(Icons.person, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Atas nama rekening wajib diisi' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Atas nama rekening wajib diisi'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -259,9 +294,12 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                     labelText: 'Tarif Iuran Bulanan Default (Rp) *',
                     hintText: 'Contoh: 100000',
                     prefixIcon: const Icon(Icons.payments_outlined, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Tarif iuran wajib diisi' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Tarif iuran wajib diisi'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -269,7 +307,8 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: _isSavingSetting ? null : _saveSettings,
@@ -277,9 +316,11 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                       ? const SizedBox(
                           height: 18,
                           width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Simpan Pengaturan Rekening', style: TextStyle(fontWeight: FontWeight.bold)),
+                      : const Text('Simpan Pengaturan Rekening',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
 
                 const SizedBox(height: 24),
@@ -289,7 +330,10 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                 // Generator Tagihan Bulanan
                 const Text(
                   'Penerbitan Tagihan Bulanan Massal',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -306,8 +350,10 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                           labelText: 'Periode (YYYY-MM)',
                           hintText: '2026-10',
                           prefixIcon: const Icon(Icons.date_range, size: 20),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                         ),
                       ),
                     ),
@@ -316,18 +362,23 @@ class _PaymentSettingsDialogState extends State<PaymentSettingsDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal.shade700,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                       ),
-                      onPressed: _isGeneratingBills ? null : _triggerGenerateBills,
+                      onPressed:
+                          _isGeneratingBills ? null : _triggerGenerateBills,
                       icon: _isGeneratingBills
                           ? const SizedBox(
                               height: 16,
                               width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
                             )
                           : const Icon(Icons.flash_on_rounded, size: 18),
-                      label: const Text('Generate Tagihan', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text('Generate Tagihan',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

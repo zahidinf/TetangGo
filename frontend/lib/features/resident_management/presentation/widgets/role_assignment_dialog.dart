@@ -29,12 +29,14 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
     {
       'value': 'CHAIRPERSON',
       'label': 'Ketua',
-      'description': 'Kepemimpinan umum RT, statistik, dan kelola peran organisasi',
+      'description':
+          'Kepemimpinan umum Cluster, statistik, dan kelola peran organisasi',
     },
     {
       'value': 'VICE_CHAIRPERSON',
       'label': 'Wakil Ketua',
-      'description': 'Mendampingi Ketua dengan wewenang kepemimpinan yang setara',
+      'description':
+          'Mendampingi Ketua dengan wewenang kepemimpinan yang setara',
     },
     {
       'value': 'TREASURER',
@@ -44,12 +46,14 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
     {
       'value': 'SECRETARY',
       'label': 'Sekretaris',
-      'description': 'Otorisasi verifikasi warga, data hunian, dan buku tamu satpam',
+      'description':
+          'Otorisasi verifikasi warga, data hunian, dan buku tamu satpam',
     },
     {
       'value': 'RESIDENT',
       'label': 'Warga (Cabut Peran)',
-      'description': 'Mengembalikan status warga standar tanpa peran struktural organisasi',
+      'description':
+          'Mengembalikan status warga standar tanpa peran struktural organisasi',
     },
   ];
 
@@ -122,7 +126,8 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                       color: AppTheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.badge_outlined, color: AppTheme.primary),
+                    child: const Icon(Icons.badge_outlined,
+                        color: AppTheme.primary),
                   ),
                   const SizedBox(width: 14),
                   const Expanded(
@@ -139,15 +144,17 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Tugaskan atau cabut tanggung jawab struktural RT',
-                          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          'Tugaskan atau cabut tanggung jawab struktural Cluster',
+                          style: TextStyle(
+                              fontSize: 12, color: AppTheme.textSecondary),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                    icon:
+                        const Icon(Icons.close, color: AppTheme.textSecondary),
                   ),
                 ],
               ),
@@ -167,7 +174,9 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                       radius: 20,
                       backgroundColor: AppTheme.primary.withOpacity(0.15),
                       child: Text(
-                        widget.user.name.isNotEmpty ? widget.user.name[0].toUpperCase() : 'W',
+                        widget.user.name.isNotEmpty
+                            ? widget.user.name[0].toUpperCase()
+                            : 'W',
                         style: const TextStyle(
                           color: AppTheme.primary,
                           fontWeight: FontWeight.bold,
@@ -191,13 +200,15 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                             widget.user.house != null
                                 ? 'Blok ${widget.user.house!.block} No. ${widget.user.house!.houseNumber}'
                                 : 'Hunian belum diatur',
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            style: const TextStyle(
+                                fontSize: 12, color: AppTheme.textSecondary),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -228,12 +239,14 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                      Icon(Icons.error_outline,
+                          color: Colors.red.shade700, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                          style: TextStyle(
+                              color: Colors.red.shade700, fontSize: 13),
                         ),
                       ),
                     ],
@@ -273,7 +286,9 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                           : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isSelected ? AppTheme.primary : const Color(0xFFE2E8F0),
+                        color: isSelected
+                            ? AppTheme.primary
+                            : const Color(0xFFE2E8F0),
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -287,7 +302,8 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                           onChanged: _isLoading
                               ? null
                               : (v) {
-                                  if (v != null) setState(() => _selectedRole = v);
+                                  if (v != null)
+                                    setState(() => _selectedRole = v);
                                 },
                         ),
                         const SizedBox(width: 8),
@@ -300,13 +316,17 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
+                                  color: isSelected
+                                      ? AppTheme.primary
+                                      : AppTheme.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 role['description']!,
-                                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textSecondary),
                               ),
                             ],
                           ),
@@ -325,8 +345,10 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                   OutlinedButton(
                     onPressed: _isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: const Text('Batal'),
                   ),
@@ -336,14 +358,17 @@ class _RoleAssignmentDialogState extends State<RoleAssignmentDialog> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: _isLoading
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
                           )
                         : const Text('Simpan Peran'),
                   ),

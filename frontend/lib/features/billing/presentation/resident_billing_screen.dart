@@ -145,12 +145,14 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded, size: 48, color: Colors.red.shade400),
+              Icon(Icons.error_outline_rounded,
+                  size: 48, color: Colors.red.shade400),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -169,19 +171,27 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
     }
 
     // Periode unik dari daftar tagihan
-    final periods = _bills.map((b) => b.billingPeriod).toSet().toList()..sort((a, b) => b.compareTo(a));
+    final periods = _bills.map((b) => b.billingPeriod).toSet().toList()
+      ..sort((a, b) => b.compareTo(a));
 
     // Filter daftar tagihan sesuai pilihan dropdown
     final displayedBills = _selectedPeriodFilter == 'all'
         ? _bills
-        : _bills.where((b) => b.billingPeriod == _selectedPeriodFilter).toList();
+        : _bills
+            .where((b) => b.billingPeriod == _selectedPeriodFilter)
+            .toList();
 
-    BillModel? currentBill = displayedBills.isNotEmpty ? displayedBills.first : null;
-    final otherBills = displayedBills.length > 1 ? displayedBills.sublist(1) : <BillModel>[];
+    BillModel? currentBill =
+        displayedBills.isNotEmpty ? displayedBills.first : null;
+    final otherBills =
+        displayedBills.length > 1 ? displayedBills.sublist(1) : <BillModel>[];
 
     final billHouseBlock = currentBill?.block ?? user?.houseBlock;
     final billHouseNumber = currentBill?.houseNumber ?? user?.houseNumber;
-    final houseUnitDisplay = (billHouseBlock != null && billHouseBlock.isNotEmpty && billHouseNumber != null && billHouseNumber.isNotEmpty)
+    final houseUnitDisplay = (billHouseBlock != null &&
+            billHouseBlock.isNotEmpty &&
+            billHouseNumber != null &&
+            billHouseNumber.isNotEmpty)
         ? 'Hunian: Blok $billHouseBlock No. $billHouseNumber'
         : (user?.houseDisplay != null && user!.houseDisplay.isNotEmpty
             ? 'Hunian: ${user.houseDisplay}'
@@ -202,7 +212,10 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                 children: [
                   const Text(
                     'Iuran Pengelolaan Lingkungan (IPL)',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -213,7 +226,8 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
               ),
               IconButton(
                 onPressed: _fetchData,
-                icon: const Icon(Icons.refresh_rounded, color: AppTheme.primary),
+                icon:
+                    const Icon(Icons.refresh_rounded, color: AppTheme.primary),
                 tooltip: 'Segarkan Data',
               ),
             ],
@@ -232,17 +246,21 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: (periods.contains(_selectedPeriodFilter) || _selectedPeriodFilter == 'all')
+                    value: (periods.contains(_selectedPeriodFilter) ||
+                            _selectedPeriodFilter == 'all')
                         ? _selectedPeriodFilter
                         : 'all',
                     decoration: InputDecoration(
                       labelText: 'Pilih Periode Tagihan',
                       prefixIcon: const Icon(Icons.filter_list, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                     ),
                     items: [
-                      const DropdownMenuItem(value: 'all', child: Text('Semua Tagihan')),
+                      const DropdownMenuItem(
+                          value: 'all', child: Text('Semua Tagihan')),
                       ...periods.map((p) {
                         return DropdownMenuItem(
                           value: p,
@@ -251,7 +269,8 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                       }),
                     ],
                     onChanged: (val) {
-                      if (val != null) setState(() => _selectedPeriodFilter = val);
+                      if (val != null)
+                        setState(() => _selectedPeriodFilter = val);
                     },
                   ),
                 ),
@@ -273,7 +292,10 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
             _selectedPeriodFilter == 'all'
                 ? 'Riwayat Tagihan Lainnya'
                 : 'Tagihan Lainnya pada Filter',
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 12),
 
@@ -309,11 +331,15 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
       ),
       child: Column(
         children: [
-          Icon(Icons.receipt_long_outlined, size: 54, color: AppTheme.primary.withOpacity(0.6)),
+          Icon(Icons.receipt_long_outlined,
+              size: 54, color: AppTheme.primary.withOpacity(0.6)),
           const SizedBox(height: 12),
           const Text(
             'Tagihan Belum Diterbitkan',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 6),
           Text(
@@ -327,7 +353,8 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
               foregroundColor: AppTheme.primary,
               side: const BorderSide(color: AppTheme.primary),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: _fetchData,
             icon: const Icon(Icons.refresh, size: 16),
@@ -375,7 +402,9 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: bill.isPaid ? Colors.green.shade200 : AppTheme.primary.withOpacity(0.3),
+          color: bill.isPaid
+              ? Colors.green.shade200
+              : AppTheme.primary.withOpacity(0.3),
           width: 1.5,
         ),
         boxShadow: [
@@ -394,23 +423,29 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(19)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.calendar_month_rounded, size: 18, color: AppTheme.primary),
+                    const Icon(Icons.calendar_month_rounded,
+                        size: 18, color: AppTheme.primary),
                     const SizedBox(width: 8),
                     Text(
                       'Periode: ${bill.billingPeriod}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: AppTheme.textPrimary),
                     ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusBgColor,
                     borderRadius: BorderRadius.circular(20),
@@ -423,7 +458,10 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                       const SizedBox(width: 4),
                       Text(
                         statusLabel,
-                        style: TextStyle(color: statusTextColor, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: statusTextColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -445,7 +483,9 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Jumlah Tagihan:', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                        Text('Jumlah Tagihan:',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600)),
                         const SizedBox(height: 4),
                         Text(
                           _formatCurrency(bill.amount),
@@ -460,11 +500,16 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('Jatuh Tempo:', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                        Text('Jatuh Tempo:',
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey.shade500)),
                         const SizedBox(height: 2),
                         const Text(
                           'Tgl 10 Tiap Bulan',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.orange),
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange),
                         ),
                       ],
                     ),
@@ -472,7 +517,8 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                 ),
 
                 // Alasan Penolakan Jika Ada
-                if (bill.isRejected && bill.payment?.rejectionReason != null) ...[
+                if (bill.isRejected &&
+                    bill.payment?.rejectionReason != null) ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -484,20 +530,26 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline_rounded, color: AppTheme.danger, size: 18),
+                        const Icon(Icons.info_outline_rounded,
+                            color: AppTheme.danger, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Catatan Penolakan Pengurus RT:',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.danger),
+                                'Catatan Penolakan Pengurus Cluster:',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.danger),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                bill.payment?.rejectionReason ?? 'Tidak ada keterangan penolakan.',
-                                style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
+                                bill.payment?.rejectionReason ??
+                                    'Tidak ada keterangan penolakan.',
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppTheme.textPrimary),
                               ),
                             ],
                           ),
@@ -515,13 +567,15 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       minimumSize: const Size.fromHeight(48),
                     ),
                     onPressed: () => _openReceiptDialog(bill),
                     icon: const Icon(Icons.receipt_long_rounded, size: 20),
-                    label: const Text('Lihat Kuitansi Digital', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text('Lihat Kuitansi Digital',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   if (bill.payment?.proofImageUrl.isNotEmpty == true) ...[
                     const SizedBox(height: 10),
@@ -529,19 +583,22 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primary,
                         side: const BorderSide(color: AppTheme.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         minimumSize: const Size.fromHeight(44),
                       ),
                       onPressed: () => _openProofDialog(bill),
                       icon: const Icon(Icons.image_outlined, size: 18),
-                      label: const Text('Lihat Bukti Transfer', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text('Lihat Bukti Transfer',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ] else if (bill.isPending) ...[
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 16),
                     decoration: BoxDecoration(
                       color: Colors.orange.shade50,
                       borderRadius: BorderRadius.circular(12),
@@ -552,7 +609,8 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                         const SizedBox(
                           height: 18,
                           width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.orange),
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
@@ -574,13 +632,15 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primary,
                         side: const BorderSide(color: AppTheme.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         minimumSize: const Size.fromHeight(44),
                       ),
                       onPressed: () => _openProofDialog(bill),
                       icon: const Icon(Icons.image_outlined, size: 18),
-                      label: const Text('Lihat Bukti Transfer yang Dikirim', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text('Lihat Bukti Transfer yang Dikirim',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ] else if (bill.isRejected) ...[
@@ -588,13 +648,15 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.grey.shade700,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         minimumSize: const Size.fromHeight(44),
                       ),
                       onPressed: () => _openProofDialog(bill),
                       icon: const Icon(Icons.image_outlined, size: 18),
-                      label: const Text('Lihat Bukti yang Ditolak', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text('Lihat Bukti yang Ditolak',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 10),
                   ],
@@ -602,13 +664,15 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       minimumSize: const Size.fromHeight(48),
                     ),
                     onPressed: () => _openPaymentDialog(bill),
                     icon: const Icon(Icons.upload_file_rounded, size: 20),
-                    label: const Text('Upload Ulang Bukti Bayar', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text('Upload Ulang Bukti Bayar',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ] else
                   // Status Belum Bayar
@@ -616,13 +680,16 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       minimumSize: const Size.fromHeight(48),
                     ),
                     onPressed: () => _openPaymentDialog(bill),
-                    icon: const Icon(Icons.account_balance_wallet_rounded, size: 20),
-                    label: const Text('Bayar Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.account_balance_wallet_rounded,
+                        size: 20),
+                    label: const Text('Bayar Sekarang',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
@@ -674,12 +741,18 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
               children: [
                 Text(
                   'Periode ${bill.billingPeriod}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   _formatCurrency(bill.amount),
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: Colors.grey.shade700),
                 ),
               ],
             ),
@@ -692,25 +765,29 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
             ),
             child: Text(
               badgeText,
-              style: TextStyle(color: badgeColor, fontSize: 11, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: badgeColor, fontSize: 11, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 4),
           if (bill.payment?.proofImageUrl.isNotEmpty == true)
             IconButton(
-              icon: const Icon(Icons.image_outlined, color: AppTheme.textSecondary, size: 20),
+              icon: const Icon(Icons.image_outlined,
+                  color: AppTheme.textSecondary, size: 20),
               tooltip: 'Bukti Transfer',
               onPressed: () => _openProofDialog(bill),
             ),
           if (bill.isPaid)
             IconButton(
-              icon: const Icon(Icons.receipt_long_rounded, color: AppTheme.primary, size: 20),
+              icon: const Icon(Icons.receipt_long_rounded,
+                  color: AppTheme.primary, size: 20),
               tooltip: 'Kuitansi',
               onPressed: () => _openReceiptDialog(bill),
             )
           else if (bill.isUnpaid || bill.isRejected)
             IconButton(
-              icon: const Icon(Icons.payment_rounded, color: AppTheme.primary, size: 20),
+              icon: const Icon(Icons.payment_rounded,
+                  color: AppTheme.primary, size: 20),
               tooltip: 'Bayar',
               onPressed: () => _openPaymentDialog(bill),
             ),

@@ -19,7 +19,8 @@ class BulkProcessPaymentDialog extends StatefulWidget {
   });
 
   @override
-  State<BulkProcessPaymentDialog> createState() => _BulkProcessPaymentDialogState();
+  State<BulkProcessPaymentDialog> createState() =>
+      _BulkProcessPaymentDialogState();
 }
 
 class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
@@ -90,7 +91,9 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
         period: widget.period,
         paymentMethod: _paymentMethod,
         billIds: _selectedBillIds.toList(),
-        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
       );
 
       if (!mounted) return;
@@ -117,13 +120,16 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
         title: Row(
           children: [
             Icon(
-              result.failedCount == 0 ? Icons.check_circle : Icons.warning_amber_rounded,
+              result.failedCount == 0
+                  ? Icons.check_circle
+                  : Icons.warning_amber_rounded,
               color: result.failedCount == 0 ? Colors.green : Colors.orange,
               size: 28,
             ),
             const SizedBox(width: 10),
             const Expanded(
-              child: Text('Hasil Pembayaran Massal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              child: Text('Hasil Pembayaran Massal',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
           ],
         ),
@@ -131,8 +137,10 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Periode: ${result.period}', style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text('Metode: ${result.paymentMethod == 'CASH' ? 'Tunai (Langsung Lunas)' : 'Transfer (Pending)'}'),
+            Text('Periode: ${result.period}',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+                'Metode: ${result.paymentMethod == 'CASH' ? 'Tunai (Langsung Lunas)' : 'Transfer (Pending)'}'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -145,20 +153,33 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                 children: [
                   Column(
                     children: [
-                      const Text('Total', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text('${result.totalProcessed}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const Text('Total',
+                          style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text('${result.totalProcessed}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
                     ],
                   ),
                   Column(
                     children: [
-                      const Text('Berhasil', style: TextStyle(fontSize: 12, color: Colors.green)),
-                      Text('${result.successCount}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                      const Text('Berhasil',
+                          style: TextStyle(fontSize: 12, color: Colors.green)),
+                      Text('${result.successCount}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.green)),
                     ],
                   ),
                   Column(
                     children: [
-                      const Text('Gagal', style: TextStyle(fontSize: 12, color: Colors.red)),
-                      Text('${result.failedCount}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red)),
+                      const Text('Gagal',
+                          style: TextStyle(fontSize: 12, color: Colors.red)),
+                      Text('${result.failedCount}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.red)),
                     ],
                   ),
                 ],
@@ -166,7 +187,11 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
             ),
             if (result.failedCount > 0) ...[
               const SizedBox(height: 12),
-              const Text('Rincian Gagal:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.danger)),
+              const Text('Rincian Gagal:',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppTheme.danger)),
               const SizedBox(height: 4),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 150),
@@ -177,7 +202,8 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 2),
                       child: Text(
                         '• Blok ${r.houseBlock} No. ${r.houseNumber} (${r.residentName}): ${r.message}',
-                        style: const TextStyle(fontSize: 12, color: Colors.black87),
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black87),
                       ),
                     );
                   }).toList(),
@@ -188,7 +214,9 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Tutup'),
           ),
@@ -220,7 +248,8 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                       color: AppTheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.playlist_add_check, color: AppTheme.primary, size: 24),
+                    child: const Icon(Icons.playlist_add_check,
+                        color: AppTheme.primary, size: 24),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -229,18 +258,23 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                       children: [
                         const Text(
                           'Proses Pembayaran Massal',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimary),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: AppTheme.textPrimary),
                         ),
                         Text(
                           'Periode Iuran: ${widget.period}',
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey.shade600),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.grey),
-                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                    onPressed:
+                        _isSubmitting ? null : () => Navigator.pop(context),
                   ),
                 ],
               ),
@@ -257,12 +291,14 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, size: 20, color: Colors.red.shade700),
+                      Icon(Icons.error_outline,
+                          size: 20, color: Colors.red.shade700),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: TextStyle(color: Colors.red.shade800, fontSize: 13),
+                          style: TextStyle(
+                              color: Colors.red.shade800, fontSize: 13),
                         ),
                       ),
                     ],
@@ -270,34 +306,48 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                 ),
 
               // Metode Pembayaran
-              const Text('Metode Pembayaran:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const Text('Metode Pembayaran:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: InkWell(
-                      onTap: _isSubmitting ? null : () => setState(() => _paymentMethod = 'CASH'),
+                      onTap: _isSubmitting
+                          ? null
+                          : () => setState(() => _paymentMethod = 'CASH'),
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 12),
                         decoration: BoxDecoration(
-                          color: _paymentMethod == 'CASH' ? Colors.green.shade50 : Colors.grey.shade50,
+                          color: _paymentMethod == 'CASH'
+                              ? Colors.green.shade50
+                              : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: _paymentMethod == 'CASH' ? Colors.green : Colors.grey.shade300,
+                            color: _paymentMethod == 'CASH'
+                                ? Colors.green
+                                : Colors.grey.shade300,
                             width: _paymentMethod == 'CASH' ? 2 : 1,
                           ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.payments, size: 20, color: _paymentMethod == 'CASH' ? Colors.green.shade800 : Colors.grey),
+                            Icon(Icons.payments,
+                                size: 20,
+                                color: _paymentMethod == 'CASH'
+                                    ? Colors.green.shade800
+                                    : Colors.grey),
                             const SizedBox(width: 8),
                             Text(
                               'Tunai (CASH)',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: _paymentMethod == 'CASH' ? Colors.green.shade800 : Colors.black87,
+                                color: _paymentMethod == 'CASH'
+                                    ? Colors.green.shade800
+                                    : Colors.black87,
                               ),
                             ),
                           ],
@@ -308,28 +358,41 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: InkWell(
-                      onTap: _isSubmitting ? null : () => setState(() => _paymentMethod = 'TRANSFER'),
+                      onTap: _isSubmitting
+                          ? null
+                          : () => setState(() => _paymentMethod = 'TRANSFER'),
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 12),
                         decoration: BoxDecoration(
-                          color: _paymentMethod == 'TRANSFER' ? AppTheme.primary.withOpacity(0.08) : Colors.grey.shade50,
+                          color: _paymentMethod == 'TRANSFER'
+                              ? AppTheme.primary.withOpacity(0.08)
+                              : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: _paymentMethod == 'TRANSFER' ? AppTheme.primary : Colors.grey.shade300,
+                            color: _paymentMethod == 'TRANSFER'
+                                ? AppTheme.primary
+                                : Colors.grey.shade300,
                             width: _paymentMethod == 'TRANSFER' ? 2 : 1,
                           ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.account_balance, size: 20, color: _paymentMethod == 'TRANSFER' ? AppTheme.primary : Colors.grey),
+                            Icon(Icons.account_balance,
+                                size: 20,
+                                color: _paymentMethod == 'TRANSFER'
+                                    ? AppTheme.primary
+                                    : Colors.grey),
                             const SizedBox(width: 8),
                             Text(
                               'Transfer Bank',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: _paymentMethod == 'TRANSFER' ? AppTheme.primary : Colors.black87,
+                                color: _paymentMethod == 'TRANSFER'
+                                    ? AppTheme.primary
+                                    : Colors.black87,
                               ),
                             ),
                           ],
@@ -345,10 +408,14 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _paymentMethod == 'CASH' ? Colors.green.shade50 : Colors.blue.shade50,
+                  color: _paymentMethod == 'CASH'
+                      ? Colors.green.shade50
+                      : Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: _paymentMethod == 'CASH' ? Colors.green.shade200 : Colors.blue.shade200,
+                    color: _paymentMethod == 'CASH'
+                        ? Colors.green.shade200
+                        : Colors.blue.shade200,
                   ),
                 ),
                 child: Row(
@@ -356,17 +423,21 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                     Icon(
                       Icons.info_outline,
                       size: 18,
-                      color: _paymentMethod == 'CASH' ? Colors.green.shade800 : Colors.blue.shade800,
+                      color: _paymentMethod == 'CASH'
+                          ? Colors.green.shade800
+                          : Colors.blue.shade800,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _paymentMethod == 'CASH'
-                            ? 'Tunai: Langsung LUNAS & dicatat otomatis ke Buku Kas RT tanpa double counting.'
+                            ? 'Tunai: Langsung LUNAS & dicatat otomatis ke Buku Kas Cluster tanpa double counting.'
                             : 'Transfer: Didaftarkan sebagai Menunggu Verifikasi (Pending) dan tidak langsung mengubah buku kas.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: _paymentMethod == 'CASH' ? Colors.green.shade900 : Colors.blue.shade900,
+                          color: _paymentMethod == 'CASH'
+                              ? Colors.green.shade900
+                              : Colors.blue.shade900,
                         ),
                       ),
                     ),
@@ -381,10 +452,13 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                 enabled: !_isSubmitting,
                 decoration: InputDecoration(
                   labelText: 'Catatan (Opsional)',
-                  hintText: 'Contoh: Pembayaran massal arisan RT / titip bendahara',
+                  hintText:
+                      'Contoh: Pembayaran massal iuran Cluster / titip bendahara',
                   prefixIcon: const Icon(Icons.note_alt_outlined, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
               const SizedBox(height: 14),
@@ -394,10 +468,13 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Expanded(
-                    child: Text('Pilih Unit yang Dibayar:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text('Pilih Unit yang Dibayar:',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                   TextButton.icon(
-                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                    style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact),
                     onPressed: _isSubmitting || allCount == 0
                         ? null
                         : () {
@@ -406,13 +483,18 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                                 _selectedBillIds.clear();
                               } else {
                                 for (final b in widget.unpaidBills) {
-                                  if (b.billId != null) _selectedBillIds.add(b.billId!);
+                                  if (b.billId != null)
+                                    _selectedBillIds.add(b.billId!);
                                 }
                               }
                             });
                           },
-                    icon: Icon(isAllSelected ? Icons.deselect : Icons.select_all, size: 16),
-                    label: Text(isAllSelected ? 'Batal Semua' : 'Pilih Semua ($allCount)'),
+                    icon: Icon(
+                        isAllSelected ? Icons.deselect : Icons.select_all,
+                        size: 16),
+                    label: Text(isAllSelected
+                        ? 'Batal Semua'
+                        : 'Pilih Semua ($allCount)'),
                   ),
                 ],
               ),
@@ -436,8 +518,10 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                           separatorBuilder: (_, __) => const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final item = widget.unpaidBills[index];
-                            if (item.billId == null) return const SizedBox.shrink();
-                            final isChecked = _selectedBillIds.contains(item.billId!);
+                            if (item.billId == null)
+                              return const SizedBox.shrink();
+                            final isChecked =
+                                _selectedBillIds.contains(item.billId!);
 
                             return CheckboxListTile(
                               value: isChecked,
@@ -446,11 +530,13 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                               activeColor: AppTheme.primary,
                               title: Text(
                                 'Blok ${item.block} No. ${item.houseNumber} - ${item.residentName}',
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 13),
                               ),
                               subtitle: Text(
                                 'Nominal: ${_formatCurrency(item.amount)}',
-                                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey.shade700),
                               ),
                               onChanged: (val) {
                                 setState(() {
@@ -478,17 +564,22 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                       children: [
                         Text(
                           'Total Terpilih: ${_selectedBillIds.length} Unit',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         Text(
                           _formatCurrency(_totalSelectedAmount),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primary),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppTheme.primary),
                         ),
                       ],
                     ),
                   ),
                   TextButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                    onPressed:
+                        _isSubmitting ? null : () => Navigator.pop(context),
                     child: const Text('Batal'),
                   ),
                   const SizedBox(width: 8),
@@ -497,15 +588,20 @@ class _BulkProcessPaymentDialogState extends State<BulkProcessPaymentDialog> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
-                    onPressed: _isSubmitting || _selectedBillIds.isEmpty ? null : _submitBulkPayment,
+                    onPressed: _isSubmitting || _selectedBillIds.isEmpty
+                        ? null
+                        : _submitBulkPayment,
                     icon: _isSubmitting
                         ? const SizedBox(
                             width: 14,
                             height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.check_circle_outline, size: 16),
                     label: Text(_isSubmitting ? 'Memproses...' : 'Proses'),

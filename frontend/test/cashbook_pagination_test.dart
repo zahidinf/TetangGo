@@ -63,7 +63,9 @@ class FakeCashbookRepo extends CashbookRepository {
     final startIdx = (page - 1) * limit;
     final endIdx = (startIdx + limit) > total ? total : (startIdx + limit);
 
-    final paged = (startIdx < total) ? filtered.sublist(startIdx, endIdx) : <CashTransactionModel>[];
+    final paged = (startIdx < total)
+        ? filtered.sublist(startIdx, endIdx)
+        : <CashTransactionModel>[];
 
     return CashTransactionsResultModel(
       transactions: paged,
@@ -71,7 +73,9 @@ class FakeCashbookRepo extends CashbookRepository {
       page: page,
       limit: limit,
       totalPages: totalPages,
-      period: (year != null && month != null) ? '$year-${month.toString().padLeft(2, '0')}' : '2026-10',
+      period: (year != null && month != null)
+          ? '$year-${month.toString().padLeft(2, '0')}'
+          : '2026-10',
       startDate: '2026-10-01',
       endDate: '2026-10-31',
       previousBalance: 1000000,
@@ -95,7 +99,9 @@ Widget createWidget(CashbookRepository repo, {bool isAdmin = true}) {
 
 void main() {
   group('Cashbook Riwayat & Mutasi Pagination Tests', () {
-    testWidgets('1. Data 0 record: shows empty state and hides pagination controls', (tester) async {
+    testWidgets(
+        '1. Data 0 record: shows empty state and hides pagination controls',
+        (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -109,7 +115,9 @@ void main() {
       expect(find.byKey(const Key('cashbook_pagination_next')), findsNothing);
     });
 
-    testWidgets('2. Data 1-20 record: shows all records on one page and hides pagination controls', (tester) async {
+    testWidgets(
+        '2. Data 1-20 record: shows all records on one page and hides pagination controls',
+        (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -142,7 +150,9 @@ void main() {
       expect(find.byKey(const Key('cashbook_pagination_next')), findsNothing);
     });
 
-    testWidgets('3. Data 21 record: page 1 shows 20, page 2 shows 1, previous/next buttons disable correctly', (tester) async {
+    testWidgets(
+        '3. Data 21 record: page 1 shows 20, page 2 shows 1, previous/next buttons disable correctly',
+        (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -156,7 +166,8 @@ void main() {
           type: 'income',
           category: 'iuran',
           amount: 100000,
-          transactionDate: '${now.year}-$monthStr-${(21 - i).toString().padLeft(2, '0')}',
+          transactionDate:
+              '${now.year}-$monthStr-${(21 - i).toString().padLeft(2, '0')}',
           description: 'Tx #${21 - i}',
           creatorName: 'Bendahara',
           createdAt: DateTime.now(),
@@ -172,7 +183,8 @@ void main() {
 
       // Pagination visible
       expect(find.textContaining('Halaman 1 dari 2'), findsOneWidget);
-      expect(find.textContaining('Menampilkan 1–20 dari 21 data'), findsOneWidget);
+      expect(
+          find.textContaining('Menampilkan 1–20 dari 21 data'), findsOneWidget);
 
       // Page 1 displays items #21 down to #2
       expect(find.text('Tx #21'), findsOneWidget);
@@ -180,15 +192,18 @@ void main() {
       expect(find.text('Tx #1'), findsNothing); // Item 21 is on page 2!
 
       // Prev button is disabled on page 1
-      final prevBtn = tester.widget<OutlinedButton>(find.byKey(const Key('cashbook_pagination_prev')));
+      final prevBtn = tester.widget<OutlinedButton>(
+          find.byKey(const Key('cashbook_pagination_prev')));
       expect(prevBtn.onPressed, isNull);
 
       // Next button is enabled on page 1
-      final nextBtn = tester.widget<OutlinedButton>(find.byKey(const Key('cashbook_pagination_next')));
+      final nextBtn = tester.widget<OutlinedButton>(
+          find.byKey(const Key('cashbook_pagination_next')));
       expect(nextBtn.onPressed, isNotNull);
 
       // Ensure next button is scrolled into view before tapping
-      await tester.ensureVisible(find.byKey(const Key('cashbook_pagination_next')));
+      await tester
+          .ensureVisible(find.byKey(const Key('cashbook_pagination_next')));
       await tester.pumpAndSettle();
 
       // Tap Next to go to page 2
@@ -197,20 +212,24 @@ void main() {
 
       // Page 2 displays only Item #1
       expect(find.textContaining('Halaman 2 dari 2'), findsOneWidget);
-      expect(find.textContaining('Menampilkan 21–21 dari 21 data'), findsOneWidget);
+      expect(find.textContaining('Menampilkan 21–21 dari 21 data'),
+          findsOneWidget);
       expect(find.text('Tx #1'), findsOneWidget);
       expect(find.text('Tx #21'), findsNothing);
 
       // Prev button is enabled on page 2
-      final prevBtnP2 = tester.widget<OutlinedButton>(find.byKey(const Key('cashbook_pagination_prev')));
+      final prevBtnP2 = tester.widget<OutlinedButton>(
+          find.byKey(const Key('cashbook_pagination_prev')));
       expect(prevBtnP2.onPressed, isNotNull);
 
       // Next button is disabled on page 2
-      final nextBtnP2 = tester.widget<OutlinedButton>(find.byKey(const Key('cashbook_pagination_next')));
+      final nextBtnP2 = tester.widget<OutlinedButton>(
+          find.byKey(const Key('cashbook_pagination_next')));
       expect(nextBtnP2.onPressed, isNull);
 
       // Tap Prev to go back to page 1
-      await tester.ensureVisible(find.byKey(const Key('cashbook_pagination_prev')));
+      await tester
+          .ensureVisible(find.byKey(const Key('cashbook_pagination_prev')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('cashbook_pagination_prev')));
       await tester.pumpAndSettle();
@@ -218,7 +237,9 @@ void main() {
       expect(find.text('Tx #21'), findsOneWidget);
     });
 
-    testWidgets('4. Data 45 records: 3 pages with direct page number navigation without missing or duplicated records', (tester) async {
+    testWidgets(
+        '4. Data 45 records: 3 pages with direct page number navigation without missing or duplicated records',
+        (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -268,13 +289,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Halaman 3 dari 3'), findsOneWidget);
-      expect(find.textContaining('Menampilkan 41–45 dari 45 data'), findsOneWidget);
+      expect(find.textContaining('Menampilkan 41–45 dari 45 data'),
+          findsOneWidget);
       expect(find.text('Transaksi Nomor 5'), findsOneWidget);
       expect(find.text('Transaksi Nomor 1'), findsOneWidget);
       expect(find.text('Transaksi Nomor 6'), findsNothing);
     });
 
-    testWidgets('5. Changing filter month or year resets current page back to page 1', (tester) async {
+    testWidgets(
+        '5. Changing filter month or year resets current page back to page 1',
+        (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -320,7 +344,8 @@ void main() {
 
       // Go to page 2 of current month
       expect(find.textContaining('Halaman 1 dari 2'), findsOneWidget);
-      await tester.ensureVisible(find.byKey(const Key('cashbook_pagination_next')));
+      await tester
+          .ensureVisible(find.byKey(const Key('cashbook_pagination_next')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('cashbook_pagination_next')));
       await tester.pumpAndSettle();
@@ -344,7 +369,8 @@ void main() {
 
       // Must be reset to page 1 of target month!
       expect(find.textContaining('Halaman 1 dari 2'), findsOneWidget);
-      expect(find.textContaining('Menampilkan 1–20 dari 25 data'), findsOneWidget);
+      expect(
+          find.textContaining('Menampilkan 1–20 dari 25 data'), findsOneWidget);
       expect(find.text('Bulan Target 24'), findsOneWidget);
       expect(find.text('Bulan Target 0'), findsNothing); // item 0 is on page 2
     });

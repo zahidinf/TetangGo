@@ -16,7 +16,9 @@ class CashbookRepository {
       }
       throw Exception(response.data['message'] ?? 'Gagal memuat ringkasan kas');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat ringkasan kas';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat ringkasan kas';
       throw Exception(msg);
     }
   }
@@ -69,7 +71,9 @@ class CashbookRepository {
       }
       throw Exception(response.data['message'] ?? 'Gagal memuat mutasi kas');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal memuat mutasi kas';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal memuat mutasi kas';
       throw Exception(msg);
     }
   }
@@ -134,9 +138,12 @@ class CashbookRepository {
       if (response.data['success'] == true) {
         return CashTransactionModel.fromJson(response.data['data']);
       }
-      throw Exception(response.data['message'] ?? 'Gagal mencatat transaksi kas');
+      throw Exception(
+          response.data['message'] ?? 'Gagal mencatat transaksi kas');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal mencatat transaksi kas';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal mencatat transaksi kas';
       throw Exception(msg);
     }
   }
@@ -147,10 +154,13 @@ class CashbookRepository {
         ApiConstants.adminDeleteCashbookTransaction(id),
       );
       if (response.data['success'] != true) {
-        throw Exception(response.data['message'] ?? 'Gagal menghapus transaksi');
+        throw Exception(
+            response.data['message'] ?? 'Gagal menghapus transaksi');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Gagal menghapus transaksi';
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Gagal menghapus transaksi';
       throw Exception(msg);
     }
   }

@@ -40,7 +40,9 @@ class ResidentUserModel extends Equatable {
       status: json['status'] as String? ?? 'active',
       ownershipStatus: json['ownership_status'] as String? ?? 'pemilik',
       houseId: (json['house_id'] as num?)?.toInt(),
-      house: json['house'] != null ? HouseModel.fromJson(json['house'] as Map<String, dynamic>) : null,
+      house: json['house'] != null
+          ? HouseModel.fromJson(json['house'] as Map<String, dynamic>)
+          : null,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -67,7 +69,8 @@ class ResidentUserModel extends Equatable {
     }
   }
 
-  bool get isAdmin => role.toUpperCase() == 'ADMIN' || role.toLowerCase() == 'admin_rt';
+  bool get isAdmin =>
+      role.toUpperCase() == 'ADMIN' || role.toLowerCase() == 'admin_rt';
 
   String get displayName {
     return HonorificHelper.formatDisplayName(salutation, name);

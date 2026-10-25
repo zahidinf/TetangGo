@@ -157,8 +157,12 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
       await widget.repository.submitPayment(
         billId: widget.bill.id,
         paymentMethod: _paymentMethod,
-        senderBank: _paymentMethod == 'TRANSFER' ? _senderBankController.text.trim() : null,
-        senderName: _paymentMethod == 'TRANSFER' ? _senderNameController.text.trim() : null,
+        senderBank: _paymentMethod == 'TRANSFER'
+            ? _senderBankController.text.trim()
+            : null,
+        senderName: _paymentMethod == 'TRANSFER'
+            ? _senderNameController.text.trim()
+            : null,
         amount: widget.bill.amount,
         notes: _notesController.text.trim(),
         imageBytes: _paymentMethod == 'TRANSFER' ? _selectedFileBytes : null,
@@ -170,8 +174,8 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_paymentMethod == 'TRANSFER'
-                ? 'Bukti transfer berhasil dikirim! Menunggu verifikasi pengurus RT.'
-                : 'Deklarasi pembayaran tunai berhasil dikirim! Menunggu konfirmasi pengurus RT.'),
+                ? 'Bukti transfer berhasil dikirim! Menunggu verifikasi pengurus Cluster.'
+                : 'Deklarasi pembayaran tunai berhasil dikirim! Menunggu konfirmasi pengurus Cluster.'),
             backgroundColor: AppTheme.success,
           ),
         );
@@ -217,7 +221,8 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                         color: AppTheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.payment_rounded, color: AppTheme.primary, size: 26),
+                      child: const Icon(Icons.payment_rounded,
+                          color: AppTheme.primary, size: 26),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -226,11 +231,15 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                         children: [
                           const Text(
                             'Konfirmasi Pembayaran Iuran',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary),
                           ),
                           Text(
                             'Periode: ${widget.bill.billingPeriod}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600),
                           ),
                         ],
                       ),
@@ -256,12 +265,14 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                       Expanded(
                         child: InkWell(
                           key: const Key('payMethodTransferBtn'),
-                          onTap: () => setState(() => _paymentMethod = 'TRANSFER'),
+                          onTap: () =>
+                              setState(() => _paymentMethod = 'TRANSFER'),
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
-                              color: !isCash ? Colors.white : Colors.transparent,
+                              color:
+                                  !isCash ? Colors.white : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: !isCash
                                   ? [
@@ -279,15 +290,21 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                                 Icon(
                                   Icons.account_balance_outlined,
                                   size: 18,
-                                  color: !isCash ? AppTheme.primary : AppTheme.textSecondary,
+                                  color: !isCash
+                                      ? AppTheme.primary
+                                      : AppTheme.textSecondary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Transfer Bank',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    fontWeight: !isCash ? FontWeight.bold : FontWeight.w500,
-                                    color: !isCash ? AppTheme.primary : AppTheme.textSecondary,
+                                    fontWeight: !isCash
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                    color: !isCash
+                                        ? AppTheme.primary
+                                        : AppTheme.textSecondary,
                                   ),
                                 ),
                               ],
@@ -321,15 +338,21 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                                 Icon(
                                   Icons.payments_outlined,
                                   size: 18,
-                                  color: isCash ? AppTheme.primary : AppTheme.textSecondary,
+                                  color: isCash
+                                      ? AppTheme.primary
+                                      : AppTheme.textSecondary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Tunai / Cash',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    fontWeight: isCash ? FontWeight.bold : FontWeight.w500,
-                                    color: isCash ? AppTheme.primary : AppTheme.textSecondary,
+                                    fontWeight: isCash
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                    color: isCash
+                                        ? AppTheme.primary
+                                        : AppTheme.textSecondary,
                                   ),
                                 ),
                               ],
@@ -348,7 +371,10 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppTheme.primary, AppTheme.primary.withBlue(160)],
+                        colors: [
+                          AppTheme.primary,
+                          AppTheme.primary.withBlue(160)
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -368,7 +394,8 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
@@ -383,12 +410,13 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.account_balance_rounded, color: Colors.white70, size: 24),
+                            const Icon(Icons.account_balance_rounded,
+                                color: Colors.white70, size: 24),
                           ],
                         ),
                         const SizedBox(height: 14),
                         const Text(
-                          'Nomor Rekening Kas RT:',
+                          'Nomor Rekening Kas Cluster:',
                           style: TextStyle(color: Colors.white70, fontSize: 11),
                         ),
                         const SizedBox(height: 2),
@@ -406,10 +434,12 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                             ),
                             const Spacer(),
                             InkWell(
-                              onTap: () => _copyToClipboard(widget.setting.accountNumber),
+                              onTap: () => _copyToClipboard(
+                                  widget.setting.accountNumber),
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(8),
@@ -417,7 +447,8 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: const [
-                                    Icon(Icons.copy_rounded, color: AppTheme.primary, size: 14),
+                                    Icon(Icons.copy_rounded,
+                                        color: AppTheme.primary, size: 14),
                                     SizedBox(width: 4),
                                     Text(
                                       'Salin',
@@ -436,11 +467,15 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                         const SizedBox(height: 6),
                         Text(
                           'Atas Nama: ${widget.setting.accountHolder}',
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -462,7 +497,10 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                   // Form Data Pengirim
                   const Text(
                     'Data Rekening Pengirim',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary),
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -472,8 +510,10 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                       labelText: 'Nama Pemilik Rekening Pengirim *',
                       hintText: 'Contoh: Ahmad Dahlan',
                       prefixIcon: const Icon(Icons.person_outline, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                     ),
                     validator: (v) {
                       if (!isCash && (v == null || v.trim().isEmpty)) {
@@ -489,9 +529,12 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                     decoration: InputDecoration(
                       labelText: 'Bank / E-Wallet Pengirim *',
                       hintText: 'Contoh: BCA, BRI, Mandiri, GoPay, OVO',
-                      prefixIcon: const Icon(Icons.account_balance_outlined, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      prefixIcon:
+                          const Icon(Icons.account_balance_outlined, size: 20),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                     ),
                     validator: (v) {
                       if (!isCash && (v == null || v.trim().isEmpty)) {
@@ -505,10 +548,12 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                     controller: _notesController,
                     decoration: InputDecoration(
                       labelText: 'Catatan Tambahan (Opsional)',
-                      hintText: 'Catatan untuk bendahara RT...',
+                      hintText: 'Catatan untuk bendahara Cluster...',
                       prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -516,7 +561,10 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                   // Upload Bukti Struk
                   const Text(
                     'Unggah Foto Struk / Screenshot Transfer *',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary),
                   ),
                   const SizedBox(height: 8),
 
@@ -529,7 +577,9 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: _selectedFileBytes != null ? AppTheme.primary : Colors.grey.shade300,
+                          color: _selectedFileBytes != null
+                              ? AppTheme.primary
+                              : Colors.grey.shade300,
                           width: 1.5,
                           style: BorderStyle.solid,
                         ),
@@ -556,10 +606,12 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                                       Container(
                                         decoration: BoxDecoration(
                                           color: Colors.black.withOpacity(0.6),
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: IconButton(
-                                          icon: const Icon(Icons.edit, color: Colors.white, size: 18),
+                                          icon: const Icon(Icons.edit,
+                                              color: Colors.white, size: 18),
                                           onPressed: _pickImage,
                                           tooltip: 'Ganti Foto',
                                         ),
@@ -567,11 +619,14 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                                       const SizedBox(width: 6),
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.red.shade700.withOpacity(0.8),
-                                          borderRadius: BorderRadius.circular(20),
+                                          color: Colors.red.shade700
+                                              .withOpacity(0.8),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: IconButton(
-                                          icon: const Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                                          icon: const Icon(Icons.delete_outline,
+                                              color: Colors.white, size: 18),
                                           onPressed: () {
                                             setState(() {
                                               _selectedFileBytes = null;
@@ -589,16 +644,22 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                           : Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_photo_alternate_rounded, size: 44, color: Colors.grey.shade400),
+                                Icon(Icons.add_photo_alternate_rounded,
+                                    size: 44, color: Colors.grey.shade400),
                                 const SizedBox(height: 8),
                                 const Text(
                                   'Klik untuk memilih foto bukti transfer',
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary),
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primary),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Format: JPG, JPEG, PNG (Maksimal 5MB)',
-                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade500),
                                 ),
                               ],
                             ),
@@ -609,12 +670,14 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                       padding: const EdgeInsets.only(top: 6),
                       child: Row(
                         children: [
-                          const Icon(Icons.check_circle_outline, color: AppTheme.success, size: 16),
+                          const Icon(Icons.check_circle_outline,
+                              color: AppTheme.success, size: 16),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               _selectedFileName!,
-                              style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                              style: const TextStyle(
+                                  fontSize: 11, color: AppTheme.textSecondary),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -635,7 +698,8 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.info_outline_rounded, color: Colors.amber.shade900, size: 22),
+                            Icon(Icons.info_outline_rounded,
+                                color: Colors.amber.shade900, size: 22),
                             const SizedBox(width: 8),
                             Text(
                               'Deklarasi Pembayaran Tunai',
@@ -649,8 +713,11 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Dengan memilih metode ini, Anda menyatakan telah atau akan menyerahkan uang tunai sebesar ${_formatCurrency(widget.bill.amount)} kepada Pengurus/Bendahara RT untuk iuran periode ${widget.bill.billingPeriod}.',
-                          style: TextStyle(color: Colors.amber.shade900, fontSize: 13, height: 1.4),
+                          'Dengan memilih metode ini, Anda menyatakan telah atau akan menyerahkan uang tunai sebesar ${_formatCurrency(widget.bill.amount)} kepada Pengurus/Bendahara Cluster untuk iuran periode ${widget.bill.billingPeriod}.',
+                          style: TextStyle(
+                              color: Colors.amber.shade900,
+                              fontSize: 13,
+                              height: 1.4),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -671,10 +738,13 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                     maxLines: 2,
                     decoration: InputDecoration(
                       labelText: 'Catatan Penyerahan Tunai (Opsional)',
-                      hintText: 'Contoh: Diserahkan langsung ke Pak RT di pos satpam',
+                      hintText:
+                          'Contoh: Diserahkan langsung ke Ketua Cluster di pos satpam',
                       prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                     ),
                   ),
                 ],
@@ -685,7 +755,8 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: _isLoading ? null : _submitPayment,
@@ -693,11 +764,15 @@ class _PaymentFlowDialogState extends State<PaymentFlowDialog> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : Text(
-                          isCash ? 'Kirim Deklarasi Tunai' : 'Kirim Bukti Pembayaran',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          isCash
+                              ? 'Kirim Deklarasi Tunai'
+                              : 'Kirim Bukti Pembayaran',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                 ),
               ],

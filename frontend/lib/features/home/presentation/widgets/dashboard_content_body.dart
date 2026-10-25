@@ -82,6 +82,25 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
           final repository = context.read<DashboardRepository>();
           data = await repository.getAdminDashboardStats();
         } catch (_) {}
+
+        if (widget.user?.canAccessResidentIuran ?? false) {
+          try {
+            BillingRepository? billingRepo;
+            try {
+              billingRepo = context.read<BillingRepository>();
+            } catch (_) {}
+
+            if (billingRepo != null) {
+              final bills = await billingRepo.getResidentBills();
+              residentBills = List<BillModel>.from(bills);
+              unpaidBills = residentBills.where((b) => b.isUnpaid).toList();
+              pendingBills = residentBills.where((b) => b.isPending).toList();
+              rejectedBills = residentBills.where((b) => b.isRejected).toList();
+              totalUnpaidAmount =
+                  unpaidBills.fold<double>(0.0, (sum, b) => sum + b.amount);
+            }
+          } catch (_) {}
+        }
       } else {
         // Warga: Ambil aktivitas iuran hunian warga yang sedang login
         try {
@@ -96,7 +115,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
             unpaidBills = residentBills.where((b) => b.isUnpaid).toList();
             pendingBills = residentBills.where((b) => b.isPending).toList();
             rejectedBills = residentBills.where((b) => b.isRejected).toList();
-            totalUnpaidAmount = unpaidBills.fold<double>(0.0, (sum, b) => sum + b.amount);
+            totalUnpaidAmount =
+                unpaidBills.fold<double>(0.0, (sum, b) => sum + b.amount);
 
             // Urutkan aktivitas warga berdasarkan:
             // 1. Prioritas status: Belum dibayar -> Menunggu verifikasi -> Ditolak -> Lunas/Disetujui -> Status lain
@@ -123,14 +143,17 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
             final defaultHouseNumber = widget.user?.houseNumber ?? '';
 
             residentActivities = bills.take(5).map((bill) {
-              final double amount = (bill.payment != null && bill.payment!.amountPaid > 0)
-                  ? bill.payment!.amountPaid
-                  : bill.amount;
+              final double amount =
+                  (bill.payment != null && bill.payment!.amountPaid > 0)
+                      ? bill.payment!.amountPaid
+                      : bill.amount;
               final DateTime relevantDate = _getRelevantDuesTimestamp(bill);
-              final String block = (bill.block != null && bill.block!.trim().isNotEmpty)
-                  ? bill.block!
-                  : defaultBlock;
-              final String houseNumber = (bill.houseNumber != null && bill.houseNumber!.trim().isNotEmpty)
+              final String block =
+                  (bill.block != null && bill.block!.trim().isNotEmpty)
+                      ? bill.block!
+                      : defaultBlock;
+              final String houseNumber = (bill.houseNumber != null &&
+                      bill.houseNumber!.trim().isNotEmpty)
                   ? bill.houseNumber!
                   : defaultHouseNumber;
 
@@ -221,8 +244,18 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
         final month = int.tryParse(parts[1]);
         if (year != null && month != null && month >= 1 && month <= 12) {
           const monthNames = [
-            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            'Januari',
+            'Februari',
+            'Maret',
+            'April',
+            'Mei',
+            'Juni',
+            'Juli',
+            'Agustus',
+            'September',
+            'Oktober',
+            'November',
+            'Desember'
           ];
           return '${monthNames[month - 1]} $year';
         }
@@ -270,7 +303,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
     return _buildStatCardsForRole(widget.user, data);
   }
 
-  List<StatCardData> _buildStatCardsForRole(UserModel? user, DashboardStatsModel data) {
+  List<StatCardData> _buildStatCardsForRole(
+      UserModel? user, DashboardStatsModel data) {
     final pctCollected = data.targetAmount > 0
         ? ((data.collectedAmount / data.targetAmount) * 100).toInt()
         : 0;
@@ -278,7 +312,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
     final role = user?.role.toUpperCase() ?? 'ADMIN';
 
     // 1. Card Perlu Ditindaklanjuti untuk Admin / Ketua / Wakil Ketua
-    final totalPendingCombined = data.pendingPaymentsCount + data.pendingResidents;
+    final totalPendingCombined =
+        data.pendingPaymentsCount + data.pendingResidents;
     final String combinedPendingSub = totalPendingCombined == 0
         ? 'Tidak ada pekerjaan yang perlu ditindaklanjuti'
         : (data.pendingPaymentsCount > 0 && data.pendingResidents > 0)
@@ -289,10 +324,14 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
 
     final statCardPerluDitindaklanjutiCombined = StatCardData(
       title: 'Perlu Ditindaklanjuti',
-      value: totalPendingCombined > 0 ? '$totalPendingCombined Antrean' : 'Semua Tuntas',
+      value: totalPendingCombined > 0
+          ? '$totalPendingCombined Antrean'
+          : 'Semua Tuntas',
       subtitle: combinedPendingSub,
       icon: Icons.assignment_late_outlined,
-      color: totalPendingCombined > 0 ? const Color(0xFFF59E0B) : const Color(0xFF0F766E),
+      color: totalPendingCombined > 0
+          ? const Color(0xFFF59E0B)
+          : const Color(0xFF0F766E),
       trend: totalPendingCombined > 0 ? 'Perlu Review' : 'Tuntas',
       isPositive: totalPendingCombined == 0,
       onTap: () {
@@ -314,7 +353,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
           ? 'Bukti transfer iuran menunggu verifikasi'
           : 'Tidak ada pembayaran yang perlu ditindaklanjuti',
       icon: Icons.mark_email_unread_outlined,
-      color: data.pendingPaymentsCount > 0 ? const Color(0xFFF59E0B) : const Color(0xFF0F766E),
+      color: data.pendingPaymentsCount > 0
+          ? const Color(0xFFF59E0B)
+          : const Color(0xFF0F766E),
       trend: data.pendingPaymentsCount > 0 ? 'Perlu Review' : 'Tuntas',
       isPositive: data.pendingPaymentsCount == 0,
       onTap: () => widget.onNavigate?.call('billing'),
@@ -330,7 +371,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
           ? 'Pendaftaran calon warga baru menunggu verifikasi'
           : 'Tidak ada pendaftaran yang perlu ditindaklanjuti',
       icon: Icons.how_to_reg_outlined,
-      color: data.pendingResidents > 0 ? const Color(0xFFF59E0B) : const Color(0xFF0F766E),
+      color: data.pendingResidents > 0
+          ? const Color(0xFFF59E0B)
+          : const Color(0xFF0F766E),
       trend: data.pendingResidents > 0 ? 'Perlu Review' : 'Tuntas',
       isPositive: data.pendingResidents == 0,
       onTap: () => widget.onNavigate?.call('verification'),
@@ -361,7 +404,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
       color: Colors.blue,
       trend: '${data.occupiedHouses}/${data.totalHouses} Terisi',
       isPositive: true,
-      onTap: (user?.canAccessHousesAdmin ?? false) ? () => widget.onNavigate?.call('houses') : null,
+      onTap: (user?.canAccessHousesAdmin ?? false)
+          ? () => widget.onNavigate?.call('houses')
+          : null,
     );
 
     // 6. Card Warga Terdaftar
@@ -373,7 +418,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
           : 'Semua Terverifikasi',
       icon: Icons.people_outline,
       color: const Color(0xFF0F766E),
-      trend: data.pendingResidents > 0 ? '${data.pendingResidents} Pending' : 'Terverifikasi',
+      trend: data.pendingResidents > 0
+          ? '${data.pendingResidents} Pending'
+          : 'Terverifikasi',
       isPositive: data.pendingResidents == 0,
       onTap: (user?.canAccessHousesAdmin ?? false)
           ? () => widget.onNavigate?.call('houses')
@@ -386,7 +433,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
     final statCardRealisasiIuran = StatCardData(
       title: 'Iuran Periode Berjalan',
       value: _formatCurrency(data.collectedAmount),
-      subtitle: 'Target: ${_formatCurrency(data.targetAmount)} (Realisasi: $pctCollected%)',
+      subtitle:
+          'Target: ${_formatCurrency(data.targetAmount)} (Realisasi: $pctCollected%)',
       icon: Icons.receipt_long_outlined,
       color: const Color(0xFF2563EB),
       trend: '$pctCollected%',
@@ -398,7 +446,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
     final statCardPengumuman = StatCardData(
       title: 'Pengumuman Warga',
       value: '${_announcements.length} Informasi',
-      subtitle: _announcements.isNotEmpty ? _announcements.first.title : 'Belum ada pengumuman baru',
+      subtitle: _announcements.isNotEmpty
+          ? _announcements.first.title
+          : 'Belum ada pengumuman baru',
       icon: Icons.campaign_outlined,
       color: const Color(0xFF0F766E),
       trend: 'Terkini',
@@ -470,7 +520,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 color: AppTheme.danger.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 24),
+              child: const Icon(Icons.warning_amber_rounded,
+                  color: AppTheme.danger, size: 24),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -502,11 +553,14 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.danger,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => widget.onNavigate?.call('resident_billing'),
-              child: const Text('Lihat Tagihan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text('Lihat Tagihan',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -532,7 +586,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 color: Colors.red.shade700.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.cancel_outlined, color: Colors.red.shade700, size: 24),
+              child: Icon(Icons.cancel_outlined,
+                  color: Colors.red.shade700, size: 24),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -564,11 +619,14 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFBE123C),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => widget.onNavigate?.call('resident_billing'),
-              child: const Text('Periksa Detail', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text('Periksa Detail',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -594,7 +652,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 color: const Color(0xFFD97706).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 24),
+              child: const Icon(Icons.hourglass_top_rounded,
+                  color: Color(0xFFD97706), size: 24),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -626,11 +685,14 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFD97706)),
                 foregroundColor: const Color(0xFF92400E),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => widget.onNavigate?.call('resident_billing'),
-              child: const Text('Lihat Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text('Lihat Status',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -638,10 +700,11 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
     }
 
     // 4. Pengumuman penting (Prioritas 4)
-    final urgentAnnouncement = _announcements.cast<AnnouncementModel?>().firstWhere(
-          (a) => a != null && (a.isUrgent || a.isImportant),
-          orElse: () => null,
-        );
+    final urgentAnnouncement =
+        _announcements.cast<AnnouncementModel?>().firstWhere(
+              (a) => a != null && (a.isUrgent || a.isImportant),
+              orElse: () => null,
+            );
 
     if (urgentAnnouncement != null) {
       return Container(
@@ -661,7 +724,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 color: AppTheme.primaryDark.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryDark, size: 24),
+              child: const Icon(Icons.campaign_rounded,
+                  color: AppTheme.primaryDark, size: 24),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -669,7 +733,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    urgentAnnouncement.isUrgent ? 'Pengumuman Darurat' : 'Pengumuman Penting Lingkungan',
+                    urgentAnnouncement.isUrgent
+                        ? 'Pengumuman Darurat'
+                        : 'Pengumuman Penting Lingkungan',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -695,16 +761,20 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryDark,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (ctx) => AnnouncementDetailDialog(announcement: urgentAnnouncement),
+                  builder: (ctx) => AnnouncementDetailDialog(
+                      announcement: urgentAnnouncement),
                 );
               },
-              child: const Text('Baca Pengumuman', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text('Baca Pengumuman',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -722,18 +792,26 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF16A34A), size: 20),
+          const Icon(Icons.check_circle_outline_rounded,
+              color: Color(0xFF16A34A), size: 20),
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
               'Status Iuran Tertib: Seluruh kewajiban iuran lingkungan Anda telah diselesaikan.',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF166534)),
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF166534)),
             ),
           ),
           if (widget.onNavigate != null)
             TextButton(
               onPressed: () => widget.onNavigate?.call('resident_billing'),
-              child: const Text('Riwayat Iuran', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+              child: const Text('Riwayat Iuran',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF166534))),
             ),
         ],
       ),
@@ -765,7 +843,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               const Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.account_balance_rounded, size: 18, color: AppTheme.primary),
+                    Icon(Icons.account_balance_rounded,
+                        size: 18, color: AppTheme.primary),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -792,9 +871,14 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Detail Iuran', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryDark)),
+                        Text('Detail Iuran',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryDark)),
                         SizedBox(width: 2),
-                        Icon(Icons.arrow_forward_rounded, size: 14, color: AppTheme.primaryDark),
+                        Icon(Icons.arrow_forward_rounded,
+                            size: 14, color: AppTheme.primaryDark),
                       ],
                     ),
                   ),
@@ -815,7 +899,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                       ? 'Total: ${_formatCurrency(_totalUnpaidAmount)}'
                       : 'Rp 0',
                   icon: Icons.pending_actions_rounded,
-                  color: _unpaidBills.isNotEmpty ? AppTheme.danger : const Color(0xFF0F766E),
+                  color: _unpaidBills.isNotEmpty
+                      ? AppTheme.danger
+                      : const Color(0xFF0F766E),
                   badge: _unpaidBills.isNotEmpty ? 'Perlu Bayar' : 'Lunas',
                   isPositive: _unpaidBills.isEmpty,
                   onTap: () => widget.onNavigate?.call('resident_billing'),
@@ -841,7 +927,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                       ? 'Memerlukan tindak lanjut warga'
                       : 'Tidak ada ditolak',
                   icon: Icons.highlight_off_rounded,
-                  color: _rejectedBills.isNotEmpty ? AppTheme.danger : Colors.grey.shade600,
+                  color: _rejectedBills.isNotEmpty
+                      ? AppTheme.danger
+                      : Colors.grey.shade600,
                   badge: _rejectedBills.isNotEmpty ? 'Tindak Lanjut' : 'Nihil',
                   isPositive: _rejectedBills.isEmpty,
                   onTap: () => widget.onNavigate?.call('resident_billing'),
@@ -922,16 +1010,21 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                             title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textSecondary),
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: (isPositive ? AppTheme.primary : AppTheme.danger).withOpacity(0.12),
+                      color: (isPositive ? AppTheme.primary : AppTheme.danger)
+                          .withOpacity(0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -939,7 +1032,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: isPositive ? AppTheme.primaryDark : AppTheme.danger,
+                        color:
+                            isPositive ? AppTheme.primaryDark : AppTheme.danger,
                       ),
                     ),
                   ),
@@ -948,14 +1042,18 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               const SizedBox(height: 8),
               Text(
                 count,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                style: const TextStyle(
+                    fontSize: 11, color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -1037,12 +1135,14 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: AppTheme.danger),
+                      const Icon(Icons.error_outline_rounded,
+                          color: AppTheme.danger),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: AppTheme.danger, fontSize: 13),
+                          style: const TextStyle(
+                              color: AppTheme.danger, fontSize: 13),
                         ),
                       ),
                       TextButton(
@@ -1054,7 +1154,11 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 ),
 
               // Loading State vs Grid Stat Cards
-              if (_isLoading && _statsData == null && _residentActivities.isEmpty && _cashbookSummary == null && _announcements.isEmpty)
+              if (_isLoading &&
+                  _statsData == null &&
+                  _residentActivities.isEmpty &&
+                  _cashbookSummary == null &&
+                  _announcements.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
                   child: Center(
@@ -1073,7 +1177,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 6, child: _buildRecentActivityTable(_statsData)),
+                    Expanded(
+                        flex: 6, child: _buildRecentActivityTable(_statsData)),
                     const SizedBox(width: 20),
                     Expanded(flex: 4, child: _buildAnnouncementsCard()),
                   ],
@@ -1145,7 +1250,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
       StatCardData(
         title: 'Pengumuman Warga',
         value: '${_announcements.length} Informasi',
-        subtitle: _announcements.isNotEmpty ? _announcements.first.title : 'Belum ada pengumuman baru',
+        subtitle: _announcements.isNotEmpty
+            ? _announcements.first.title
+            : 'Belum ada pengumuman baru',
         icon: Icons.campaign_outlined,
         color: const Color(0xFF0F766E),
         trend: 'Terkini',
@@ -1160,7 +1267,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
             : 'Belum ditautkan ke unit rumah',
         icon: Icons.home_work_outlined,
         color: Colors.blue,
-        trend: widget.user?.canAccessResidentIuran ?? false ? 'Terverifikasi' : 'Belum Terdaftar',
+        trend: widget.user?.canAccessResidentIuran ?? false
+            ? 'Terverifikasi'
+            : 'Belum Terdaftar',
         isPositive: widget.user?.canAccessResidentIuran ?? false,
         onTap: () => widget.onNavigate?.call('profile'),
       ),
@@ -1249,7 +1358,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
@@ -1313,7 +1423,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               if (activities.isNotEmpty) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -1345,38 +1456,40 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                   )
                 : Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Column(
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    size: 40,
-                    color: AppTheme.textSecondary,
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Belum ada aktivitas pembayaran iuran baru-baru ini.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                      height: 1.4,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 36, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                  ),
-                ],
-              ),
-            )
+                    child: const Column(
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 40,
+                          color: AppTheme.textSecondary,
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'Belum ada aktivitas pembayaran iuran baru-baru ini.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
           else
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: activities.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
               itemBuilder: (context, i) {
                 final item = activities[i];
                 final isLunas = item.status == 'paid';
@@ -1401,7 +1514,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 final initial = item.residentName.trim().isNotEmpty
                     ? item.residentName.trim()[0].toUpperCase()
                     : 'W';
-                final formattedPeriod = _formatBillingPeriod(item.billingPeriod);
+                final formattedPeriod =
+                    _formatBillingPeriod(item.billingPeriod);
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1467,7 +1581,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                           ),
                           Container(
                             margin: const EdgeInsets.only(top: 3),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(4),
@@ -1521,18 +1636,23 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
               ),
               if (topAnnouncements.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${topAnnouncements.length} Pengumuman',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryDark),
                   ),
                 )
               else
-                const Icon(Icons.campaign_rounded, color: AppTheme.primary, size: 20),
+                const Icon(Icons.campaign_rounded,
+                    color: AppTheme.primary, size: 20),
             ],
           ),
           const SizedBox(height: 14),
@@ -1551,38 +1671,39 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                 : Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.campaign_outlined,
-                    size: 36,
-                    color: AppTheme.textSecondary,
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Belum ada pengumuman resmi yang dipublikasikan.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                      height: 1.5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                  ),
-                ],
-              ),
-            )
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.campaign_outlined,
+                          size: 36,
+                          color: AppTheme.textSecondary,
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'Belum ada pengumuman resmi yang dipublikasikan.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
           else
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: topAnnouncements.length,
-              separatorBuilder: (_, __) => const Divider(height: 16, color: Color(0xFFF1F5F9)),
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 16, color: Color(0xFFF1F5F9)),
               itemBuilder: (context, idx) {
                 final a = topAnnouncements[idx];
                 Color badgeColor;
@@ -1598,7 +1719,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                   onTap: () {
                     showDialog(
                       context: context,
-                      builder: (ctx) => AnnouncementDetailDialog(announcement: a),
+                      builder: (ctx) =>
+                          AnnouncementDetailDialog(announcement: a),
                     );
                   },
                   borderRadius: BorderRadius.circular(10),
@@ -1608,7 +1730,9 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: a.isPinned ? AppTheme.danger.withOpacity(0.3) : const Color(0xFFE2E8F0),
+                        color: a.isPinned
+                            ? AppTheme.danger.withOpacity(0.3)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -1618,7 +1742,8 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                           children: [
                             if (a.isPinned) ...[
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 5, vertical: 2),
                                 margin: const EdgeInsets.only(right: 6),
                                 decoration: BoxDecoration(
                                   color: AppTheme.danger.withOpacity(0.12),
@@ -1627,28 +1752,38 @@ class _DashboardContentBodyState extends State<DashboardContentBody> {
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.push_pin_rounded, size: 10, color: AppTheme.danger),
+                                    Icon(Icons.push_pin_rounded,
+                                        size: 10, color: AppTheme.danger),
                                     SizedBox(width: 2),
-                                    Text('PIN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.danger)),
+                                    Text('PIN',
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.danger)),
                                   ],
                                 ),
                               ),
                             ],
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: badgeColor.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 a.categoryDisplay,
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: badgeColor),
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: badgeColor),
                               ),
                             ),
                             const Spacer(),
                             Text(
                               _formatDateTime(a.createdAt),
-                              style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                              style: const TextStyle(
+                                  fontSize: 10, color: AppTheme.textSecondary),
                             ),
                           ],
                         ),

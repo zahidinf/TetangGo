@@ -15,7 +15,8 @@ class RecordCashPaymentDialog extends StatefulWidget {
   });
 
   @override
-  State<RecordCashPaymentDialog> createState() => _RecordCashPaymentDialogState();
+  State<RecordCashPaymentDialog> createState() =>
+      _RecordCashPaymentDialogState();
 }
 
 class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
@@ -101,7 +102,8 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
 
     setState(() => _isLoadingPeriods = true);
     try {
-      final periods = await widget.repository.getResidentEligiblePeriods(resident.residentId);
+      final periods = await widget.repository
+          .getResidentEligiblePeriods(resident.residentId);
       if (mounted) {
         setState(() {
           _periods = periods;
@@ -163,7 +165,8 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
     if (_selectedPeriod!.isPaid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pembayaran untuk periode ini sudah lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.'),
+          content: Text(
+              'Pembayaran untuk periode ini sudah lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.'),
           backgroundColor: AppTheme.danger,
         ),
       );
@@ -173,7 +176,8 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
     if (_selectedPeriod!.isPending) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pembayaran untuk periode ini sedang menunggu verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.'),
+          content: Text(
+              'Pembayaran untuk periode ini sedang menunggu verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.'),
           backgroundColor: AppTheme.danger,
         ),
       );
@@ -199,7 +203,8 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
           children: const [
             Icon(Icons.payments_rounded, color: Colors.green),
             SizedBox(width: 8),
-            Text('Konfirmasi Pembayaran Tunai', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('Konfirmasi Pembayaran Tunai',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
@@ -220,9 +225,15 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
               child: Column(
                 children: [
                   _summaryRow('Warga', _selectedResident!.residentName),
-                  _summaryRow('Hunian', _selectedResident!.occupancyIdentifier.isNotEmpty ? _selectedResident!.occupancyIdentifier : 'Blok ${_selectedResident!.houseBlock} No. ${_selectedResident!.houseNumber}'),
+                  _summaryRow(
+                      'Hunian',
+                      _selectedResident!.occupancyIdentifier.isNotEmpty
+                          ? _selectedResident!.occupancyIdentifier
+                          : 'Blok ${_selectedResident!.houseBlock} No. ${_selectedResident!.houseNumber}'),
                   _summaryRow('Periode', _selectedPeriod!.billingPeriod),
-                  _summaryRow('Nominal', _formatCurrency(_selectedPeriod!.amount), isBold: true),
+                  _summaryRow(
+                      'Nominal', _formatCurrency(_selectedPeriod!.amount),
+                      isBold: true),
                   _summaryRow('Tanggal', _formatDate(_paymentDate)),
                 ],
               ),
@@ -255,14 +266,17 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
         billId: _selectedPeriod!.billId,
         amount: _selectedPeriod!.amount,
         paymentDate: _paymentDate,
-        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
       );
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Pembayaran tunai berhasil dicatat dan langsung tercatat di buku kas!'),
+            content: Text(
+                'Pembayaran tunai berhasil dicatat dan langsung tercatat di buku kas!'),
             backgroundColor: AppTheme.success,
           ),
         );
@@ -329,7 +343,8 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                                 color: Colors.green.shade50,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Icon(Icons.point_of_sale_rounded, color: Colors.green.shade700, size: 26),
+                              child: Icon(Icons.point_of_sale_rounded,
+                                  color: Colors.green.shade700, size: 26),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -338,11 +353,16 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                                 children: const [
                                   Text(
                                     'Catat Pembayaran Tunai (Cash)',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textPrimary),
                                   ),
                                   Text(
                                     'Penerimaan uang iuran fisik oleh pengurus/bendahara',
-                                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary),
                                   ),
                                 ],
                               ),
@@ -360,7 +380,10 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                         // Dropdown Warga
                         const Text(
                           'Pilih Warga Pembayar *',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary),
                         ),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<ResidentBillingOptionModel>(
@@ -369,9 +392,12 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                           isExpanded: true,
                           decoration: InputDecoration(
                             hintText: 'Pilih warga...',
-                            prefixIcon: const Icon(Icons.person_search_outlined, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            prefixIcon: const Icon(Icons.person_search_outlined,
+                                size: 20),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
                           ),
                           items: _residents.map((r) {
                             return DropdownMenuItem<ResidentBillingOptionModel>(
@@ -383,20 +409,26 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                             );
                           }).toList(),
                           onChanged: _onResidentChanged,
-                          validator: (v) => v == null ? 'Warga pembayar wajib dipilih' : null,
+                          validator: (v) =>
+                              v == null ? 'Warga pembayar wajib dipilih' : null,
                         ),
                         const SizedBox(height: 16),
 
                         // Periode Iuran Selector
                         const Text(
                           'Pilih Periode Iuran Tagihan *',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary),
                         ),
                         const SizedBox(height: 8),
                         if (_isLoadingPeriods)
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            child: Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
                           )
                         else if (_selectedResident == null)
                           Container(
@@ -407,7 +439,8 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                             ),
                             child: const Text(
                               'Pilih warga terlebih dahulu untuk melihat daftar periode iuran.',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                           )
                         else if (_periods.isEmpty)
@@ -420,12 +453,16 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                             ),
                             child: Row(
                               children: const [
-                                Icon(Icons.info_outline, color: Colors.grey, size: 20),
+                                Icon(Icons.info_outline,
+                                    color: Colors.grey, size: 20),
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'Belum ada data periode iuran yang tersedia dalam sistem.',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w500),
                                   ),
                                 ),
                               ],
@@ -438,9 +475,13 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                             isExpanded: true,
                             decoration: InputDecoration(
                               hintText: 'Pilih periode tagihan...',
-                              prefixIcon: const Icon(Icons.calendar_month_outlined, size: 20),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              prefixIcon: const Icon(
+                                  Icons.calendar_month_outlined,
+                                  size: 20),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 12),
                             ),
                             items: _periods.map((p) {
                               Color badgeColor;
@@ -467,10 +508,14 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                                 value: p,
                                 child: Row(
                                   children: [
-                                    Text(p.billingPeriod, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                    Text(p.billingPeriod,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13)),
                                     const SizedBox(width: 6),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 2),
                                       decoration: BoxDecoration(
                                         color: badgeColor.withOpacity(0.12),
                                         borderRadius: BorderRadius.circular(4),
@@ -485,15 +530,22 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                                       ),
                                     ),
                                     const Spacer(),
-                                    Text(_formatCurrency(p.amount), style: TextStyle(color: Colors.green.shade700, fontSize: 12)),
+                                    Text(_formatCurrency(p.amount),
+                                        style: TextStyle(
+                                            color: Colors.green.shade700,
+                                            fontSize: 12)),
                                   ],
                                 ),
                               );
                             }).toList(),
-                            onChanged: (p) => setState(() => _selectedPeriod = p),
-                            validator: (v) => v == null ? 'Periode iuran wajib dipilih' : null,
+                            onChanged: (p) =>
+                                setState(() => _selectedPeriod = p),
+                            validator: (v) => v == null
+                                ? 'Periode iuran wajib dipilih'
+                                : null,
                           ),
-                          if (_selectedPeriod != null && _selectedPeriod!.isPaid) ...[
+                          if (_selectedPeriod != null &&
+                              _selectedPeriod!.isPaid) ...[
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.all(10),
@@ -504,34 +556,44 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.cancel_outlined, color: Colors.red.shade700, size: 18),
+                                  Icon(Icons.cancel_outlined,
+                                      color: Colors.red.shade700, size: 18),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       'Pembayaran untuk periode ini sudah lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.',
-                                      style: TextStyle(fontSize: 11, color: Colors.red.shade800, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.red.shade800,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ] else if (_selectedPeriod != null && _selectedPeriod!.isPending) ...[
+                          ] else if (_selectedPeriod != null &&
+                              _selectedPeriod!.isPending) ...[
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: Colors.orange.shade50,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.orange.shade200),
+                                border:
+                                    Border.all(color: Colors.orange.shade200),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.hourglass_empty_rounded, color: Colors.orange.shade700, size: 18),
+                                  Icon(Icons.hourglass_empty_rounded,
+                                      color: Colors.orange.shade700, size: 18),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       'Pembayaran untuk periode ini sedang menunggu verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.',
-                                      style: TextStyle(fontSize: 11, color: Colors.orange.shade800, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.orange.shade800,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                 ],
@@ -544,28 +606,39 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                         // Tanggal Pembayaran
                         const Text(
                           'Tanggal Pembayaran *',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary),
                         ),
                         const SizedBox(height: 8),
                         InkWell(
                           onTap: _pickDate,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey.shade400),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.event, size: 20, color: AppTheme.primary),
+                                const Icon(Icons.event,
+                                    size: 20, color: AppTheme.primary),
                                 const SizedBox(width: 10),
                                 Text(
                                   _formatDate(_paymentDate),
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600),
                                 ),
                                 const Spacer(),
-                                const Text('Ubah', style: TextStyle(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                                const Text('Ubah',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.primary,
+                                        fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -575,7 +648,10 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                         // Catatan Tambahan
                         const Text(
                           'Catatan Tambahan (Opsional)',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary),
                         ),
                         const SizedBox(height: 8),
                         TextFormField(
@@ -583,10 +659,14 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                           controller: _notesController,
                           maxLines: 2,
                           decoration: InputDecoration(
-                            hintText: 'Contoh: Uang tunai diterima di kantor sekretariat RT...',
-                            prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            hintText:
+                                'Contoh: Uang tunai diterima di kantor sekretariat Cluster...',
+                            prefixIcon:
+                                const Icon(Icons.note_alt_outlined, size: 20),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -597,21 +677,27 @@ class _RecordCashPaymentDialogState extends State<RecordCashPaymentDialog> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green.shade700,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: (_isSubmitting || _periods.isEmpty || _selectedPeriod == null)
+                          onPressed: (_isSubmitting ||
+                                  _periods.isEmpty ||
+                                  _selectedPeriod == null)
                               ? null
                               : _submitDirectCash,
                           child: _isSubmitting
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white),
                                 )
                               : const Text(
                                   'Lanjutkan & Konfirmasi',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14),
                                 ),
                         ),
                       ],

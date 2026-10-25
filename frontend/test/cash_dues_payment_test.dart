@@ -43,7 +43,8 @@ class FakeBillingRepository extends Fake implements BillingRepository {
   }
 
   @override
-  Future<List<EligibleDuesPeriodModel>> getResidentEligiblePeriods(int residentId) async {
+  Future<List<EligibleDuesPeriodModel>> getResidentEligiblePeriods(
+      int residentId) async {
     return mockPeriods;
   }
 
@@ -78,7 +79,9 @@ void main() {
       fakeRepo = FakeBillingRepository();
     });
 
-    test('1. PaymentModel properly reflects cash payment method and proof image nullability', () {
+    test(
+        '1. PaymentModel properly reflects cash payment method and proof image nullability',
+        () {
       final json = {
         'id': 10,
         'bill_id': 20,
@@ -121,7 +124,9 @@ void main() {
       expect(item.amountPaid, 35000.0);
     });
 
-    testWidgets('3. Resident PaymentFlowDialog allows cash declaration without proof image', (WidgetTester tester) async {
+    testWidgets(
+        '3. Resident PaymentFlowDialog allows cash declaration without proof image',
+        (WidgetTester tester) async {
       final bill = BillModel(
         id: 1,
         houseId: 101,
@@ -182,7 +187,8 @@ void main() {
       expect(fakeRepo.lastAmount, 35000.0);
     });
 
-    testWidgets('4. DigitalReceiptDialog renders CASH payment method cleanly', (WidgetTester tester) async {
+    testWidgets('4. DigitalReceiptDialog renders CASH payment method cleanly',
+        (WidgetTester tester) async {
       final bill = BillModel(
         id: 5,
         houseId: 101,
@@ -230,7 +236,9 @@ void main() {
       expect(find.text('Lihat Bukti Transfer'), findsNothing);
     });
 
-    testWidgets('5. RecordCashPaymentDialog enforces confirmation summary and triggers direct cash recording', (WidgetTester tester) async {
+    testWidgets(
+        '5. RecordCashPaymentDialog enforces confirmation summary and triggers direct cash recording',
+        (WidgetTester tester) async {
       fakeRepo.mockResidents = [
         ResidentBillingOptionModel(
           residentId: 10,
@@ -286,7 +294,10 @@ void main() {
 
       // Verify Confirmation Modal appears with exact details
       expect(find.text('Konfirmasi Pembayaran Tunai'), findsOneWidget);
-      expect(find.text('Pastikan uang tunai fisik telah diterima bendahara/pengurus sebelum melanjutkan.'), findsOneWidget);
+      expect(
+          find.text(
+              'Pastikan uang tunai fisik telah diterima bendahara/pengurus sebelum melanjutkan.'),
+          findsOneWidget);
       expect(find.text('Konfirmasi & Catat Lunas'), findsOneWidget);
 
       // Confirm
@@ -299,7 +310,9 @@ void main() {
       expect(fakeRepo.lastDirectCashAmount, 35000.0);
     });
 
-    test('6. ResidentBillingOptionModel formats display name with salutation and occupancy correctly', () {
+    test(
+        '6. ResidentBillingOptionModel formats display name with salutation and occupancy correctly',
+        () {
       final r1 = ResidentBillingOptionModel(
         residentId: 1,
         residentName: 'Bapak Ridwan',
@@ -323,7 +336,9 @@ void main() {
       expect(r2.displayName, 'Ibu Siti (Blok B2/05)');
     });
 
-    testWidgets('7. RecordCashPaymentDialog displays all periods (including paid/pending) and blocks paid period submission', (WidgetTester tester) async {
+    testWidgets(
+        '7. RecordCashPaymentDialog displays all periods (including paid/pending) and blocks paid period submission',
+        (WidgetTester tester) async {
       fakeRepo.mockResidents = [
         ResidentBillingOptionModel(
           residentId: 20,
@@ -393,7 +408,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Warning banner for paid period should appear
-      expect(find.text('Pembayaran untuk periode ini sudah lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.'), findsOneWidget);
+      expect(
+          find.text(
+              'Pembayaran untuk periode ini sudah lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.'),
+          findsOneWidget);
 
       // Try submitting paid period
       await tester.ensureVisible(find.byKey(const Key('submitDirectCashBtn')));
@@ -405,7 +423,8 @@ void main() {
       expect(fakeRepo.recordDirectCashCalled, isFalse);
 
       // Dismiss snackbars
-      ScaffoldMessenger.of(tester.element(find.byType(RecordCashPaymentDialog))).clearSnackBars();
+      ScaffoldMessenger.of(tester.element(find.byType(RecordCashPaymentDialog)))
+          .clearSnackBars();
       await tester.pumpAndSettle();
 
       // Select pending period '2026-09'
@@ -415,7 +434,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Warning banner for pending period should appear
-      expect(find.text('Pembayaran untuk periode ini sedang menunggu verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.'), findsOneWidget);
+      expect(
+          find.text(
+              'Pembayaran untuk periode ini sedang menunggu verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.'),
+          findsOneWidget);
 
       // Try submitting pending period
       await tester.ensureVisible(find.byKey(const Key('submitDirectCashBtn')));
@@ -427,7 +449,8 @@ void main() {
       expect(fakeRepo.recordDirectCashCalled, isFalse);
 
       // Dismiss snackbars
-      ScaffoldMessenger.of(tester.element(find.byType(RecordCashPaymentDialog))).clearSnackBars();
+      ScaffoldMessenger.of(tester.element(find.byType(RecordCashPaymentDialog)))
+          .clearSnackBars();
       await tester.pumpAndSettle();
 
       // Select unpaid period '2026-10'
@@ -437,8 +460,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Warning banner should disappear
-      expect(find.text('Pembayaran untuk periode ini sudah lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.'), findsNothing);
-      expect(find.text('Pembayaran untuk periode ini sedang menunggu verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.'), findsNothing);
+      expect(
+          find.text(
+              'Pembayaran untuk periode ini sudah lunas. Silakan periksa riwayat pembayaran sebelum melanjutkan.'),
+          findsNothing);
+      expect(
+          find.text(
+              'Pembayaran untuk periode ini sedang menunggu verifikasi. Selesaikan verifikasi terlebih dahulu sebelum mencatat pembayaran tunai.'),
+          findsNothing);
 
       // Submit unpaid period
       await tester.ensureVisible(find.byKey(const Key('submitDirectCashBtn')));

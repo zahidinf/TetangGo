@@ -46,7 +46,8 @@ class DashboardTopHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFCBD5E1)),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 16, color: Color(0xFFCBD5E1)),
               const SizedBox(width: 8),
               Text(
                 activeMenuTitle,
@@ -70,11 +71,14 @@ class DashboardTopHeader extends StatelessWidget {
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Cari warga, nomor rumah, tagihan...',
-                  hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                  prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF94A3B8)),
+                  hintStyle:
+                      const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      size: 18, color: Color(0xFF94A3B8)),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: Color(0xFFE2E8F0)),

@@ -55,8 +55,9 @@ class PendingUserModel extends Equatable {
 
   String get houseDisplay => 'Blok $houseBlock No. $houseNumber';
 
-  String get ownershipDisplay =>
-      ownershipStatus.toLowerCase() == 'pengontrak' ? 'Penyewa / Pengontrak' : 'Pemilik Rumah';
+  String get ownershipDisplay => ownershipStatus.toLowerCase() == 'pengontrak'
+      ? 'Penyewa / Pengontrak'
+      : 'Pemilik Rumah';
 
   @override
   List<Object?> get props => [

@@ -31,7 +31,9 @@ class TablePaginationControl extends StatelessWidget {
 
     final totalPages = (totalItems / pageSize).ceil();
     final startRecord = ((currentPage - 1) * pageSize) + 1;
-    final endRecord = (currentPage * pageSize) > totalItems ? totalItems : (currentPage * pageSize);
+    final endRecord = (currentPage * pageSize) > totalItems
+        ? totalItems
+        : (currentPage * pageSize);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -122,91 +124,105 @@ class TablePaginationControl extends StatelessWidget {
         children: [
           // Tombol Sebelumnya
           OutlinedButton(
-          key: Key('${keyPrefix}_prev'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            side: BorderSide(
-              color: canPrev ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
-            foregroundColor: canPrev ? AppTheme.textPrimary : Colors.grey.shade400,
-          ),
-          onPressed: canPrev ? () => onPageChanged(currentPage - 1) : null,
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.chevron_left_rounded, size: 16),
-              SizedBox(width: 2),
-              Text('Sebelumnya', style: TextStyle(fontSize: 12)),
-            ],
-          ),
-        ),
-        const SizedBox(width: 6),
-
-        // Nomor Halaman
-        for (final p in pages) ...[
-          if (p == -1)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                '...',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-              ),
-            )
-          else ...[
-            InkWell(
-              key: Key('${keyPrefix}_page_$p'),
-              onTap: p == currentPage ? null : () => onPageChanged(p),
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: p == currentPage ? AppTheme.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: p == currentPage ? AppTheme.primary : const Color(0xFFE2E8F0),
-                  ),
-                ),
-                child: Text(
-                  '$p',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: p == currentPage ? FontWeight.bold : FontWeight.w500,
-                    color: p == currentPage ? Colors.white : AppTheme.textPrimary,
-                  ),
-                ),
-              ),
+            key: Key('${keyPrefix}_prev'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              side: BorderSide(
+                  color: canPrev
+                      ? const Color(0xFFCBD5E1)
+                      : const Color(0xFFE2E8F0)),
+              foregroundColor:
+                  canPrev ? AppTheme.textPrimary : Colors.grey.shade400,
             ),
-            const SizedBox(width: 4),
-          ],
-        ],
-
-        const SizedBox(width: 2),
-
-        // Tombol Berikutnya
-        OutlinedButton(
-          key: Key('${keyPrefix}_next'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            side: BorderSide(
-              color: canNext ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
-            foregroundColor: canNext ? AppTheme.textPrimary : Colors.grey.shade400,
+            onPressed: canPrev ? () => onPageChanged(currentPage - 1) : null,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chevron_left_rounded, size: 16),
+                SizedBox(width: 2),
+                Text('Sebelumnya', style: TextStyle(fontSize: 12)),
+              ],
+            ),
           ),
-          onPressed: canNext ? () => onPageChanged(currentPage + 1) : null,
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Berikutnya', style: TextStyle(fontSize: 12)),
-              SizedBox(width: 2),
-              Icon(Icons.chevron_right_rounded, size: 16),
+          const SizedBox(width: 6),
+
+          // Nomor Halaman
+          for (final p in pages) ...[
+            if (p == -1)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  '...',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                ),
+              )
+            else ...[
+              InkWell(
+                key: Key('${keyPrefix}_page_$p'),
+                onTap: p == currentPage ? null : () => onPageChanged(p),
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  constraints:
+                      const BoxConstraints(minWidth: 28, minHeight: 28),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: p == currentPage
+                        ? AppTheme.primary
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: p == currentPage
+                          ? AppTheme.primary
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: Text(
+                    '$p',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          p == currentPage ? FontWeight.bold : FontWeight.w500,
+                      color: p == currentPage
+                          ? Colors.white
+                          : AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
             ],
+          ],
+
+          const SizedBox(width: 2),
+
+          // Tombol Berikutnya
+          OutlinedButton(
+            key: Key('${keyPrefix}_next'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              side: BorderSide(
+                  color: canNext
+                      ? const Color(0xFFCBD5E1)
+                      : const Color(0xFFE2E8F0)),
+              foregroundColor:
+                  canNext ? AppTheme.textPrimary : Colors.grey.shade400,
+            ),
+            onPressed: canNext ? () => onPageChanged(currentPage + 1) : null,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Berikutnya', style: TextStyle(fontSize: 12)),
+                SizedBox(width: 2),
+                Icon(Icons.chevron_right_rounded, size: 16),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }
