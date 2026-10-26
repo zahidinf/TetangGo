@@ -253,6 +253,39 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			profileGroup.Post("/vehicles", appHandler.AddVehicle)
 			profileGroup.Delete("/vehicles/:id", appHandler.DeleteVehicle)
 		}
+
+		// Sprint 5 (US-5.1 & US-5.2): Guest & Courier Invitations and Visits
+		// Creation requires authenticated user with valid active housing mapping
+		invitationsGroup := v1.Group("/invitations", authMid.RequireAuth())
+		{
+			invitationsGroup.Post("/", authMid.RequireHouseMapping(), appHandler.CreateInvitation)
+			invitationsGroup.Get("/", appHandler.GetMyInvitations)
+			// Operasional validasi & scan: Satpam
+			invitationsGroup.Post("/verify", authMid.RequireRole(string(entity.RoleSecurity)), appHandler.VerifyInvitationQR)
+			// Operasional gerbang check-in & check-out: Satpam
+			invitationsGroup.Post("/check-in", authMid.RequireRole(string(entity.RoleSecurity)), appHandler.CheckInGuest)
+			invitationsGroup.Post("/check-out", authMid.RequireRole(string(entity.RoleSecurity)), appHandler.CheckOutGuest)
+			// Riwayat log kunjungan: Satpam, Admin, Ketua, Wakil Ketua, Bendahara, Sekretaris
+			invitationsGroup.Get("/visits", authMid.RequireRole(
+				string(entity.RoleSecurity),
+				string(entity.RoleAdmin),
+				string(entity.RoleChairperson),
+				string(entity.RoleViceChairperson),
+				string(entity.RoleTreasurer),
+				string(entity.RoleSecretary),
+			), appHandler.ListGuestVisits)
+			invitationsGroup.Get("/visits/:id", authMid.RequireRole(
+				string(entity.RoleSecurity),
+				string(entity.RoleAdmin),
+				string(entity.RoleChairperson),
+				string(entity.RoleViceChairperson),
+				string(entity.RoleTreasurer),
+				string(entity.RoleSecretary),
+			), appHandler.GetGuestVisitDetail)
+			invitationsGroup.Get("/:id", appHandler.GetInvitationDetail)
+			invitationsGroup.Post("/:id/cancel", appHandler.CancelInvitation)
+			invitationsGroup.Post("/:id/complete", appHandler.CompleteInvitation)
+		}
 	}
 
 	return app

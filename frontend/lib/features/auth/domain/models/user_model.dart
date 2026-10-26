@@ -133,7 +133,7 @@ class UserModel extends Equatable {
   bool get canAccessHousesAdmin =>
       isAdmin || isChairperson || isViceChairperson || isSecretary;
   bool get canAccessSecurityGuestbookAdmin =>
-      isAdmin || isChairperson || isViceChairperson || isSecretary;
+      isAdmin || isChairperson || isViceChairperson || isTreasurer || isSecretary || isSecurity;
 
   // Has any administrative portal capability
   bool get hasAdminAccess =>

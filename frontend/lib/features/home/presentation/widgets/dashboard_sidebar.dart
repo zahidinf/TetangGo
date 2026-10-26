@@ -99,32 +99,42 @@ class NavigationItemBuilder {
 
     // 5. Administrative: Kelola Iuran & Tagihan (Admin, Chairperson, Vice Chairperson, Treasurer)
     if (user?.canAccessBillingAdmin ?? false) {
+      final totalBadge = pendingBillsCount + residentUnpaidBillsCount;
       items.add(
         SidebarItemData(
           keyId: 'billing',
-          title: 'Iuran & Tagihan (Admin)',
-          icon: Icons.receipt_long_outlined,
-          selectedIcon: Icons.receipt_long_rounded,
+          title: 'Iuran Warga',
+          icon: Icons.payments_outlined,
+          selectedIcon: Icons.payments_rounded,
           index: index++,
-          badge: pendingBillsCount > 0 ? '$pendingBillsCount Baru' : null,
+          badge: totalBadge > 0 ? '$totalBadge Baru' : null,
         ),
       );
-    }
-
-    // 6. Resident Baseline: Iuran Warga (Accessible to ANY user with valid housing association)
-    if (user?.canAccessResidentIuran ?? false) {
+    } else if (user?.canAccessResidentIuran ?? false) {
+      // 6. Resident Baseline: Iuran Warga (Accessible to ANY user with valid housing association without admin rights)
       items.add(
         SidebarItemData(
           keyId: 'resident_billing',
-          title: user?.canAccessBillingAdmin ?? false
-              ? 'Iuran Pribadi Warga'
-              : 'Iuran Warga',
+          title: 'Iuran Warga',
           icon: Icons.payments_outlined,
           selectedIcon: Icons.payments_rounded,
           index: index++,
           badge: residentUnpaidBillsCount > 0
               ? '$residentUnpaidBillsCount Belum Bayar'
               : null,
+        ),
+      );
+    }
+
+    // 6b. Resident Baseline: Undang Tamu & Kurir (Accessible to ANY user with valid housing association)
+    if (user?.hasHousingAssociation ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'invitations',
+          title: 'Undang Tamu & Kurir',
+          icon: Icons.qr_code_2_rounded,
+          selectedIcon: Icons.qr_code_2_rounded,
+          index: index++,
         ),
       );
     }

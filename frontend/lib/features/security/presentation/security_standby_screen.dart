@@ -13,6 +13,7 @@ import '../data/security_siren_service.dart';
 import '../data/security_websocket_service.dart';
 import '../domain/models/security_models.dart';
 import 'widgets/emergency_fullscreen_dialog.dart';
+import '../../invitation/presentation/screens/security_guestbook_screen.dart';
 
 class SecurityStandbyScreen extends StatefulWidget {
   final SecurityRepository? repository;
@@ -65,7 +66,7 @@ class _SecurityStandbyScreenState extends State<SecurityStandbyScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
 
     if (widget.repository != null) {
       _repository = widget.repository!;
@@ -497,6 +498,8 @@ class _SecurityStandbyScreenState extends State<SecurityStandbyScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           indicatorColor: AppTheme.primary,
           labelColor: AppTheme.primary,
           unselectedLabelColor: AppTheme.textSecondary,
@@ -557,6 +560,16 @@ class _SecurityStandbyScreenState extends State<SecurityStandbyScreen>
                       ),
                     ),
                   ],
+                ],
+              ),
+            ),
+            const Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.shield_outlined, size: 18),
+                  SizedBox(width: 8),
+                  Text('Buku Tamu Satpam'),
                 ],
               ),
             ),
@@ -642,6 +655,7 @@ class _SecurityStandbyScreenState extends State<SecurityStandbyScreen>
               children: [
                 _buildActiveTab(filteredIncidents),
                 _buildHistoryTab(context),
+                SecurityGuestbookScreen(user: user),
               ],
             ),
           ),

@@ -12,6 +12,7 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/billing/data/billing_repository.dart';
 import 'features/cashbook/data/cashbook_repository.dart';
 import 'features/home/data/dashboard_repository.dart';
+import 'features/invitation/data/repositories/invitation_repository.dart';
 import 'features/panic/data/panic_repository.dart';
 import 'features/profile/data/profile_repository.dart';
 import 'features/resident_management/data/resident_repository.dart';
@@ -39,6 +40,7 @@ void main() async {
   final announcementsRepository = AnnouncementsRepository(dioClient);
   final panicRepository = PanicRepository(dioClient);
   final securityRepository = SecurityRepository(dioClient);
+  final invitationRepository = InvitationRepository(dioClient);
   final securityWsService =
       SecurityWebSocketService(storageService: storageService);
   final securitySirenService = SecuritySirenService();
@@ -57,6 +59,7 @@ void main() async {
     announcementsRepository: announcementsRepository,
     panicRepository: panicRepository,
     securityRepository: securityRepository,
+    invitationRepository: invitationRepository,
     securityWsService: securityWsService,
     securitySirenService: securitySirenService,
   ));
@@ -74,6 +77,7 @@ class TetangGoApp extends StatefulWidget {
   final AnnouncementsRepository announcementsRepository;
   final PanicRepository panicRepository;
   final SecurityRepository securityRepository;
+  final InvitationRepository invitationRepository;
   final SecurityWebSocketService securityWsService;
   final SecuritySirenService securitySirenService;
 
@@ -90,6 +94,7 @@ class TetangGoApp extends StatefulWidget {
     required this.announcementsRepository,
     required this.panicRepository,
     required this.securityRepository,
+    required this.invitationRepository,
     required this.securityWsService,
     required this.securitySirenService,
   });
@@ -136,6 +141,8 @@ class _TetangGoAppState extends State<TetangGoApp> {
             value: widget.panicRepository),
         RepositoryProvider<SecurityRepository>.value(
             value: widget.securityRepository),
+        RepositoryProvider<InvitationRepository>.value(
+            value: widget.invitationRepository),
         RepositoryProvider<SecurityWebSocketService>.value(
             value: widget.securityWsService),
         RepositoryProvider<SecuritySirenService>.value(

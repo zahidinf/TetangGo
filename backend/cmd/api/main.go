@@ -23,6 +23,7 @@ import (
 	"tetanggo-backend/internal/usecase/dashboard"
 	"tetanggo-backend/internal/usecase/house"
 	"tetanggo-backend/internal/usecase/incident"
+	"tetanggo-backend/internal/usecase/invitation"
 	"tetanggo-backend/internal/usecase/profile"
 	"tetanggo-backend/internal/usecase/security"
 )
@@ -57,6 +58,7 @@ func main() {
 	secRepo := repository.NewPostgresSecurityRepository(db)
 	incidentRepo := repository.NewPostgresIncidentRepository(db)
 	deviceTokenRepo := repository.NewPostgresSecurityDeviceTokenRepository(db)
+	invitationRepo := repository.NewPostgresGuestInvitationRepository(db)
 
 	tokenService := auth.NewTokenService(cfg.JWTSecret, cfg.JWTExpirationMinutes, cfg.RefreshTokenExpDays)
 	authUseCase := auth.NewAuthUseCase(userRepo, roleRepo, houseRepo, tokenService)
@@ -68,6 +70,7 @@ func main() {
 	announcementUseCase := announcement.NewAnnouncementUseCase(announcementRepo)
 	securityUseCase := security.NewSecurityUseCase(secRepo, userRepo, roleRepo)
 	incidentUseCase := incident.NewIncidentUseCase(incidentRepo, secRepo, userRepo, houseRepo)
+	invitationUseCase := invitation.NewInvitationUseCase(invitationRepo, userRepo, houseRepo, cfg.JWTSecret)
 
 	authMiddleware := middleware.NewAuthMiddleware(tokenService, userRepo)
 	appHandler := handler.NewAppHandler(
@@ -81,6 +84,7 @@ func main() {
 		announcementUseCase,
 		securityUseCase,
 		incidentUseCase,
+		invitationUseCase,
 	)
 
 	// 4. Realtime Engine (Sprint 4 US-4.3)

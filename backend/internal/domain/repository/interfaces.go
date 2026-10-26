@@ -153,6 +153,29 @@ type PushNotificationService interface {
 	SendIncidentPush(ctx context.Context, tokens []entity.SecurityDeviceToken, inc *entity.Incident) error
 }
 
+type GuestInvitationRepository interface {
+	Create(ctx context.Context, inv *entity.GuestInvitation) error
+	GetByID(ctx context.Context, id int64) (*entity.GuestInvitation, error)
+	GetByCode(ctx context.Context, code string) (*entity.GuestInvitation, error)
+	ListByHostUserID(ctx context.Context, hostUserID int64, limit, offset int) ([]entity.GuestInvitation, int, error)
+	Cancel(ctx context.Context, id int64, cancelledBy int64, reason string) error
+	ExpireOutdatedInvitations(ctx context.Context) (int64, error)
+	CheckIn(ctx context.Context, id int64) error
+	Complete(ctx context.Context, id int64) error
+
+	// US-5.2: Visits and Audit Logs
+	CreateVisit(ctx context.Context, visit *entity.GuestVisit) error
+	GetActiveVisitByInvitationID(ctx context.Context, invitationID int64) (*entity.GuestVisit, error)
+	GetVisitByID(ctx context.Context, visitID int64) (*entity.GuestVisit, error)
+	CheckOutVisit(ctx context.Context, visitID int64, checkOutBy int64, checkOutAt time.Time, notes *string) error
+	ListVisits(ctx context.Context, filter entity.GuestVisitFilter) ([]entity.GuestVisit, int, error)
+	ListGroupedVisits(ctx context.Context, filter entity.GuestVisitFilter) ([]entity.GuestVisitGroup, int, error)
+	CreateAuditLog(ctx context.Context, log *entity.GuestVisitAuditLog) error
+	CountCompletedVisitsByInvitationID(ctx context.Context, invitationID int64) (int, error)
+}
+
+
+
 
 
 

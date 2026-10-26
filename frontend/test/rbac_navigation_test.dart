@@ -100,15 +100,15 @@ void main() {
       final items = NavigationItemBuilder.buildNavigationItems(user);
       final keys = items.map((it) => it.keyId).toList();
 
-      // Resident menus preserved
+      // Resident menus preserved (resident billing unified into billing menu for billing admins)
       expect(keys, contains('dashboard'));
       expect(keys, contains('profile'));
-      expect(keys, contains('resident_billing'));
+      expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('cashbook'));
       expect(keys, contains('announcements'));
       expect(keys, contains('panic'));
 
-      // Administrative menus granted
+      // Administrative menus granted (Iuran Warga unified menu)
       expect(keys, contains('verification'));
       expect(keys, contains('houses'));
       expect(keys, contains('billing'));
@@ -135,7 +135,7 @@ void main() {
       expect(keys, contains('houses'));
       expect(keys, contains('profile'));
       expect(keys, contains('billing'));
-      expect(keys, contains('resident_billing'));
+      expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('cashbook'));
       expect(keys, contains('announcements'));
       expect(keys, contains('panic'));
@@ -161,26 +161,27 @@ void main() {
       expect(user.canAccessCashbookAdmin, isTrue);
       expect(user.canAccessVerificationAdmin, isFalse);
       expect(user.canAccessHousesAdmin, isFalse);
-      expect(user.canAccessSecurityGuestbookAdmin, isFalse);
+      // US-5.2: Treasurer can access guestbook read-only
+      expect(user.canAccessSecurityGuestbookAdmin, isTrue);
 
       final items = NavigationItemBuilder.buildNavigationItems(user);
       final keys = items.map((it) => it.keyId).toList();
 
-      // Resident menus preserved
+      // Resident menus preserved (unified billing menu)
       expect(keys, contains('dashboard'));
       expect(keys, contains('profile'));
-      expect(keys, contains('resident_billing'));
+      expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('cashbook'));
       expect(keys, contains('announcements'));
       expect(keys, contains('panic'));
 
-      // Authorized admin menu
+      // Authorized admin menu (unified Iuran Warga)
       expect(keys, contains('billing'));
+      expect(keys, contains('guestbook'));
 
       // Unauthorized admin menus DENIED
       expect(keys, isNot(contains('verification')));
       expect(keys, isNot(contains('houses')));
-      expect(keys, isNot(contains('guestbook')));
     });
 
     test(
@@ -225,7 +226,7 @@ void main() {
       expect(keys, isNot(contains('billing')));
     });
 
-    test('7. ADMIN with housing gets all admin menus + resident billing', () {
+    test('7. ADMIN with housing gets all admin menus + unified Iuran Warga', () {
       const user = UserModel(
         id: 1,
         name: 'Admin TetangGo',
@@ -241,7 +242,7 @@ void main() {
       final items = NavigationItemBuilder.buildNavigationItems(user);
       final keys = items.map((it) => it.keyId).toList();
 
-      expect(keys, contains('resident_billing'));
+      expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('billing'));
       expect(keys, contains('verification'));
       expect(keys, contains('houses'));
@@ -380,7 +381,7 @@ void main() {
     });
 
     test(
-        '12. Ketua and Bendahara with housing association get resident billing titled "Iuran Pribadi Warga"',
+        '12. Ketua, Bendahara, and Warga get unified single Iuran Warga menu title',
         () {
       const ketua = UserModel(
         id: 2,
@@ -395,8 +396,8 @@ void main() {
 
       final ketuaItems = NavigationItemBuilder.buildNavigationItems(ketua);
       final ketuaBillingItem =
-          ketuaItems.firstWhere((it) => it.keyId == 'resident_billing');
-      expect(ketuaBillingItem.title, equals('Iuran Pribadi Warga'));
+          ketuaItems.firstWhere((it) => it.keyId == 'billing');
+      expect(ketuaBillingItem.title, equals('Iuran Warga'));
 
       const bendahara = UserModel(
         id: 4,
@@ -412,8 +413,8 @@ void main() {
       final bendaharaItems =
           NavigationItemBuilder.buildNavigationItems(bendahara);
       final bendaharaBillingItem =
-          bendaharaItems.firstWhere((it) => it.keyId == 'resident_billing');
-      expect(bendaharaBillingItem.title, equals('Iuran Pribadi Warga'));
+          bendaharaItems.firstWhere((it) => it.keyId == 'billing');
+      expect(bendaharaBillingItem.title, equals('Iuran Warga'));
 
       const regularResident = UserModel(
         id: 10,

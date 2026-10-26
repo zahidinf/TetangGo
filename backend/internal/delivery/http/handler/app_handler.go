@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"tetanggo-backend/internal/usecase/dashboard"
 	"tetanggo-backend/internal/usecase/house"
 	"tetanggo-backend/internal/usecase/incident"
+	"tetanggo-backend/internal/usecase/invitation"
 	"tetanggo-backend/internal/usecase/profile"
 	"tetanggo-backend/internal/usecase/security"
 
@@ -42,6 +44,7 @@ type AppHandler struct {
 	secRepo             repository.SecurityRepository
 	userRepo            repository.UserRepository
 	deviceTokenRepo     repository.SecurityDeviceTokenRepository
+	invitationUseCase   *invitation.InvitationUseCase
 }
 
 func NewAppHandler(
@@ -55,7 +58,12 @@ func NewAppHandler(
 	announcementUseCase *announcement.AnnouncementUseCase,
 	securityUseCase *security.SecurityUseCase,
 	incidentUseCase *incident.IncidentUseCase,
+	invitationUseCase ...*invitation.InvitationUseCase,
 ) *AppHandler {
+	var invUC *invitation.InvitationUseCase
+	if len(invitationUseCase) > 0 {
+		invUC = invitationUseCase[0]
+	}
 	return &AppHandler{
 		db:                  db,
 		authUseCase:         authUseCase,
@@ -67,8 +75,14 @@ func NewAppHandler(
 		announcementUseCase: announcementUseCase,
 		securityUseCase:     securityUseCase,
 		incidentUseCase:     incidentUseCase,
+		invitationUseCase:   invUC,
 	}
 }
+
+func (h *AppHandler) SetInvitationUseCase(uc *invitation.InvitationUseCase) {
+	h.invitationUseCase = uc
+}
+
 
 // GET /health
 func (h *AppHandler) HealthCheck(c *fiber.Ctx) error {
@@ -2976,6 +2990,489 @@ func (h *AppHandler) RevokeSecurityDeviceToken(c *fiber.Ctx) error {
 		"message": "Token perangkat security berhasil dicabut",
 	})
 }
+
+// ----------------------------------------------------
+// SPRINT 5 (US-5.1): GUEST & COURIER INVITATION HANDLERS
+// ----------------------------------------------------
+
+// POST /api/v1/invitations
+func (h *AppHandler) CreateInvitation(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	if h.invitationUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invitation usecase belum dikonfigurasi",
+		})
+	}
+
+	var req entity.CreateInvitationRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Payload JSON undangan tidak valid",
+		})
+	}
+
+	inv, err := h.invitationUseCase.CreateInvitation(c.Context(), callerID, req)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrUnauthorized) || errors.Is(err, invitation.ErrHouseNotMapped) {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Undangan tamu berhasil dibuat",
+		"data":    inv,
+	})
+}
+
+// GET /api/v1/invitations
+func (h *AppHandler) GetMyInvitations(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	if h.invitationUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invitation usecase belum dikonfigurasi",
+		})
+	}
+
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 20)
+
+	list, total, totalPages, err := h.invitationUseCase.GetMyInvitations(c.Context(), callerID, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success":     true,
+		"data":        list,
+		"total":       total,
+		"page":        page,
+		"limit":       limit,
+		"total_pages": totalPages,
+	})
+}
+
+// GET /api/v1/invitations/:id
+func (h *AppHandler) GetInvitationDetail(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID undangan tidak valid",
+		})
+	}
+
+	if h.invitationUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invitation usecase belum dikonfigurasi",
+		})
+	}
+
+	inv, err := h.invitationUseCase.GetInvitationDetail(c.Context(), id, callerID, callerRole)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrInvitationNotFound) {
+			status = fiber.StatusNotFound
+		} else if errors.Is(err, invitation.ErrUnauthorized) {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    inv,
+	})
+}
+
+// POST /api/v1/invitations/:id/cancel
+func (h *AppHandler) CancelInvitation(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID undangan tidak valid",
+		})
+	}
+
+	if h.invitationUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invitation usecase belum dikonfigurasi",
+		})
+	}
+
+	var req entity.CancelInvitationRequest
+	_ = c.BodyParser(&req)
+
+	if err := h.invitationUseCase.CancelInvitation(c.Context(), id, callerID, req.Reason); err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrInvitationNotFound) {
+			status = fiber.StatusNotFound
+		} else if errors.Is(err, invitation.ErrUnauthorized) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, invitation.ErrCannotCancel) {
+			status = fiber.StatusConflict
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Undangan berhasil dibatalkan",
+	})
+}
+
+// POST /api/v1/invitations/:id/complete
+// Digunakan oleh warga pengundang untuk menyelesaikan kunjungan lebih awal
+func (h *AppHandler) CompleteInvitation(c *fiber.Ctx) error {
+	callerID, _ := getUserIDFromLocals(c)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	id, err := c.ParamsInt("id")
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID undangan tidak valid",
+		})
+	}
+
+	if h.invitationUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invitation usecase belum dikonfigurasi",
+		})
+	}
+
+	if err := h.invitationUseCase.CompleteInvitation(c.Context(), int64(id), callerID); err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrInvitationNotFound) {
+			status = fiber.StatusNotFound
+		} else if errors.Is(err, invitation.ErrUnauthorized) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, invitation.ErrCannotComplete) ||
+			errors.Is(err, invitation.ErrCannotCompleteActiveVisit) ||
+			errors.Is(err, invitation.ErrCannotCompleteNoVisit) {
+			status = fiber.StatusConflict
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Kunjungan berhasil diselesaikan oleh warga",
+	})
+}
+
+// POST /api/v1/invitations/verify
+// Digunakan oleh Satpam dan Pengurus untuk memindai / memverifikasi status keabsahan QR undangan
+func (h *AppHandler) VerifyInvitationQR(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	if h.invitationUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invitation usecase belum dikonfigurasi",
+		})
+	}
+
+	var req entity.VerifyInvitationRequest
+	if err := c.BodyParser(&req); err != nil || strings.TrimSpace(req.Code) == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"valid":   false,
+			"message": "Kode atau payload QR wajib disertakan",
+		})
+	}
+
+	checkInQuery := c.Query("check_in") == "true"
+	res, err := h.invitationUseCase.VerifyAndScanInvitation(c.Context(), req.Code, checkInQuery)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrInvitationNotFound) {
+			status = fiber.StatusNotFound
+		} else if errors.Is(err, invitation.ErrInvitationRevoked) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, invitation.ErrInvitationExpired) || errors.Is(err, invitation.ErrInvitationUsed) || errors.Is(err, invitation.ErrInvitationCompleted) {
+			status = fiber.StatusGone
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"valid":   false,
+			"status":  res.Status,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"valid":   res.Valid,
+		"status":  res.Status,
+		"message": res.Message,
+		"data":    res.Invitation,
+		"active_visit": res.ActiveVisit,
+	})
+}
+
+// POST /api/v1/invitations/check-in
+// Operasional gerbang satpam untuk check-in tamu
+func (h *AppHandler) CheckInGuest(c *fiber.Ctx) error {
+	callerID, _ := getUserIDFromLocals(c)
+	callerRole := getUserRoleFromLocals(c)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	var req entity.CheckInGuestRequest
+	if err := c.BodyParser(&req); err != nil || strings.TrimSpace(req.Code) == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Kode QR atau payload undangan wajib disertakan",
+		})
+	}
+
+	visit, err := h.invitationUseCase.CheckInGuest(c.Context(), callerID, callerRole, req.Code, req.Notes)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrUnauthorized) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, invitation.ErrInvitationNotFound) {
+			status = fiber.StatusNotFound
+		} else if errors.Is(err, invitation.ErrInvitationRevoked) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, invitation.ErrInvitationExpired) || errors.Is(err, invitation.ErrInvitationUsed) || errors.Is(err, invitation.ErrInvitationCompleted) {
+			status = fiber.StatusGone
+		} else if errors.Is(err, invitation.ErrDoubleCheckIn) {
+			status = fiber.StatusConflict
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Check-in tamu berhasil dicatat",
+		"data":    visit,
+	})
+}
+
+// POST /api/v1/invitations/check-out
+// Operasional gerbang satpam untuk check-out tamu
+func (h *AppHandler) CheckOutGuest(c *fiber.Ctx) error {
+	callerID, _ := getUserIDFromLocals(c)
+	callerRole := getUserRoleFromLocals(c)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	var req entity.CheckOutGuestRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Format request tidak valid",
+		})
+	}
+
+	visit, err := h.invitationUseCase.CheckOutGuest(c.Context(), callerID, callerRole, req)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrUnauthorized) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, invitation.ErrNoActiveVisit) || errors.Is(err, invitation.ErrInvitationNotFound) {
+			status = fiber.StatusNotFound
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Check-out tamu berhasil dicatat",
+		"data":    visit,
+	})
+}
+
+// GET /api/v1/invitations/visits
+// Daftar riwayat log kunjungan tamu satpam
+func (h *AppHandler) ListGuestVisits(c *fiber.Ctx) error {
+	callerRole := getUserRoleFromLocals(c)
+
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	filter := entity.GuestVisitFilter{
+		Status:    c.Query("status"),
+		Search:    c.Query("search"),
+		VisitType: c.Query("visit_type"),
+		Limit:     limit,
+		Offset:    offset,
+	}
+
+	grouped := c.Query("grouped")
+	if grouped == "true" || grouped == "1" {
+		groups, total, err := h.invitationUseCase.ListGroupedVisits(c.Context(), callerRole, filter)
+		if err != nil {
+			status := fiber.StatusInternalServerError
+			if errors.Is(err, invitation.ErrUnauthorized) {
+				status = fiber.StatusForbidden
+			}
+			return c.Status(status).JSON(fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"message": "Riwayat kunjungan terpadu berhasil dimuat",
+			"data":    groups,
+			"meta": fiber.Map{
+				"page":  page,
+				"limit": limit,
+				"total": total,
+			},
+		})
+	}
+
+	visits, total, err := h.invitationUseCase.ListVisits(c.Context(), callerRole, filter)
+	if err != nil {
+		status := fiber.StatusInternalServerError
+		if errors.Is(err, invitation.ErrUnauthorized) {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Riwayat kunjungan berhasil dimuat",
+		"data":    visits,
+		"meta": fiber.Map{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		},
+	})
+}
+
+// GET /api/v1/invitations/visits/:id
+// Detail riwayat log kunjungan tamu satpam
+func (h *AppHandler) GetGuestVisitDetail(c *fiber.Ctx) error {
+	callerRole := getUserRoleFromLocals(c)
+	visitIDParam := c.Params("id")
+	visitID, err := strconv.ParseInt(visitIDParam, 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID kunjungan tidak valid",
+		})
+	}
+
+	visit, err := h.invitationUseCase.GetVisitDetail(c.Context(), callerRole, visitID)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, invitation.ErrUnauthorized) {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Detail kunjungan berhasil dimuat",
+		"data":    visit,
+	})
+}
+
+
 
 
 

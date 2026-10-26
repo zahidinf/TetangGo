@@ -6,6 +6,7 @@ import '../../../../core/utils/image_url_helper.dart';
 import '../../billing/data/billing_repository.dart';
 import '../../billing/domain/models/billing_models.dart';
 import '../../billing/presentation/widgets/digital_receipt_dialog.dart';
+import '../../billing/presentation/resident_billing_screen.dart';
 import 'widgets/full_image_preview_dialog.dart';
 import 'widgets/payment_settings_dialog.dart';
 import 'widgets/record_cash_payment_dialog.dart';
@@ -14,18 +15,20 @@ import 'widgets/bulk_process_payment_dialog.dart';
 class AdminBillingView extends StatefulWidget {
   final VoidCallback? onPendingCountUpdated;
   final VoidCallback? onNavigateToResidentBilling;
+  final bool hasResidentAccess;
 
   const AdminBillingView({
     super.key,
     this.onPendingCountUpdated,
     this.onNavigateToResidentBilling,
+    this.hasResidentAccess = false,
   });
 
   @override
-  State<AdminBillingView> createState() => _AdminBillingViewState();
+  State<AdminBillingView> createState() => AdminBillingViewState();
 }
 
-class _AdminBillingViewState extends State<AdminBillingView>
+class AdminBillingViewState extends State<AdminBillingView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -45,11 +48,20 @@ class _AdminBillingViewState extends State<AdminBillingView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: widget.hasResidentAccess ? 3 : 2,
+      vsync: this,
+    );
     _periodFilterController = TextEditingController(
         text: DateFormat('yyyy-MM').format(DateTime.now()));
 
     _loadInitialData();
+  }
+
+  void switchToResidentBillingTab() {
+    if (widget.hasResidentAccess) {
+      _tabController.animateTo(2);
+    }
   }
 
   @override
@@ -547,7 +559,13 @@ class _AdminBillingViewState extends State<AdminBillingView>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                     ),
-                    onPressed: widget.onNavigateToResidentBilling,
+                    onPressed: () {
+                      if (widget.hasResidentAccess) {
+                        _tabController.animateTo(2);
+                      } else {
+                        widget.onNavigateToResidentBilling?.call();
+                      }
+                    },
                     icon: const Icon(Icons.payment_rounded, size: 18),
                     label: const Text('Bayar Iuran Saya',
                         style: TextStyle(fontWeight: FontWeight.bold)),
@@ -639,6 +657,17 @@ class _AdminBillingViewState extends State<AdminBillingView>
                     ],
                   ),
                 ),
+                if (widget.hasResidentAccess)
+                  const Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.payments_outlined, size: 18),
+                        SizedBox(width: 8),
+                        Text('Tagihan Saya'),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -650,6 +679,13 @@ class _AdminBillingViewState extends State<AdminBillingView>
               children: [
                 _buildVerificationTab(),
                 _buildSummaryTab(),
+                if (widget.hasResidentAccess)
+                  ResidentBillingScreen(
+                    onBillUpdated: () {
+                      widget.onPendingCountUpdated?.call();
+                      _loadInitialData();
+                    },
+                  ),
               ],
             ),
           ),

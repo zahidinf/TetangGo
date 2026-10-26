@@ -136,6 +136,17 @@ class ApiConstants {
       '/api/v1/admin/security/assignments/$id';
   static const String adminNeighborhoods = '/api/v1/admin/neighborhoods';
 
+  // Sprint 5 (US-5.1 & US-5.2): Guest & Courier Invitations and Visits
+  static const String invitations = '/api/v1/invitations';
+  static const String verifyInvitation = '/api/v1/invitations/verify';
+  static const String checkInInvitation = '/api/v1/invitations/check-in';
+  static const String checkOutInvitation = '/api/v1/invitations/check-out';
+  static const String guestVisits = '/api/v1/invitations/visits';
+  static String guestVisitDetail(int id) => '/api/v1/invitations/visits/$id';
+  static String invitationDetail(int id) => '/api/v1/invitations/$id';
+  static String cancelInvitation(int id) => '/api/v1/invitations/$id/cancel';
+  static String completeInvitation(int id) => '/api/v1/invitations/$id/complete';
+
   // Storage Keys
   static const String tokenKey = 'tetanggo_access_token';
   static const String refreshTokenKey = 'tetanggo_refresh_token';

@@ -39,6 +39,7 @@ frontend/ephemeral/
 frontend/android/.gradle/
 frontend/android/local.properties
 frontend/android/app/build/
+frontend/android/build/
 frontend/android/captures/
 frontend/android/.cxx/
 

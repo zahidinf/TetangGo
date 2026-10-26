@@ -16,6 +16,10 @@ import '../../cashbook/presentation/cashbook_screen.dart';
 import '../../profile/presentation/resident_profile_screen.dart';
 import '../../panic/presentation/emergency_monitoring_screen.dart';
 import '../../panic/presentation/widgets/panic_button_fab.dart';
+import '../../invitation/data/repositories/invitation_repository.dart';
+import '../../invitation/presentation/bloc/invitation_bloc.dart';
+import '../../invitation/presentation/screens/resident_invitations_screen.dart';
+import '../../invitation/presentation/screens/security_guestbook_screen.dart';
 import '../../resident_management/data/resident_repository.dart';
 import '../../resident_management/presentation/houses_management_view.dart';
 import '../../resident_management/presentation/resident_verification_view.dart';
@@ -36,6 +40,8 @@ class AdaptiveDashboardScreen extends StatefulWidget {
 class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   int _selectedMenuIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<AdminBillingViewState> _adminBillingKey =
+      GlobalKey<AdminBillingViewState>();
   final Set<String> _visitedTabKeys = {'dashboard'};
   int _pendingCount = 0;
   int _pendingBillsCount = 0;
@@ -150,6 +156,20 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   }
 
   void _navigateToKey(String key, List<SidebarItemData> items) {
+    if (key == 'resident_billing' &&
+        !items.any((it) => it.keyId == 'resident_billing') &&
+        items.any((it) => it.keyId == 'billing')) {
+      final billingIdx = items.indexWhere((it) => it.keyId == 'billing');
+      setState(() {
+        _selectedMenuIndex = billingIdx;
+        _visitedTabKeys.add('billing');
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _adminBillingKey.currentState?.switchToResidentBillingTab();
+      });
+      return;
+    }
+
     final idx = items.indexWhere((it) => it.keyId == key);
     if (idx != -1) {
       setState(() {
@@ -240,19 +260,28 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
         return const ResidentProfileScreen();
       case 'billing':
         return AdminBillingView(
+          key: _adminBillingKey,
           onPendingCountUpdated: _fetchPendingCount,
+          hasResidentAccess: user?.canAccessResidentIuran ?? false,
           onNavigateToResidentBilling: (user?.canAccessResidentIuran ?? false)
               ? () => _navigateToKey('resident_billing', items)
               : null,
         );
       case 'resident_billing':
         return ResidentBillingScreen(onBillUpdated: _fetchPendingCount);
+      case 'invitations':
+        return BlocProvider(
+          create: (context) => InvitationBloc(
+            repository: context.read<InvitationRepository>(),
+          ),
+          child: const ResidentInvitationsScreen(),
+        );
       case 'cashbook':
         return CashbookScreen(isAdmin: user?.canAccessCashbookAdmin ?? false);
       case 'announcements':
         return AnnouncementsScreen(isAdmin: user?.canAccessLeadership ?? false);
       case 'guestbook':
-        return _buildFeaturePlaceholder('Buku Tamu Pos Satpam');
+        return SecurityGuestbookScreen(user: user);
       case 'panic':
         return EmergencyMonitoringScreen(
           user: user,

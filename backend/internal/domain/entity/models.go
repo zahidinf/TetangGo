@@ -646,6 +646,177 @@ type SecurityDeviceToken struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+// Sprint 5 (US-5.1): Guest & Courier Invitations with QR Code
+
+type VisitType string
+
+const (
+	VisitTypeGuest   VisitType = "TAMU"
+	VisitTypeCourier VisitType = "KURIR"
+)
+
+func IsValidVisitType(vt string) bool {
+	switch VisitType(strings.ToUpper(strings.TrimSpace(vt))) {
+	case VisitTypeGuest, VisitTypeCourier:
+		return true
+	default:
+		return false
+	}
+}
+
+type InvitationStatus string
+
+const (
+	InvitationStatusActive    InvitationStatus = "ACTIVE"
+	InvitationStatusUsed      InvitationStatus = "USED"
+	InvitationStatusCompleted InvitationStatus = "COMPLETED"
+	InvitationStatusCancelled InvitationStatus = "CANCELLED"
+	InvitationStatusExpired   InvitationStatus = "EXPIRED"
+)
+
+type GuestInvitation struct {
+	ID                 int64            `json:"id"`
+	InvitationCode     string           `json:"invitation_code"`
+	HostUserID         int64            `json:"host_user_id"`
+	HouseID            int64            `json:"house_id"`
+	GuestName          string           `json:"guest_name"`
+	VisitType          string           `json:"visit_type"`
+	Phone              *string          `json:"phone,omitempty"`
+	Notes              *string          `json:"notes,omitempty"`
+	ValidFrom          time.Time        `json:"valid_from"`
+	ValidUntil         time.Time        `json:"valid_until"`
+	Status             InvitationStatus `json:"status"`
+	QRPayload          string           `json:"qr_payload"`
+	QRTokenHash        string           `json:"-"` // Never expose token hash directly
+	CancelledAt        *time.Time       `json:"cancelled_at,omitempty"`
+	CancelledBy        *int64           `json:"cancelled_by,omitempty"`
+	CancellationReason *string          `json:"cancellation_reason,omitempty"`
+	CreatedAt          time.Time        `json:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at"`
+
+	// Relational details for display
+	HostName    string `json:"host_name,omitempty"`
+	HouseBlock  string `json:"house_block,omitempty"`
+	HouseNumber string `json:"house_number,omitempty"`
+
+	// Visit statistics for action condition checking (US-5.2)
+	HasActiveSession     bool `json:"has_active_session"`
+	CompletedVisitsCount int  `json:"completed_visits_count"`
+}
+
+type CreateInvitationRequest struct {
+	GuestName  string  `json:"guest_name"`
+	VisitType  string  `json:"visit_type"`
+	Phone      *string `json:"phone,omitempty"`
+	Notes      *string `json:"notes,omitempty"`
+	ValidHours int     `json:"valid_hours,omitempty"` // Default 24, max 72
+}
+
+type CancelInvitationRequest struct {
+	Reason string `json:"reason,omitempty"`
+}
+
+type VerifyInvitationRequest struct {
+	Code string `json:"code"` // Payload QR Base64 atau InvitationCode langsung
+}
+
+type VerifyInvitationResponse struct {
+	Valid          bool             `json:"valid"`
+	Status         InvitationStatus `json:"status"`
+	Message        string           `json:"message"`
+	Invitation     *GuestInvitation `json:"invitation,omitempty"`
+	ActiveVisit    *GuestVisit      `json:"active_visit,omitempty"`
+}
+
+// Sprint 5 (US-5.2): Guest Visits and Security Gate Log
+
+type VisitStatus string
+
+const (
+	VisitStatusCheckedIn  VisitStatus = "CHECKED_IN"
+	VisitStatusCheckedOut VisitStatus = "CHECKED_OUT"
+)
+
+type GuestVisit struct {
+	ID          int64       `json:"id"`
+	InvitationID int64      `json:"invitation_id"`
+	CheckInAt   time.Time   `json:"check_in_at"`
+	CheckInBy   int64       `json:"check_in_by"`
+	CheckOutAt  *time.Time  `json:"check_out_at,omitempty"`
+	CheckOutBy  *int64      `json:"check_out_by,omitempty"`
+	Status      VisitStatus `json:"status"`
+	Notes       *string     `json:"notes,omitempty"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+
+	// Enriched fields for security and management history
+	InvitationCode   string           `json:"invitation_code,omitempty"`
+	GuestName        string           `json:"guest_name,omitempty"`
+	VisitType        string           `json:"visit_type,omitempty"`
+	HostName         string           `json:"host_name,omitempty"`
+	HouseBlock       string           `json:"house_block,omitempty"`
+	HouseNumber      string           `json:"house_number,omitempty"`
+	CheckInByName    string           `json:"check_in_by_name,omitempty"`
+	CheckOutByName   *string          `json:"check_out_by_name,omitempty"`
+	InvitationStatus InvitationStatus `json:"invitation_status,omitempty"`
+	ValidUntil       *time.Time       `json:"valid_until,omitempty"`
+}
+
+type GuestVisitGroup struct {
+	InvitationID     int64            `json:"invitation_id"`
+	InvitationCode   string           `json:"invitation_code"`
+	GuestName        string           `json:"guest_name"`
+	VisitType        string           `json:"visit_type"`
+	HostName         string           `json:"host_name"`
+	HouseBlock       string           `json:"house_block"`
+	HouseNumber      string           `json:"house_number"`
+	InvitationStatus InvitationStatus `json:"invitation_status"`
+	ValidFrom        time.Time        `json:"valid_from"`
+	ValidUntil       time.Time        `json:"valid_until"`
+	Phone            *string          `json:"phone,omitempty"`
+	Notes            *string          `json:"notes,omitempty"`
+	HasActiveSession bool             `json:"has_active_session"`
+	ActiveVisitID    *int64           `json:"active_visit_id,omitempty"`
+	FirstCheckInAt   time.Time        `json:"first_check_in_at"`
+	LatestActivityAt time.Time        `json:"latest_activity_at"`
+	TotalVisits      int              `json:"total_visits"`
+	Visits           []GuestVisit     `json:"visits"`
+}
+
+type CheckInGuestRequest struct {
+	Code  string  `json:"code"` // QR Payload atau InvitationCode
+	Notes *string `json:"notes,omitempty"`
+}
+
+type CheckOutGuestRequest struct {
+	VisitID          *int64  `json:"visit_id,omitempty"`
+	Code             *string `json:"code,omitempty"`
+	Notes            *string `json:"notes,omitempty"`
+	EndInvitation    bool    `json:"end_invitation,omitempty"`
+}
+
+type GuestVisitFilter struct {
+	Status    string
+	Search    string
+	VisitType string
+	Limit     int
+	Offset    int
+}
+
+type GuestVisitAuditLog struct {
+	ID           int64     `json:"id"`
+	VisitID      *int64    `json:"visit_id,omitempty"`
+	InvitationID *int64    `json:"invitation_id,omitempty"`
+	ActorID      int64     `json:"actor_id"`
+	ActorRole    string    `json:"actor_role"`
+	Action       string    `json:"action"` // VERIFY, CHECK_IN, CHECK_OUT, REJECTED
+	Status       string    `json:"status"` // SUCCESS, FAILED
+	Notes        *string   `json:"notes,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+
+
 
 
 

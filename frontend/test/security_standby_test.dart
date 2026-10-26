@@ -241,6 +241,8 @@ void main() {
       expect(find.text('Lingkungan Tugas Aktif: RT 01 Lingkungan A'),
           findsOneWidget);
       expect(find.text('Kondisi Lingkungan Aman'), findsOneWidget);
+      // US-5.2: Buku Tamu Satpam tab is accessible in standby portal
+      expect(find.text('Buku Tamu Satpam'), findsOneWidget);
     });
 
     testWidgets('2. Denies access if security officer has no active assignment',
