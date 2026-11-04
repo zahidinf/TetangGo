@@ -165,10 +165,6 @@ class _EmergencyMonitoringScreenState extends State<EmergencyMonitoringScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
-                  _buildHeader(isDesktop),
-                  const SizedBox(height: 18),
-
                   // Prominent Active Status Banner
                   _buildActiveStatusBanner(isDesktop),
                   const SizedBox(height: 20),
@@ -251,78 +247,6 @@ class _EmergencyMonitoringScreenState extends State<EmergencyMonitoringScreen> {
     );
   }
 
-  Widget _buildHeader(bool isDesktop) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.emergency_rounded,
-                  color: AppTheme.danger,
-                  size: 28,
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Kejadian Darurat',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _activeCount > 0
-                        ? AppTheme.danger.withOpacity(0.12)
-                        : AppTheme.success.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _activeCount > 0
-                          ? AppTheme.danger.withOpacity(0.3)
-                          : AppTheme.success.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Text(
-                    _activeCount > 0 ? 'Siaga $_activeCount' : 'Aman',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color:
-                          _activeCount > 0 ? AppTheme.danger : AppTheme.success,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.user?.canAccessFullEmergencyHistory ?? false
-                  ? 'Pusat monitoring, riwayat lengkap, dan penanganan kejadian darurat cluster'
-                  : 'Monitoring laporan kejadian darurat aktif di lingkungan Anda',
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        IconButton(
-          onPressed: _loadData,
-          icon: const Icon(Icons.refresh_rounded),
-          tooltip: 'Muat Ulang',
-          color: AppTheme.primaryDark,
-        ),
-      ],
-    );
-  }
 
   Widget _buildActiveStatusBanner(bool isDesktop) {
     final hasActive = _activeCount > 0;

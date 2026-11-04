@@ -203,37 +203,6 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Banner Info
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Iuran Pengelolaan Lingkungan (IPL)',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    houseUnitDisplay,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-              IconButton(
-                onPressed: _fetchData,
-                icon:
-                    const Icon(Icons.refresh_rounded, color: AppTheme.primary),
-                tooltip: 'Segarkan Data',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
           // Bar Pemilih Periode & Tombol Bayar Di Muka
           Container(
             padding: const EdgeInsets.all(12),
@@ -426,10 +395,14 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(19)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.calendar_month_rounded,
                         size: 18, color: AppTheme.primary),
@@ -476,9 +449,11 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.end,
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,12 +462,16 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey.shade600)),
                         const SizedBox(height: 4),
-                        Text(
-                          _formatCurrency(bill.amount),
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.textPrimary,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _formatCurrency(bill.amount),
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.textPrimary,
+                            ),
                           ),
                         ),
                       ],
@@ -720,9 +699,11 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
-        children: [
-          Container(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 360;
+
+          final iconWidget = Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
@@ -733,65 +714,105 @@ class _ResidentBillingScreenState extends State<ResidentBillingScreen> {
               color: bill.isPaid ? Colors.green : Colors.grey.shade700,
               size: 24,
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
+          );
+
+          final detailsWidget = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Periode ${bill.billingPeriod}',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppTheme.textPrimary),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _formatCurrency(bill.amount),
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: Colors.grey.shade700),
+              ),
+            ],
+          );
+
+          final actionsWidget = Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                      color: badgeColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              if (bill.payment?.proofImageUrl.isNotEmpty == true)
+                IconButton(
+                  icon: const Icon(Icons.image_outlined,
+                      color: AppTheme.textSecondary, size: 20),
+                  tooltip: 'Bukti Transfer',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => _openProofDialog(bill),
+                ),
+              if (bill.isPaid)
+                IconButton(
+                  icon: const Icon(Icons.receipt_long_rounded,
+                      color: AppTheme.primary, size: 20),
+                  tooltip: 'Kuitansi',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => _openReceiptDialog(bill),
+                )
+              else if (bill.isUnpaid || bill.isRejected)
+                IconButton(
+                  icon: const Icon(Icons.payment_rounded,
+                      color: AppTheme.primary, size: 20),
+                  tooltip: 'Bayar',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => _openPaymentDialog(bill),
+                ),
+            ],
+          );
+
+          if (isNarrow) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Periode ${bill.billingPeriod}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: AppTheme.textPrimary),
+                Row(
+                  children: [
+                    iconWidget,
+                    const SizedBox(width: 12),
+                    Expanded(child: detailsWidget),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _formatCurrency(bill.amount),
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      color: Colors.grey.shade700),
-                ),
+                const SizedBox(height: 10),
+                actionsWidget,
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: badgeColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              badgeText,
-              style: TextStyle(
-                  color: badgeColor, fontSize: 11, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 4),
-          if (bill.payment?.proofImageUrl.isNotEmpty == true)
-            IconButton(
-              icon: const Icon(Icons.image_outlined,
-                  color: AppTheme.textSecondary, size: 20),
-              tooltip: 'Bukti Transfer',
-              onPressed: () => _openProofDialog(bill),
-            ),
-          if (bill.isPaid)
-            IconButton(
-              icon: const Icon(Icons.receipt_long_rounded,
-                  color: AppTheme.primary, size: 20),
-              tooltip: 'Kuitansi',
-              onPressed: () => _openReceiptDialog(bill),
-            )
-          else if (bill.isUnpaid || bill.isRejected)
-            IconButton(
-              icon: const Icon(Icons.payment_rounded,
-                  color: AppTheme.primary, size: 20),
-              tooltip: 'Bayar',
-              onPressed: () => _openPaymentDialog(bill),
-            ),
-        ],
+            );
+          }
+
+          return Row(
+            children: [
+              iconWidget,
+              const SizedBox(width: 14),
+              Expanded(child: detailsWidget),
+              const SizedBox(width: 8),
+              actionsWidget,
+            ],
+          );
+        },
       ),
     );
   }

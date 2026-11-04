@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/image_url_helper.dart';
+import '../../../../core/widgets/standard_submenu_tab_bar.dart';
 import '../../billing/data/billing_repository.dart';
 import '../../billing/domain/models/billing_models.dart';
 import '../../billing/presentation/widgets/digital_receipt_dialog.dart';
@@ -510,26 +511,21 @@ class AdminBillingViewState extends State<AdminBillingView>
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
     return Container(
       color: AppTheme.background,
       child: Column(
         children: [
-          // Header Bar
+          // Header with Title and Actions
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 24 : 16,
+              vertical: 16,
+            ),
             color: Colors.white,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.receipt_long_rounded,
-                      color: AppTheme.primary, size: 26),
-                ),
-                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -537,139 +533,86 @@ class AdminBillingViewState extends State<AdminBillingView>
                       Text(
                         'Iuran Lingkungan (IPL) & Pembayaran',
                         style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
+                      SizedBox(height: 4),
                       Text(
                         'Verifikasi struk transfer warga dan pantau rekapitulasi kas iuran bulanan',
                         style: TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary),
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                if (widget.onNavigateToResidentBilling != null) ...[
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                const SizedBox(width: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      key: const Key('openRecordCashBtn'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                      ),
+                      onPressed: _openRecordCashDialog,
+                      icon: const Icon(Icons.payments_outlined, size: 18),
+                      label: const Text('Catat Pembayaran Tunai',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                    onPressed: () {
-                      if (widget.hasResidentAccess) {
-                        _tabController.animateTo(2);
-                      } else {
-                        widget.onNavigateToResidentBilling?.call();
-                      }
-                    },
-                    icon: const Icon(Icons.payment_rounded, size: 18),
-                    label: const Text('Bayar Iuran Saya',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                ElevatedButton.icon(
-                  key: const Key('openRecordCashBtn'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                  ),
-                  onPressed: _openRecordCashDialog,
-                  icon: const Icon(Icons.payments_outlined, size: 18),
-                  label: const Text('Catat Pembayaran Tunai',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppTheme.primary,
-                    side: const BorderSide(color: AppTheme.primary),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                  ),
-                  onPressed: _openSettingsDialog,
-                  icon: const Icon(Icons.settings_outlined, size: 18),
-                  label: const Text('Pengaturan & Generate',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.primary,
+                        side: const BorderSide(color: AppTheme.primary),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                      ),
+                      onPressed: _openSettingsDialog,
+                      icon: const Icon(Icons.settings_outlined, size: 18),
+                      label: const Text('Pengaturan & Generate',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
           // Tab Bar
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppTheme.primary,
-              unselectedLabelColor: AppTheme.textSecondary,
-              indicatorColor: AppTheme.primary,
-              indicatorWeight: 3,
-              labelStyle:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.verified_user_outlined, size: 18),
-                      const SizedBox(width: 8),
-                      const Text('Verifikasi Pembayaran'),
-                      if (_pendingPayments.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.danger,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${_pendingPayments.length}',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+          StandardSubmenuTabBar(
+            controller: _tabController,
+            isScrollable: isDesktop ? false : true,
+            items: [
+              StandardSubmenuItem(
+                icon: Icons.verified_user_outlined,
+                label: 'Verifikasi Pembayaran',
+                badgeCount: _pendingPayments.isNotEmpty
+                    ? _pendingPayments.length
+                    : null,
+              ),
+              const StandardSubmenuItem(
+                icon: Icons.assessment_outlined,
+                label: 'Rekapitulasi Iuran Lingkungan',
+              ),
+              if (widget.hasResidentAccess)
+                const StandardSubmenuItem(
+                  icon: Icons.payments_outlined,
+                  label: 'Tagihan Saya',
                 ),
-                const Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.assessment_outlined, size: 18),
-                      SizedBox(width: 8),
-                      Text('Rekapitulasi Iuran Lingkungan'),
-                    ],
-                  ),
-                ),
-                if (widget.hasResidentAccess)
-                  const Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.payments_outlined, size: 18),
-                        SizedBox(width: 8),
-                        Text('Tagihan Saya'),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
 
           // Tab Views
@@ -779,11 +722,11 @@ class AdminBillingViewState extends State<AdminBillingView>
             ),
             child: Padding(
               padding: const EdgeInsets.all(18),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Bukti Transfer / Cash Icon Thumbnail
-                  item.isCash
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCardNarrow = constraints.maxWidth < 620;
+
+                  final thumbnailWidget = item.isCash
                       ? Container(
                           width: 100,
                           height: 110,
@@ -848,137 +791,133 @@ class AdminBillingViewState extends State<AdminBillingView>
                               ),
                             ],
                           ),
-                        ),
-                  const SizedBox(width: 18),
-
-                  // Data Info Pembayaran
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'Blok ${item.houseBlock} No. ${item.houseNumber}',
-                                style: const TextStyle(
-                                  color: AppTheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
+                        );
+                  final infoWidget = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Blok ${item.houseBlock} No. ${item.houseNumber}',
+                              style: const TextStyle(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'Periode: ${item.billingPeriod}',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w600),
-                              ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            const Spacer(),
-                            Text(
-                              _formatDate(item.createdAt),
+                            child: Text(
+                              'Periode: ${item.billingPeriod}',
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.grey.shade500),
+                                  fontSize: 11,
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w600),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          item.residentName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: AppTheme.textPrimary),
-                        ),
-                        if (item.residentPhone.isNotEmpty)
+                          ),
                           Text(
-                            item.residentPhone,
+                            _formatDate(item.createdAt),
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        item.residentName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: AppTheme.textPrimary),
+                      ),
+                      if (item.residentPhone.isNotEmpty)
+                        Text(
+                          item.residentPhone,
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600),
+                        ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Metode: ',
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey.shade600),
                           ),
-                        const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: item.isCash
+                                  ? Colors.green.shade50
+                                  : Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              item.isCash ? 'TUNAI (CASH)' : 'TRANSFER BANK',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: item.isCash
+                                    ? Colors.green.shade800
+                                    : AppTheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (!item.isCash) ...[
+                        const SizedBox(height: 4),
                         Row(
                           children: [
                             Text(
-                              'Metode: ',
+                              'Pengirim: ',
                               style: TextStyle(
                                   fontSize: 12, color: Colors.grey.shade600),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: item.isCash
-                                    ? Colors.green.shade50
-                                    : Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                item.isCash ? 'TUNAI (CASH)' : 'TRANSFER BANK',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: item.isCash
-                                      ? Colors.green.shade800
-                                      : AppTheme.primary,
-                                ),
-                              ),
+                            Text(
+                              '${item.senderBank ?? "-"} a.n ${item.senderName ?? "-"}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textPrimary),
                             ),
                           ],
                         ),
-                        if (!item.isCash) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                'Pengirim: ',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey.shade600),
-                              ),
-                              Text(
-                                '${item.senderBank ?? '-'} a.n ${item.senderName ?? '-'}',
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (item.notes != null && item.notes!.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Catatan: "${item.notes}"',
-                            style: const TextStyle(
-                                fontSize: 11,
-                                fontStyle: FontStyle.italic,
-                                color: AppTheme.textSecondary),
-                          ),
-                        ],
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 18),
+                      if (item.notes != null && item.notes!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Catatan: "${item.notes}"',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                              color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ],
+                  );
 
-                  // Nominal & Actions
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  final amountAndActions = Column(
+                    crossAxisAlignment: isCardNarrow
+                        ? CrossAxisAlignment.start
+                        : CrossAxisAlignment.end,
                     children: [
                       Text(
                         _formatCurrency(item.amountPaid),
@@ -989,7 +928,9 @@ class AdminBillingViewState extends State<AdminBillingView>
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
@@ -1004,7 +945,6 @@ class AdminBillingViewState extends State<AdminBillingView>
                             icon: const Icon(Icons.close, size: 16),
                             label: const Text('Tolak'),
                           ),
-                          const SizedBox(width: 8),
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.success,
@@ -1022,8 +962,39 @@ class AdminBillingViewState extends State<AdminBillingView>
                         ],
                       ),
                     ],
-                  ),
-                ],
+                  );
+
+                  if (isCardNarrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            thumbnailWidget,
+                            const SizedBox(width: 14),
+                            Expanded(child: infoWidget),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        const Divider(height: 1),
+                        const SizedBox(height: 12),
+                        amountAndActions,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      thumbnailWidget,
+                      const SizedBox(width: 18),
+                      Expanded(child: infoWidget),
+                      const SizedBox(width: 18),
+                      amountAndActions,
+                    ],
+                  );
+                },
               ),
             ),
           );
@@ -1232,10 +1203,14 @@ class AdminBillingViewState extends State<AdminBillingView>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.analytics_outlined,
                                   color: AppTheme.primary, size: 20),
@@ -1278,38 +1253,54 @@ class AdminBillingViewState extends State<AdminBillingView>
               },
             ),
             // 3 Kartu Ringkasan (Stat Cards)
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    title: 'Total Tagihan',
-                    amount: sum.totalPaidAmount + sum.totalUnpaidAmount,
-                    subtitle: '${sum.totalHouses} Unit Rumah',
-                    icon: Icons.payments_outlined,
-                    color: AppTheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildSummaryCard(
-                    title: 'Sudah Terbayar',
-                    amount: sum.totalPaidAmount,
-                    subtitle: '${sum.paidHouses} Rumah Lunas',
-                    icon: Icons.check_circle_outline,
-                    color: AppTheme.success,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildSummaryCard(
-                    title: 'Belum Terbayar / Menunggak',
-                    amount: sum.totalUnpaidAmount,
-                    subtitle: '${sum.unpaidHouses} Rumah Menunggak',
-                    icon: Icons.pending_actions_rounded,
-                    color: AppTheme.danger,
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 700;
+
+                final c1 = _buildSummaryCard(
+                  title: 'Total Tagihan',
+                  amount: sum.totalPaidAmount + sum.totalUnpaidAmount,
+                  subtitle: '${sum.totalHouses} Unit Rumah',
+                  icon: Icons.payments_outlined,
+                  color: AppTheme.primary,
+                );
+                final c2 = _buildSummaryCard(
+                  title: 'Sudah Terbayar',
+                  amount: sum.totalPaidAmount,
+                  subtitle: '${sum.paidHouses} Rumah Lunas',
+                  icon: Icons.check_circle_outline,
+                  color: AppTheme.success,
+                );
+                final c3 = _buildSummaryCard(
+                  title: 'Belum Terbayar / Menunggak',
+                  amount: sum.totalUnpaidAmount,
+                  subtitle: '${sum.unpaidHouses} Rumah Menunggak',
+                  icon: Icons.pending_actions_rounded,
+                  color: AppTheme.danger,
+                );
+
+                if (isNarrow) {
+                  return Column(
+                    children: [
+                      c1,
+                      const SizedBox(height: 12),
+                      c2,
+                      const SizedBox(height: 12),
+                      c3,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: c1),
+                    const SizedBox(width: 16),
+                    Expanded(child: c2),
+                    const SizedBox(width: 16),
+                    Expanded(child: c3),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
@@ -1602,14 +1593,18 @@ class AdminBillingViewState extends State<AdminBillingView>
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            _formatCurrency(amount),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: color == AppTheme.danger
-                  ? Colors.red.shade700
-                  : AppTheme.textPrimary,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _formatCurrency(amount),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: color == AppTheme.danger
+                    ? Colors.red.shade700
+                    : AppTheme.textPrimary,
+              ),
             ),
           ),
           const SizedBox(height: 4),

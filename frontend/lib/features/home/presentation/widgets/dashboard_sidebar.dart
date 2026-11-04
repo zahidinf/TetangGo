@@ -46,34 +46,57 @@ class NavigationItemBuilder {
       ),
     );
 
-    // 2. Administrative: Verifikasi Warga (Admin, Chairperson, Vice Chairperson, Secretary)
-    if (user?.canAccessVerificationAdmin ?? false) {
-      items.add(
-        SidebarItemData(
-          keyId: 'verification',
-          title: 'Verifikasi Warga',
-          icon: Icons.how_to_reg_outlined,
-          selectedIcon: Icons.how_to_reg_rounded,
-          index: index++,
-          badge: pendingCount > 0 ? '$pendingCount Baru' : null,
-        ),
-      );
-    }
+    // 2. Residential Management: Verifikasi Warga, Data Hunian & Warga, Profil Hunian & Keluarga
+    final canVerification = user?.canAccessVerificationAdmin ?? false;
+    final canHouses = user?.canAccessHousesAdmin ?? false;
+    final canProfile = user != null;
 
-    // 3. Administrative: Data Hunian & Warga (Admin, Chairperson, Vice Chairperson, Secretary)
-    if (user?.canAccessHousesAdmin ?? false) {
+    final managementFeaturesCount = (canVerification ? 1 : 0) +
+        (canHouses ? 1 : 0) +
+        (canProfile ? 1 : 0);
+
+    // If role has access to 2 or more of the features: consolidate into one menu
+    if (managementFeaturesCount >= 2) {
       items.add(
         SidebarItemData(
-          keyId: 'houses',
-          title: 'Data Hunian & Warga',
+          keyId: 'resident_management',
+          title: 'Manajemen Hunian & Warga',
           icon: Icons.home_work_outlined,
           selectedIcon: Icons.home_work_rounded,
           index: index++,
+          badge: (canVerification && pendingCount > 0)
+              ? '$pendingCount Baru'
+              : null,
         ),
       );
+    } else {
+      // Role with only 1 feature: keep standalone menu
+      if (canVerification) {
+        items.add(
+          SidebarItemData(
+            keyId: 'verification',
+            title: 'Verifikasi Warga',
+            icon: Icons.how_to_reg_outlined,
+            selectedIcon: Icons.how_to_reg_rounded,
+            index: index++,
+            badge: pendingCount > 0 ? '$pendingCount Baru' : null,
+          ),
+        );
+      }
+      if (canHouses) {
+        items.add(
+          SidebarItemData(
+            keyId: 'houses',
+            title: 'Data Hunian & Warga',
+            icon: Icons.home_work_outlined,
+            selectedIcon: Icons.home_work_rounded,
+            index: index++,
+          ),
+        );
+      }
     }
 
-    // 4. Administrative: Manajemen Satpam (Admin, Chairperson, Vice Chairperson)
+    // 3. Administrative: Manajemen Satpam (Admin, Chairperson, Vice Chairperson)
     if (user?.canAccessSecurityAdmin ?? false) {
       items.add(
         SidebarItemData(
@@ -86,16 +109,31 @@ class NavigationItemBuilder {
       );
     }
 
-    // 5. Common Baseline: Profil Hunian & Keluarga
-    items.add(
-      SidebarItemData(
-        keyId: 'profile',
-        title: 'Profil Hunian & Keluarga',
-        icon: Icons.family_restroom_rounded,
-        selectedIcon: Icons.family_restroom_rounded,
-        index: index++,
-      ),
-    );
+    // 4. Administrative: Kelola Pengaduan & Kanban (Admin, Chairperson, Vice Chairperson, Treasurer, Secretary)
+    if (user?.hasAdminAccess ?? false) {
+      items.add(
+        SidebarItemData(
+          keyId: 'admin_complaints',
+          title: 'Kelola Pengaduan',
+          icon: Icons.view_kanban_outlined,
+          selectedIcon: Icons.view_kanban_rounded,
+          index: index++,
+        ),
+      );
+    }
+
+    // 5. Common Baseline: Profil Hunian & Keluarga (Standalone only if not consolidated into resident_management)
+    if (managementFeaturesCount < 2 && canProfile) {
+      items.add(
+        SidebarItemData(
+          keyId: 'profile',
+          title: 'Profil Hunian & Keluarga',
+          icon: Icons.family_restroom_rounded,
+          selectedIcon: Icons.family_restroom_rounded,
+          index: index++,
+        ),
+      );
+    }
 
     // 5. Administrative: Kelola Iuran & Tagihan (Admin, Chairperson, Vice Chairperson, Treasurer)
     if (user?.canAccessBillingAdmin ?? false) {
@@ -137,6 +175,20 @@ class NavigationItemBuilder {
           index: index++,
         ),
       );
+
+      // 6c. Resident Baseline: Lapor Cluster (Pengajuan Pengaduan Fasilitas Lingkungan US-5.3)
+      // Hidden for roles with access to Kelola Pengaduan to avoid duplicate sidebar menus
+      if (!(user?.hasAdminAccess ?? false)) {
+        items.add(
+          SidebarItemData(
+            keyId: 'complaints',
+            title: 'Lapor Cluster',
+            icon: Icons.report_problem_outlined,
+            selectedIcon: Icons.report_problem_rounded,
+            index: index++,
+          ),
+        );
+      }
     }
 
     // 7. Common Baseline: Kas Transparan (Accessible to EVERY resident and admin; editable by admin/treasurer)

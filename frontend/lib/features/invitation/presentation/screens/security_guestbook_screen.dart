@@ -505,73 +505,20 @@ class _SecurityGuestbookScreenState extends State<SecurityGuestbookScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.shield_rounded, color: AppTheme.primary, size: 24),
-                          ),
-                          const SizedBox(width: 14),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Buku Tamu Satpam',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                isSecurityOfficer
-                                    ? 'Operasional Pemindaian & Log Akses Gerbang'
-                                    : 'Log Kunjungan Tamu & Kurir (Mode Read-Only)',
-                                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: _loadVisits,
-                        icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary),
-                        tooltip: 'Muat ulang data',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (isSecurityOfficer)
-                    TabBar(
-                      controller: _tabController,
-                      labelColor: AppTheme.primary,
-                      unselectedLabelColor: AppTheme.textSecondary,
-                      indicatorColor: AppTheme.primary,
-                      indicatorWeight: 3,
-                      tabs: const [
-                        Tab(icon: Icon(Icons.qr_code_scanner_rounded), text: 'Pemindai QR Gerbang'),
-                        Tab(icon: Icon(Icons.history_rounded), text: 'Riwayat Kunjungan'),
-                      ],
-                    )
-                  else
-                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            if (isSecurityOfficer)
+              TabBar(
+                controller: _tabController,
+                labelColor: AppTheme.primary,
+                unselectedLabelColor: AppTheme.textSecondary,
+                indicatorColor: AppTheme.primary,
+                indicatorWeight: 3,
+                tabs: const [
+                  Tab(icon: Icon(Icons.qr_code_scanner_rounded), text: 'Pemindai QR Gerbang'),
+                  Tab(icon: Icon(Icons.history_rounded), text: 'Riwayat Kunjungan'),
                 ],
-              ),
-            ),
+              )
+            else
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
             // Tab Content
             Expanded(
@@ -775,6 +722,13 @@ class _SecurityGuestbookScreenState extends State<SecurityGuestbookScreen>
                   setState(() => _selectedStatusFilter = val);
                   _loadVisits();
                 },
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _loadVisits,
+                icon: const Icon(Icons.refresh_rounded, size: 20, color: AppTheme.textSecondary),
+                tooltip: 'Muat ulang data',
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
             ],
           ),

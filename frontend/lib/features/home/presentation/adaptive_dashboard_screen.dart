@@ -20,8 +20,14 @@ import '../../invitation/data/repositories/invitation_repository.dart';
 import '../../invitation/presentation/bloc/invitation_bloc.dart';
 import '../../invitation/presentation/screens/resident_invitations_screen.dart';
 import '../../invitation/presentation/screens/security_guestbook_screen.dart';
+import '../../complaint/data/repositories/complaint_repository.dart';
+import '../../complaint/presentation/bloc/complaint_bloc.dart';
+import '../../complaint/presentation/bloc/admin_complaint_bloc.dart';
+import '../../complaint/presentation/screens/resident_complaints_screen.dart';
+import '../../complaint/presentation/screens/admin_complaints_screen.dart';
 import '../../resident_management/data/resident_repository.dart';
 import '../../resident_management/presentation/houses_management_view.dart';
+import '../../resident_management/presentation/manajemen_hunian_warga_screen.dart';
 import '../../resident_management/presentation/resident_verification_view.dart';
 import '../../security/data/security_repository.dart';
 import '../../security/presentation/security_management_view.dart';
@@ -42,6 +48,8 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<AdminBillingViewState> _adminBillingKey =
       GlobalKey<AdminBillingViewState>();
+  final GlobalKey<ManajemenHunianWargaScreenState> _residentManagementKey =
+      GlobalKey<ManajemenHunianWargaScreenState>();
   final Set<String> _visitedTabKeys = {'dashboard'};
   int _pendingCount = 0;
   int _pendingBillsCount = 0;
@@ -170,6 +178,20 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
       return;
     }
 
+    if ((key == 'verification' || key == 'houses' || key == 'profile') &&
+        !items.any((it) => it.keyId == key) &&
+        items.any((it) => it.keyId == 'resident_management')) {
+      final mgtIdx = items.indexWhere((it) => it.keyId == 'resident_management');
+      setState(() {
+        _selectedMenuIndex = mgtIdx;
+        _visitedTabKeys.add('resident_management');
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _residentManagementKey.currentState?.switchToTabKey(key);
+      });
+      return;
+    }
+
     final idx = items.indexWhere((it) => it.keyId == key);
     if (idx != -1) {
       setState(() {
@@ -247,9 +269,43 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
             }
           },
         );
+      case 'resident_management':
+        final canVerif = user?.canAccessVerificationAdmin ?? false;
+        final canHous = user?.canAccessHousesAdmin ?? false;
+        final mgtCount = (canVerif ? 1 : 0) + (canHous ? 1 : 0) + 1;
+        if (mgtCount < 2) {
+          return const Center(
+            child: Text(
+              'Akses ditolak: Anda tidak memiliki izin mengakses Manajemen Hunian & Warga',
+              style: TextStyle(color: AppTheme.danger),
+            ),
+          );
+        }
+        return ManajemenHunianWargaScreen(
+          key: _residentManagementKey,
+          currentUser: user,
+          pendingCount: _pendingCount,
+          onQueueUpdated: _fetchPendingCount,
+        );
       case 'verification':
+        if (!(user?.canAccessVerificationAdmin ?? false)) {
+          return const Center(
+            child: Text(
+              'Akses ditolak: Anda tidak memiliki izin mengakses Verifikasi Warga',
+              style: TextStyle(color: AppTheme.danger),
+            ),
+          );
+        }
         return ResidentVerificationView(onQueueUpdated: _fetchPendingCount);
       case 'houses':
+        if (!(user?.canAccessHousesAdmin ?? false)) {
+          return const Center(
+            child: Text(
+              'Akses ditolak: Anda tidak memiliki izin mengakses Data Hunian & Warga',
+              style: TextStyle(color: AppTheme.danger),
+            ),
+          );
+        }
         return const HousesManagementView();
       case 'security_management':
         if (!(user?.canAccessSecurityAdmin ?? false)) {
@@ -275,6 +331,45 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
             repository: context.read<InvitationRepository>(),
           ),
           child: const ResidentInvitationsScreen(),
+        );
+      case 'complaints':
+        if (!(user?.hasHousingAssociation ?? false)) {
+          return const Center(
+            child: Text(
+              'Akses ditolak: Anda tidak memiliki hunian terdaftar untuk mengakses Lapor Cluster',
+              style: TextStyle(color: AppTheme.danger),
+            ),
+          );
+        }
+        return BlocProvider(
+          create: (context) => ComplaintBloc(
+            repository: context.read<ComplaintRepository>(),
+          ),
+          child: const ResidentComplaintsScreen(),
+        );
+      case 'admin_complaints':
+        if (!(user?.hasAdminAccess ?? false)) {
+          return const Center(
+            child: Text(
+              'Akses ditolak: Anda tidak memiliki izin mengakses Kelola Pengaduan',
+              style: TextStyle(color: AppTheme.danger),
+            ),
+          );
+        }
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (context) => AdminComplaintBloc(
+                repository: context.read<ComplaintRepository>(),
+              ),
+            ),
+            BlocProvider(
+              create: (context) => ComplaintBloc(
+                repository: context.read<ComplaintRepository>(),
+              ),
+            ),
+          ],
+          child: AdminComplaintsScreen(currentUser: user),
         );
       case 'cashbook':
         return CashbookScreen(isAdmin: user?.canAccessCashbookAdmin ?? false);
@@ -462,7 +557,11 @@ class _AdaptiveDashboardScreenState extends State<AdaptiveDashboardScreen> {
   int _getBottomNavIndex(List<SidebarItemData> items) {
     final activeKey = _getActiveItem(items).keyId;
     if (activeKey == 'dashboard') return 0;
-    if (activeKey == 'profile') return 1;
+    if (activeKey == 'profile' ||
+        (activeKey == 'resident_management' &&
+            _residentManagementKey.currentState?.activeTabKey == 'profile')) {
+      return 1;
+    }
     if (activeKey == 'resident_billing' || activeKey == 'billing') return 2;
     return 3;
   }

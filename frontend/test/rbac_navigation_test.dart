@@ -100,17 +100,18 @@ void main() {
       final items = NavigationItemBuilder.buildNavigationItems(user);
       final keys = items.map((it) => it.keyId).toList();
 
-      // Resident menus preserved (resident billing unified into billing menu for billing admins)
+      // Resident management unified menu (verification + houses + profile)
       expect(keys, contains('dashboard'));
-      expect(keys, contains('profile'));
+      expect(keys, contains('resident_management'));
+      expect(keys, isNot(contains('verification')));
+      expect(keys, isNot(contains('houses')));
+      expect(keys, isNot(contains('profile')));
       expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('cashbook'));
       expect(keys, contains('announcements'));
       expect(keys, contains('panic'));
 
       // Administrative menus granted (Iuran Warga unified menu)
-      expect(keys, contains('verification'));
-      expect(keys, contains('houses'));
       expect(keys, contains('billing'));
       expect(keys, contains('guestbook'));
     });
@@ -131,9 +132,10 @@ void main() {
       final keys = items.map((it) => it.keyId).toList();
 
       expect(keys, contains('dashboard'));
-      expect(keys, contains('verification'));
-      expect(keys, contains('houses'));
-      expect(keys, contains('profile'));
+      expect(keys, contains('resident_management'));
+      expect(keys, isNot(contains('verification')));
+      expect(keys, isNot(contains('houses')));
+      expect(keys, isNot(contains('profile')));
       expect(keys, contains('billing'));
       expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('cashbook'));
@@ -211,15 +213,16 @@ void main() {
 
       // Resident menus preserved (including transparent cashbook and resident dues)
       expect(keys, contains('dashboard'));
-      expect(keys, contains('profile'));
+      expect(keys, contains('resident_management'));
+      expect(keys, isNot(contains('verification')));
+      expect(keys, isNot(contains('houses')));
+      expect(keys, isNot(contains('profile')));
       expect(keys, contains('resident_billing'));
       expect(keys, contains('cashbook'));
       expect(keys, contains('announcements'));
       expect(keys, contains('panic'));
 
       // Authorized admin menus
-      expect(keys, contains('verification'));
-      expect(keys, contains('houses'));
       expect(keys, contains('guestbook'));
 
       // Unauthorized admin billing DENIED
@@ -244,8 +247,10 @@ void main() {
 
       expect(keys, isNot(contains('resident_billing')));
       expect(keys, contains('billing'));
-      expect(keys, contains('verification'));
-      expect(keys, contains('houses'));
+      expect(keys, contains('resident_management'));
+      expect(keys, isNot(contains('verification')));
+      expect(keys, isNot(contains('houses')));
+      expect(keys, isNot(contains('profile')));
       expect(keys, contains('guestbook'));
     });
 
@@ -270,18 +275,15 @@ void main() {
     });
 
     test(
-        '9. Profile menu is titled "Profil Hunian & Keluarga" across all roles',
+        '9. Profile menu is titled "Profil Hunian & Keluarga" for standalone roles and merged for multi-access roles',
         () {
-      final roles = [
-        'ADMIN',
-        'CHAIRPERSON',
-        'VICE_CHAIRPERSON',
+      final standaloneRoles = [
         'TREASURER',
-        'SECRETARY',
-        'RESIDENT'
+        'SECURITY',
+        'RESIDENT',
       ];
 
-      for (final role in roles) {
+      for (final role in standaloneRoles) {
         final user = UserModel(
           id: 99,
           name: 'Test $role',
@@ -302,10 +304,39 @@ void main() {
           reason: 'Role $role must display "Profil Hunian & Keluarga"',
         );
       }
+
+      final multiAccessRoles = [
+        'ADMIN',
+        'CHAIRPERSON',
+        'VICE_CHAIRPERSON',
+        'SECRETARY',
+      ];
+
+      for (final role in multiAccessRoles) {
+        final user = UserModel(
+          id: 99,
+          name: 'Test $role',
+          email: '$role@tetanggo.id',
+          phone: '081234567890',
+          roleId: 1,
+          role: role,
+          status: 'active',
+          houseId: 101,
+        );
+
+        final items = NavigationItemBuilder.buildNavigationItems(user);
+        final mgtItem = items.firstWhere((it) => it.keyId == 'resident_management');
+
+        expect(
+          mgtItem.title,
+          equals('Manajemen Hunian & Warga'),
+          reason: 'Role $role must display "Manajemen Hunian & Warga"',
+        );
+      }
     });
 
     testWidgets(
-        '10. DashboardSidebar widget test: renders "Profil Hunian & Keluarga", no "Profil Pengurus RT", and no copyright section',
+        '10. DashboardSidebar widget test: renders "Manajemen Hunian & Warga" for admin, no "Profil Pengurus RT", and no copyright section',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -338,8 +369,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Profile menu label check
-      expect(find.text('Profil Hunian & Keluarga'), findsOneWidget);
+      // Consolidated menu check
+      expect(find.text('Manajemen Hunian & Warga'), findsOneWidget);
       expect(find.text('Profil Pengurus RT'), findsNothing);
 
       // Copyright notice removed check

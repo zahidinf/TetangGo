@@ -228,49 +228,55 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Card
+              // Header
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Verifikasi Warga Baru',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${_pendingUsers.length} Menunggu',
-                              style: const TextStyle(
-                                  color: Color(0xFFB45309),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Verifikasi Warga Baru',
+                              style: TextStyle(
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 12),
+                                  color: AppTheme.textPrimary),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Tinjau permohonan bergabung warga baru sebelum dapat mengakses layanan cluster',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 13),
-                      ),
-                    ],
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${_pendingUsers.length} Menunggu',
+                                style: const TextStyle(
+                                    color: Color(0xFFB45309),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Tinjau permohonan bergabung warga baru sebelum dapat mengakses layanan cluster',
+                          style: TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 13),
+                        ),
+                      ],
+                    ),
                   ),
-                  Row(
+                  const SizedBox(width: 16),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       OutlinedButton.icon(
                         onPressed: () {
@@ -294,7 +300,6 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                               borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
-                      const SizedBox(width: 10),
                       ElevatedButton.icon(
                         onPressed: _fetchPendingUsers,
                         icon: const Icon(Icons.refresh_rounded, size: 18),
@@ -303,6 +308,8 @@ class _ResidentVerificationViewState extends State<ResidentVerificationView> {
                           backgroundColor: Colors.white,
                           foregroundColor: AppTheme.textPrimary,
                           side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         ),

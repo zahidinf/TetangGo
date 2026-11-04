@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/waiting_verification_screen.dart';
 import '../../features/home/presentation/adaptive_dashboard_screen.dart';
 import '../../features/security/presentation/security_standby_screen.dart';
+import '../../test_icon_debug.dart';
 import 'refresh_stream.dart';
 
 GoRouter createAppRouter(AuthBloc authBloc) {
@@ -101,6 +102,12 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         path: '/security-standby',
         builder: (BuildContext context, GoRouterState state) {
           return const SecurityStandbyScreen();
+        },
+      ),
+      GoRoute(
+        path: '/test-icon-debug',
+        builder: (BuildContext context, GoRouterState state) {
+          return const TestIconDebug();
         },
       ),
     ],

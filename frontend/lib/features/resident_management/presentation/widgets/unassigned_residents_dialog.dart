@@ -469,106 +469,108 @@ class _QuickMapToHouseDialogState extends State<_QuickMapToHouseDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(10),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.danger.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(_errorMessage!,
+                      style:
+                          const TextStyle(color: AppTheme.danger, fontSize: 12)),
                 ),
-                child: Text(_errorMessage!,
-                    style:
-                        const TextStyle(color: AppTheme.danger, fontSize: 12)),
-              ),
-            if (_isLoading)
-              const Center(
-                  child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: CircularProgressIndicator()))
-            else ...[
-              // Step 1: Pilih Blok
-              const Text('1. Pilih Blok Rumah:',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                value: _selectedBlock,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              if (_isLoading)
+                const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator()))
+              else ...[
+                // Step 1: Pilih Blok
+                const Text('1. Pilih Blok Rumah:',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  value: _selectedBlock,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: _blocks
+                      .map((b) =>
+                          DropdownMenuItem(value: b, child: Text('Blok $b')))
+                      .toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedBlock = val;
+                      _selectedHouse = null;
+                    });
+                  },
                 ),
-                items: _blocks
-                    .map((b) =>
-                        DropdownMenuItem(value: b, child: Text('Blok $b')))
-                    .toList(),
-                onChanged: (val) {
-                  setState(() {
-                    _selectedBlock = val;
-                    _selectedHouse = null;
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // Step 2: Pilih Nomor Rumah
-              const Text('2. Pilih Nomor Rumah:',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<HouseModel>(
-                value: _selectedHouse,
-                isExpanded: true,
-                hint: const Text('Pilih nomor rumah di blok ini'),
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                // Step 2: Pilih Nomor Rumah
+                const Text('2. Pilih Nomor Rumah:',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<HouseModel>(
+                  value: _selectedHouse,
+                  isExpanded: true,
+                  hint: const Text('Pilih nomor rumah di blok ini'),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: _filteredHouses.map((h) {
+                    return DropdownMenuItem(
+                      value: h,
+                      child: Text('${h.label} (${h.statusDisplay})'),
+                    );
+                  }).toList(),
+                  onChanged: (val) => setState(() => _selectedHouse = val),
                 ),
-                items: _filteredHouses.map((h) {
-                  return DropdownMenuItem(
-                    value: h,
-                    child: Text('${h.label} (${h.statusDisplay})'),
-                  );
-                }).toList(),
-                onChanged: (val) => setState(() => _selectedHouse = val),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // Step 3: Status Kepemilikan
-              const Text('3. Status Kepemilikan:',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                value: _occupantType,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                // Step 3: Status Kepemilikan
+                const Text('3. Status Kepemilikan:',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  value: _occupantType,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'pemilik', child: Text('Pemilik Rumah')),
+                    DropdownMenuItem(
+                        value: 'pengontrak', child: Text('Penyewa / Kontrak')),
+                    DropdownMenuItem(
+                        value: 'anggota_keluarga',
+                        child: Text('Anggota Keluarga')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _occupantType = val);
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'pemilik', child: Text('Pemilik Rumah')),
-                  DropdownMenuItem(
-                      value: 'pengontrak', child: Text('Penyewa / Kontrak')),
-                  DropdownMenuItem(
-                      value: 'anggota_keluarga',
-                      child: Text('Anggota Keluarga')),
-                ],
-                onChanged: (val) {
-                  if (val != null) setState(() => _occupantType = val);
-                },
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       actions: [

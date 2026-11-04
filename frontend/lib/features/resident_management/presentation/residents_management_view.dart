@@ -326,30 +326,30 @@ class _ResidentsManagementViewState extends State<ResidentsManagementView> {
                 const SizedBox(height: 16),
               ],
               // Header
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 16,
-                runSpacing: 16,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Manajemen Data Warga',
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Kelola akun seluruh warga Cluster, perbarui data hunian, reset password, dan status akun',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 13),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Manajemen Data Warga',
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Kelola akun seluruh warga Cluster, perbarui data hunian, reset password, dan status akun',
+                          style: TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 13),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 16),
                   ElevatedButton.icon(
                     onPressed: _showAddUserDialog,
                     icon: const Icon(Icons.person_add_rounded, size: 18),

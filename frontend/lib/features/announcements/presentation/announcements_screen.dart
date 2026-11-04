@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/image_url_helper.dart';
 import '../../../../core/utils/responsive_helper.dart';
+import '../../../../core/widgets/standard_page_header.dart';
 import '../data/announcements_repository.dart';
 import '../domain/models/announcement_model.dart';
 import 'widgets/announcement_detail_dialog.dart';
@@ -262,38 +263,49 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Widget _buildHeader(bool isDesktop) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Papan Pengumuman Resmi Cluster',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
+    if (!widget.isAdmin) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 24 : 16,
+        vertical: 16,
+      ),
+      color: Colors.white,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Papan Pengumuman Resmi Cluster',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Informasi resmi dan himbauan pengurus cluster lingkungan secara terpusat.',
-                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-              ),
-            ],
+                SizedBox(height: 4),
+                Text(
+                  'Informasi resmi dan himbauan pengurus cluster lingkungan secara terpusat.',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
           ),
-        ),
-        if (widget.isAdmin) ...[
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: () => _openCreateOrEditDialog(),
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('+ Buat Pengumuman Baru'),
+          const SizedBox(width: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: () => _openCreateOrEditDialog(),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Buat Pengumuman Baru'),
+            ),
           ),
         ],
-      ],
+      ),
     );
   }
 
@@ -580,8 +592,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       const SizedBox(height: 10),
 
                       // Author & Read prompt
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           Text(
                             'Dipublikasikan oleh: ${a.authorName}',
@@ -589,6 +604,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                 fontSize: 11, color: AppTheme.textSecondary),
                           ),
                           const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 'Baca Selengkapnya',

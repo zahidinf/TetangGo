@@ -611,42 +611,43 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog>
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text('Petakan Warga ke ${widget.currentHouse.label}',
           style: const TextStyle(fontWeight: FontWeight.bold)),
-      content: SizedBox(
-        width: 480,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TabBar(
-              controller: _tabController,
-              labelColor: AppTheme.primary,
-              unselectedLabelColor: AppTheme.textSecondary,
-              indicatorColor: AppTheme.primary,
-              tabs: const [
-                Tab(text: 'Warga Belum Ada Rumah'),
-                Tab(text: 'Pindah dari Rumah Lain'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(10),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.danger.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(_errorMessage!,
-                    style:
-                        const TextStyle(color: AppTheme.danger, fontSize: 12)),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TabBar(
+                controller: _tabController,
+                labelColor: AppTheme.primary,
+                unselectedLabelColor: AppTheme.textSecondary,
+                indicatorColor: AppTheme.primary,
+                tabs: const [
+                  Tab(text: 'Warga Belum Ada Rumah'),
+                  Tab(text: 'Pindah dari Rumah Lain'),
+                ],
               ),
-            _isLoading
-                ? const Center(
-                    child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator()))
-                : SizedBox(
-                    height: 190,
+              const SizedBox(height: 16),
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(_errorMessage!,
+                      style:
+                          const TextStyle(color: AppTheme.danger, fontSize: 12)),
+                ),
+              _isLoading
+                  ? const Center(
+                      child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator()))
+                  : SizedBox(
+                      height: 220,
                     child: TabBarView(
                       controller: _tabController,
                       children: [
@@ -770,6 +771,7 @@ class _AssignResidentSubDialogState extends State<_AssignResidentSubDialog>
                   ),
           ],
         ),
+      ),
       ),
       actions: [
         TextButton(

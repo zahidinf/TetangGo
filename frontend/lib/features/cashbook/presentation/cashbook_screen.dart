@@ -278,36 +278,43 @@ class _CashbookScreenState extends State<CashbookScreen> {
   }
 
   Widget _buildHeader(bool isDesktop) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.isAdmin
-                    ? 'Kelola Kas Transparan Lingkungan'
-                    : 'Buku Kas Transparan Cluster',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
+    if (!widget.isAdmin) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 24 : 16,
+        vertical: 16,
+      ),
+      color: Colors.white,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Buku Kas Transparan Cluster',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Pantau aliran dana masuk dan keluar lingkungan Cluster secara terbuka dan akuntabel.',
-                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-              ),
-            ],
+                SizedBox(height: 4),
+                Text(
+                  'Pantau aliran dana masuk dan keluar lingkungan Cluster secara terbuka dan akuntabel.',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
           ),
-        ),
-        if (widget.isAdmin) ...[
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               OutlinedButton.icon(
                 onPressed: _openExportDialog,
@@ -332,7 +339,7 @@ class _CashbookScreenState extends State<CashbookScreen> {
             ],
           ),
         ],
-      ],
+      ),
     );
   }
 
@@ -365,31 +372,36 @@ class _CashbookScreenState extends State<CashbookScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(10),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.account_balance_wallet_rounded,
+                          color: Colors.white, size: 20),
                     ),
-                    child: const Icon(Icons.account_balance_wallet_rounded,
-                        color: Colors.white, size: 22),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Saldo Kas Lingkungan Riil Saat Ini',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Saldo Kas Lingkungan Riil Saat Ini',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -397,12 +409,12 @@ class _CashbookScreenState extends State<CashbookScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.verified_rounded, size: 14, color: Colors.white),
+                    Icon(Icons.verified_rounded, size: 12, color: Colors.white),
                     SizedBox(width: 4),
                     Text(
                       'Live Real-Time',
                       style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: Colors.white),
                     ),
@@ -412,90 +424,189 @@ class _CashbookScreenState extends State<CashbookScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          Text(
-            _formatCurrency(balance),
-            style: const TextStyle(
-              fontSize: 34,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: -0.5,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _formatCurrency(balance),
+              style: TextStyle(
+                fontSize: isDesktop ? 34 : 26,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
-          const SizedBox(height: 20),
-          const Divider(color: Colors.white24, height: 1),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Row(
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 14),
+          if (isDesktop)
+            Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_downward_rounded,
+                            color: Color(0xFF6EE7B7), size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Total Pemasukan Kas',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 11),
+                            ),
+                            const SizedBox(height: 2),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _formatCurrency(income),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(height: 36, width: 1, color: Colors.white24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_upward_rounded,
+                            color: Color(0xFFFCA5A5), size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Total Pengeluaran Kas',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 11),
+                            ),
+                            const SizedBox(height: 2),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _formatCurrency(expense),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          else
+            Column(
+              children: [
+                Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.arrow_downward_rounded,
-                          color: Color(0xFF6EE7B7), size: 18),
+                          color: Color(0xFF6EE7B7), size: 16),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Total Pemasukan Kas',
-                          style: TextStyle(color: Colors.white70, fontSize: 11),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _formatCurrency(income),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15),
-                        ),
-                      ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total Pemasukan Kas',
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _formatCurrency(income),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Container(height: 36, width: 1, color: Colors.white24),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Row(
+                const SizedBox(height: 10),
+                Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.arrow_upward_rounded,
-                          color: Color(0xFFFCA5A5), size: 18),
+                          color: Color(0xFFFCA5A5), size: 16),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Total Pengeluaran Kas',
-                          style: TextStyle(color: Colors.white70, fontSize: 11),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _formatCurrency(expense),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15),
-                        ),
-                      ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total Pengeluaran Kas',
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _formatCurrency(expense),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
@@ -530,87 +641,100 @@ class _CashbookScreenState extends State<CashbookScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(Icons.calendar_month_rounded,
-                  size: 18, color: AppTheme.primary),
-              const SizedBox(width: 8),
-              const Text(
-                'Filter Periode Buku Kas:',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary),
-              ),
-              const Spacer(),
-              // Month dropdown
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: _selectedMonth,
-                    isDense: true,
-                    style: const TextStyle(
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_month_rounded,
+                      size: 18, color: AppTheme.primary),
+                  SizedBox(width: 8),
+                  Text(
+                    'Periode:',
+                    style: TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                         color: AppTheme.textPrimary),
-                    items: months.map((m) {
-                      return DropdownMenuItem<int>(
-                        value: m['val'] as int,
-                        child: Text(m['name'] as String),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null && val != _selectedMonth) {
-                        setState(() {
-                          _selectedMonth = val;
-                          _currentPage = 1;
-                        });
-                        _loadData();
-                      }
-                    },
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: 8),
-              // Year dropdown
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: _selectedYear,
-                    isDense: true,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary),
-                    items: years.map((y) {
-                      return DropdownMenuItem<int>(
-                        value: y,
-                        child: Text(y.toString()),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null && val != _selectedYear) {
-                        setState(() {
-                          _selectedYear = val;
-                          _currentPage = 1;
-                        });
-                        _loadData();
-                      }
-                    },
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  // Month dropdown
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _selectedMonth,
+                        isDense: true,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary),
+                        items: months.map((m) {
+                          return DropdownMenuItem<int>(
+                            value: m['val'] as int,
+                            child: Text(m['name'] as String),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null && val != _selectedMonth) {
+                            setState(() {
+                              _selectedMonth = val;
+                              _currentPage = 1;
+                            });
+                            _loadData();
+                          }
+                        },
+                      ),
+                    ),
                   ),
-                ),
+                  // Year dropdown
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _selectedYear,
+                        isDense: true,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary),
+                        items: years.map((y) {
+                          return DropdownMenuItem<int>(
+                            value: y,
+                            child: Text(y.toString()),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null && val != _selectedYear) {
+                            setState(() {
+                              _selectedYear = val;
+                              _currentPage = 1;
+                            });
+                            _loadData();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -690,36 +814,41 @@ class _CashbookScreenState extends State<CashbookScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.swap_vert_rounded,
-                        color: AppTheme.primary, size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Riwayat & Mutasi Buku Kas',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${_transactionsResult?.total ?? _transactions.length} Mutasi',
-                        style: const TextStyle(
-                            fontSize: 11,
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.swap_vert_rounded,
+                          color: AppTheme.primary, size: 20),
+                      const SizedBox(width: 8),
+                      const Flexible(
+                        child: Text(
+                          'Riwayat & Mutasi Buku Kas',
+                          style: TextStyle(
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryDark),
+                            color: AppTheme.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${_transactionsResult?.total ?? _transactions.length} Mutasi',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDark),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh_rounded, size: 18),
@@ -1132,19 +1261,29 @@ class _CashbookScreenState extends State<CashbookScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: WrapAlignment.spaceBetween,
             children: [
-              const Icon(Icons.analytics_outlined,
-                  size: 16, color: AppTheme.primary),
-              const SizedBox(width: 6),
-              Text(
-                'Rekapitulasi Mutasi Kas Periode ${res.period.isNotEmpty ? res.period : "$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}"}',
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.analytics_outlined,
+                      size: 16, color: AppTheme.primary),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Rekapitulasi Mutasi Kas Periode ${res.period.isNotEmpty ? res.period : "$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}"}',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary),
+                    ),
+                  ),
+                ],
               ),
-              const Spacer(),
               if (res.startDate.isNotEmpty && res.endDate.isNotEmpty)
                 Text(
                   '${res.startDate} s/d ${res.endDate}',
@@ -1210,14 +1349,17 @@ class _CashbookScreenState extends State<CashbookScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isBold ? 13 : 12,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-            color: isBold ? AppTheme.textPrimary : AppTheme.textSecondary,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isBold ? 13 : 12,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+              color: isBold ? AppTheme.textPrimary : AppTheme.textSecondary,
+            ),
           ),
         ),
+        const SizedBox(width: 8),
         Text(
           _formatCurrency(amount),
           style: TextStyle(

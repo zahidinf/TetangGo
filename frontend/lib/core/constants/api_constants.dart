@@ -147,6 +147,18 @@ class ApiConstants {
   static String cancelInvitation(int id) => '/api/v1/invitations/$id/cancel';
   static String completeInvitation(int id) => '/api/v1/invitations/$id/complete';
 
+  // Sprint 5 (US-5.3 & US-5.4): Pengaduan Lingkungan ("Lapor Cluster") & Kanban
+  static const String complaints = '/api/v1/complaints';
+  static String complaintDetail(int id) => '/api/v1/complaints/$id';
+  static String complaintPhoto(String filename) => '/api/v1/complaints/photo/$filename';
+  static const String adminComplaints = '/api/v1/admin/complaints';
+  static const String adminComplaintsKanban = '/api/v1/admin/complaints/kanban';
+  static const String adminComplaintsEligibleOfficers = '/api/v1/admin/complaints/eligible-officers';
+  static String adminComplaintDetail(int id) => '/api/v1/admin/complaints/$id';
+  static String adminComplaintAssign(int id) => '/api/v1/admin/complaints/$id/assign';
+  static String adminComplaintStatus(int id) => '/api/v1/admin/complaints/$id/status';
+  static String adminComplaintAssignments(int id) => '/api/v1/admin/complaints/$id/assignments';
+
   // Storage Keys
   static const String tokenKey = 'tetanggo_access_token';
   static const String refreshTokenKey = 'tetanggo_refresh_token';

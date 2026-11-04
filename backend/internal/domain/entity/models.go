@@ -815,6 +815,127 @@ type GuestVisitAuditLog struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+// Sprint 5 (US-5.3): Pengajuan Pengaduan Fasilitas Lingkungan ("Lapor Cluster")
+
+type ComplaintCategory string
+
+const (
+	ComplaintCategoryLampuJalan ComplaintCategory = "Lampu Jalan"
+	ComplaintCategorySampah     ComplaintCategory = "Sampah"
+	ComplaintCategoryKetertiban ComplaintCategory = "Ketertiban"
+	ComplaintCategoryJalanan    ComplaintCategory = "Jalanan"
+)
+
+func (c ComplaintCategory) IsValid() bool {
+	switch c {
+	case ComplaintCategoryLampuJalan, ComplaintCategorySampah, ComplaintCategoryKetertiban, ComplaintCategoryJalanan:
+		return true
+	default:
+		return false
+	}
+}
+
+type ComplaintStatus string
+
+const (
+	ComplaintStatusMenunggu ComplaintStatus = "Menunggu"
+	ComplaintStatusDiproses ComplaintStatus = "Diproses"
+	ComplaintStatusSelesai  ComplaintStatus = "Selesai"
+	ComplaintStatusDitolak  ComplaintStatus = "Ditolak"
+)
+
+type Complaint struct {
+	ID           int64           `json:"id"`
+	TicketNumber string          `json:"ticket_number"`
+	UserID       int64           `json:"user_id"`
+	HouseID      int64           `json:"house_id"`
+	Title        string          `json:"title"`
+	Description  string          `json:"description"`
+	Category     ComplaintCategory `json:"category"`
+	PhotoURL     *string         `json:"photo_url,omitempty"`
+	Status       ComplaintStatus `json:"status"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+
+	// Relational details for response presentation
+	ReporterName string `json:"reporter_name,omitempty"`
+	HouseBlock   string `json:"house_block,omitempty"`
+	HouseNumber  string `json:"house_number,omitempty"`
+
+	// Officer assignment (US-5.4)
+	AssignedOfficer   *string    `json:"assigned_officer,omitempty"`
+	AssignedOfficerID *int64     `json:"assigned_officer_id,omitempty"`
+	AssignedAt        *time.Time `json:"assigned_at,omitempty"`
+}
+
+type CreateComplaintRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+}
+
+type ComplaintFilter struct {
+	UserID *int64
+	Page   int
+	Limit  int
+}
+
+type ComplaintListResult struct {
+	Complaints []Complaint `json:"complaints"`
+	Total      int         `json:"total"`
+	Page       int         `json:"page"`
+	Limit      int         `json:"limit"`
+	TotalPages int         `json:"total_pages"`
+}
+
+// US-5.4: Complaint Assignment and Kanban Models
+type ComplaintAssignment struct {
+	ID             int64     `json:"id"`
+	ComplaintID    int64     `json:"complaint_id"`
+	OfficerName    string    `json:"officer_name"`
+	OfficerUserID  *int64    `json:"officer_user_id,omitempty"`
+	AssignedBy     int64     `json:"assigned_by"`
+	AssignedByName string    `json:"assigned_by_name,omitempty"`
+	Notes          string    `json:"notes,omitempty"`
+	AssignedAt     time.Time `json:"assigned_at"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type AssignComplaintRequest struct {
+	OfficerName   string  `json:"officer_name"`
+	OfficerUserID *int64  `json:"officer_user_id,omitempty"`
+	Notes         string  `json:"notes,omitempty"`
+	Status        *string `json:"status,omitempty"`
+}
+
+type UpdateComplaintStatusRequest struct {
+	Status string `json:"status"`
+}
+
+type AdminComplaintFilter struct {
+	Status    string
+	Category  string
+	Officer   string
+	Search    string
+	StartDate string
+	EndDate   string
+	Page      int
+	Limit     int
+}
+
+type KanbanComplaintsResult struct {
+	Menunggu []Complaint    `json:"menunggu"`
+	Diproses []Complaint    `json:"diproses"`
+	Selesai  []Complaint    `json:"selesai"`
+	Counts   map[string]int `json:"counts"`
+}
+
+type ComplaintDetailResponse struct {
+	Complaint   Complaint             `json:"complaint"`
+	Assignments []ComplaintAssignment `json:"assignments"`
+}
+
+
 
 
 

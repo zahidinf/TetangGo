@@ -146,63 +146,65 @@ class _HousesManagementViewState extends State<HousesManagementView> {
             isEdit ? 'Ubah Data Rumah' : 'Tambah Unit Rumah Baru',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Blok Rumah',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: blockController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: InputDecoration(
-                    hintText: 'Contoh: A, B, C, D',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Blok Rumah',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: blockController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: A, B, C, D',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                const Text('Nomor Rumah',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: numberController,
-                  decoration: InputDecoration(
-                    hintText: 'Contoh: 01, 12A, 15',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 14),
+                  const Text('Nomor Rumah',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: numberController,
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: 01, 12A, 15',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                const Text('Status Rumah',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  value: status,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 14),
+                  const Text('Status Rumah',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: status,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'milik', child: Text('Dihuni Pemilik')),
+                      DropdownMenuItem(
+                          value: 'kontrak', child: Text('Disewa / Kontrak')),
+                      DropdownMenuItem(value: 'kosong', child: Text('Kosong')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => status = val);
+                      }
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(
-                        value: 'milik', child: Text('Dihuni Pemilik')),
-                    DropdownMenuItem(
-                        value: 'kontrak', child: Text('Disewa / Kontrak')),
-                    DropdownMenuItem(value: 'kosong', child: Text('Kosong')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => status = val);
-                    }
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -567,31 +569,31 @@ class _HousesManagementViewState extends State<HousesManagementView> {
             children: [
               _buildTabBar(),
               const SizedBox(height: 16),
-              // Header
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 16,
-                runSpacing: 16,
+              // Header with Actions
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Master Data Hunian & Warga',
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Kelola kavling hunian, nomor rumah, dan data penghuni cluster',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 13),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Master Data Hunian & Warga',
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Kelola kavling hunian, nomor rumah, dan data penghuni cluster',
+                          style: TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 13),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 16),
                   Wrap(
                     spacing: 10,
                     runSpacing: 8,

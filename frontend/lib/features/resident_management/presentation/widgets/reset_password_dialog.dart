@@ -90,49 +90,51 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 380,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Masukkan kata sandi baru untuk akun ${widget.user.displayName} (${widget.user.phone}):',
-                style: const TextStyle(
-                    fontSize: 13, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,
-                decoration: InputDecoration(
-                  hintText: 'Kata sandi baru (min. 6 karakter)',
-                  prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordVisible
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      size: 18,
-                    ),
-                    onPressed: () => setState(
-                        () => _isPasswordVisible = !_isPasswordVisible),
-                  ),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Masukkan kata sandi baru untuk akun ${widget.user.displayName} (${widget.user.phone}):',
+                  style: const TextStyle(
+                      fontSize: 13, color: AppTheme.textSecondary),
                 ),
-                validator: (val) {
-                  if (val == null || val.trim().length < 6) {
-                    return 'Kata sandi baru minimal 6 karakter';
-                  }
-                  return null;
-                },
-              ),
-            ],
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    hintText: 'Kata sandi baru (min. 6 karakter)',
+                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        size: 18,
+                      ),
+                      onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible),
+                    ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().length < 6) {
+                      return 'Kata sandi baru minimal 6 karakter';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

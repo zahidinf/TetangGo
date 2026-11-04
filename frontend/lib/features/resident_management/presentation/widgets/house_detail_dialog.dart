@@ -77,52 +77,54 @@ class _HouseDetailDialogState extends State<HouseDetailDialog> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Nama Lengkap *',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Nama Lengkap *',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: relation,
-                  decoration: InputDecoration(
-                    labelText: 'Hubungan Keluarga *',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: relation,
+                    decoration: InputDecoration(
+                      labelText: 'Hubungan Keluarga *',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'istri', child: Text('Istri')),
+                      DropdownMenuItem(value: 'suami', child: Text('Suami')),
+                      DropdownMenuItem(value: 'anak', child: Text('Anak')),
+                      DropdownMenuItem(
+                          value: 'orang_tua', child: Text('Orang Tua')),
+                      DropdownMenuItem(value: 'famili', child: Text('Famili')),
+                      DropdownMenuItem(value: 'lainnya', child: Text('Lainnya')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setDlgState(() => relation = val);
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'istri', child: Text('Istri')),
-                    DropdownMenuItem(value: 'suami', child: Text('Suami')),
-                    DropdownMenuItem(value: 'anak', child: Text('Anak')),
-                    DropdownMenuItem(
-                        value: 'orang_tua', child: Text('Orang Tua')),
-                    DropdownMenuItem(value: 'famili', child: Text('Famili')),
-                    DropdownMenuItem(value: 'lainnya', child: Text('Lainnya')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setDlgState(() => relation = val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'No. WhatsApp / HP (Opsional)',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: 'No. WhatsApp / HP (Opsional)',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -245,50 +247,52 @@ class _HouseDetailDialogState extends State<HouseDetailDialog> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: plateCtrl,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: InputDecoration(
-                    labelText: 'Nomor Plat Kendaraan *',
-                    hintText: 'Misal: B 1234 XYZ',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: plateCtrl,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      labelText: 'Nomor Plat Kendaraan *',
+                      hintText: 'Misal: B 1234 XYZ',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: vehicleType,
-                  decoration: InputDecoration(
-                    labelText: 'Tipe Kendaraan *',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: vehicleType,
+                    decoration: InputDecoration(
+                      labelText: 'Tipe Kendaraan *',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'mobil', child: Text('Mobil')),
+                      DropdownMenuItem(
+                          value: 'motor', child: Text('Sepeda Motor')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setDlgState(() => vehicleType = val);
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'mobil', child: Text('Mobil')),
-                    DropdownMenuItem(
-                        value: 'motor', child: Text('Sepeda Motor')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setDlgState(() => vehicleType = val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: modelCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Brand / Model (Warna)',
-                    hintText: 'Misal: Avanza Putih / Vario Hitam',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: modelCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Brand / Model (Warna)',
+                      hintText: 'Misal: Avanza Putih / Vario Hitam',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [

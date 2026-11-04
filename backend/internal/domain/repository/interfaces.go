@@ -174,6 +174,22 @@ type GuestInvitationRepository interface {
 	CountCompletedVisitsByInvitationID(ctx context.Context, invitationID int64) (int, error)
 }
 
+type ComplaintRepository interface {
+	Create(ctx context.Context, complaint *entity.Complaint) error
+	GetByID(ctx context.Context, id int64) (*entity.Complaint, error)
+	GetByTicketNumber(ctx context.Context, ticket string) (*entity.Complaint, error)
+	GetByPhotoFilename(ctx context.Context, filename string) (*entity.Complaint, error)
+	ListByUser(ctx context.Context, userID int64, limit, offset int) ([]entity.Complaint, int, error)
+
+	// US-5.4: Pengelolaan Tiket, Penugasan, & Kanban
+	ListAdmin(ctx context.Context, filter entity.AdminComplaintFilter) ([]entity.Complaint, int, error)
+	GetKanban(ctx context.Context, filter entity.AdminComplaintFilter) (*entity.KanbanComplaintsResult, error)
+	AssignOfficer(ctx context.Context, assignment *entity.ComplaintAssignment, newStatus *string) error
+	UpdateStatus(ctx context.Context, id int64, status entity.ComplaintStatus) error
+	GetAssignmentsByComplaintID(ctx context.Context, complaintID int64) ([]entity.ComplaintAssignment, error)
+}
+
+
 
 
 

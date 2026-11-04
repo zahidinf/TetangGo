@@ -29,6 +29,14 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
 	}))
 
+	// Deny public direct access to protected complaints directory in uploads
+	app.All("/uploads/complaints/*", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"success": false,
+			"message": "Akses langsung ke folder pengaduan dilarang. Gunakan endpoint resmi terproteksi.",
+		})
+	})
+
 	// Static files serving (payment proofs, profile photos, etc)
 	app.Static("/uploads", "./uploads")
 
@@ -162,6 +170,16 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			// Sprint 3: Admin Cashbook & Announcements
 			adminGroup.Post("/cashbook/transactions", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminCreateCashTransaction)
 			adminGroup.Delete("/cashbook/transactions/:id", authMid.RequireRole(roleFinanceManagement...), appHandler.AdminDeleteCashTransaction)
+
+			// Sprint 5 (US-5.4): Admin Complaints ("Lapor Cluster") & Kanban
+			adminGroup.Get("/complaints", authMid.RequireRole(roleManagement...), appHandler.AdminListComplaints)
+			adminGroup.Get("/complaints/kanban", authMid.RequireRole(roleManagement...), appHandler.AdminGetKanbanComplaints)
+			adminGroup.Get("/complaints/eligible-officers", authMid.RequireRole(roleManagement...), appHandler.AdminGetEligibleOfficers)
+			adminGroup.Get("/complaints/:id", authMid.RequireRole(roleManagement...), appHandler.AdminGetComplaintDetail)
+			adminGroup.Get("/complaints/:id/assignments", authMid.RequireRole(roleManagement...), appHandler.AdminGetComplaintAssignments)
+			adminGroup.Post("/complaints/:id/assign", authMid.RequireRole(roleLeadership...), appHandler.AdminAssignComplaint)
+			adminGroup.Patch("/complaints/:id/status", authMid.RequireRole(roleLeadership...), appHandler.AdminUpdateComplaintStatus)
+			adminGroup.Put("/complaints/:id/status", authMid.RequireRole(roleLeadership...), appHandler.AdminUpdateComplaintStatus)
 		}
 
 		// Sprint 3: Cashbook (Authenticated Users - Warga & Pengurus, Security Excluded)
@@ -285,6 +303,19 @@ func SetupRouter(appHandler *handler.AppHandler, authMid *middleware.AuthMiddlew
 			invitationsGroup.Get("/:id", appHandler.GetInvitationDetail)
 			invitationsGroup.Post("/:id/cancel", appHandler.CancelInvitation)
 			invitationsGroup.Post("/:id/complete", appHandler.CompleteInvitation)
+		}
+
+		// Sprint 5 (US-5.3): Complaints ("Lapor Cluster")
+		complaintsGroup := v1.Group("/complaints", authMid.RequireAuth())
+		{
+			// Warga create with house mapping check & upload
+			complaintsGroup.Post("/", authMid.RequireHouseMapping(), appHandler.CreateComplaint)
+			// List my complaints
+			complaintsGroup.Get("/", appHandler.GetMyComplaints)
+			// Protected photo access
+			complaintsGroup.Get("/photo/:filename", appHandler.GetComplaintPhoto)
+			// Detail my complaint
+			complaintsGroup.Get("/:id", appHandler.GetComplaintDetail)
 		}
 	}
 

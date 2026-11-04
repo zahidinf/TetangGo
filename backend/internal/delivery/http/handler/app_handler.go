@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	nethttp "net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"tetanggo-backend/internal/usecase/auth"
 	"tetanggo-backend/internal/usecase/billing"
 	"tetanggo-backend/internal/usecase/cashbook"
+	"tetanggo-backend/internal/usecase/complaint"
 	"tetanggo-backend/internal/usecase/dashboard"
 	"tetanggo-backend/internal/usecase/house"
 	"tetanggo-backend/internal/usecase/incident"
@@ -45,6 +47,7 @@ type AppHandler struct {
 	userRepo            repository.UserRepository
 	deviceTokenRepo     repository.SecurityDeviceTokenRepository
 	invitationUseCase   *invitation.InvitationUseCase
+	complaintUseCase    *complaint.ComplaintUseCase
 }
 
 func NewAppHandler(
@@ -78,6 +81,11 @@ func NewAppHandler(
 		invitationUseCase:   invUC,
 	}
 }
+
+func (h *AppHandler) SetComplaintUseCase(uc *complaint.ComplaintUseCase) {
+	h.complaintUseCase = uc
+}
+
 
 func (h *AppHandler) SetInvitationUseCase(uc *invitation.InvitationUseCase) {
 	h.invitationUseCase = uc
@@ -3471,6 +3479,606 @@ func (h *AppHandler) GetGuestVisitDetail(c *fiber.Ctx) error {
 		"data":    visit,
 	})
 }
+
+// ----------------------------------------------------
+// SPRINT 5 (US-5.3): COMPLAINT / LAPOR CLUSTER HANDLERS
+// ----------------------------------------------------
+
+// POST /api/v1/complaints
+func (h *AppHandler) CreateComplaint(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	title := strings.TrimSpace(c.FormValue("title"))
+	description := strings.TrimSpace(c.FormValue("description"))
+	category := strings.TrimSpace(c.FormValue("category"))
+
+	// Photo upload handling
+	var photoURL *string
+	var savedFilePath string
+
+	fileHeader, err := c.FormFile("photo")
+	if err == nil && fileHeader != nil {
+		// Limit 5MB
+		if fileHeader.Size > 5*1024*1024 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Ukuran file foto maksimal 5MB",
+			})
+		}
+
+		// Check extension
+		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Format file tidak didukung. Harap unggah format JPG, JPEG, PNG, atau WEBP",
+			})
+		}
+
+		// Content magic bytes inspection
+		file, openErr := fileHeader.Open()
+		if openErr != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal membaca isi file foto",
+			})
+		}
+		defer file.Close()
+
+		buffer := make([]byte, 512)
+		n, _ := file.Read(buffer)
+		mimeType := nethttp.DetectContentType(buffer[:n])
+		if !strings.HasPrefix(mimeType, "image/") {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Isi file bukan gambar yang valid",
+			})
+		}
+
+		uploadDir := filepath.Join("uploads", "complaints")
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyiapkan direktori penyimpanan foto pengaduan",
+			})
+		}
+
+		uniqueFileName := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		savedFilePath = filepath.Join(uploadDir, uniqueFileName)
+
+		if err := c.SaveFile(fileHeader, savedFilePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menyimpan file foto pengaduan",
+			})
+		}
+
+		pURL := fmt.Sprintf("/api/v1/complaints/photo/%s", uniqueFileName)
+		photoURL = &pURL
+	}
+
+	comp, err := h.complaintUseCase.CreateComplaint(c.Context(), callerID, title, description, category, photoURL)
+	if err != nil {
+		// Clean up saved file on creation failure
+		if savedFilePath != "" {
+			_ = os.Remove(savedFilePath)
+		}
+
+		status := fiber.StatusBadRequest
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) || errors.Is(err, complaint.ErrNoHouseAssociation) || errors.Is(err, complaint.ErrUserInactive) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, complaint.ErrUserNotFound) {
+			status = fiber.StatusNotFound
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Pengaduan fasilitas cluster berhasil dibuat",
+		"data":    comp,
+	})
+}
+
+// GET /api/v1/complaints
+func (h *AppHandler) GetMyComplaints(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 10)
+
+	result, err := h.complaintUseCase.GetMyComplaints(c.Context(), callerID, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Daftar pengaduan berhasil dimuat",
+		"data":    result.Complaints,
+		"meta": fiber.Map{
+			"page":        result.Page,
+			"limit":       result.Limit,
+			"total":       result.Total,
+			"total_pages": result.TotalPages,
+		},
+	})
+}
+
+// GET /api/v1/complaints/:id
+func (h *AppHandler) GetComplaintDetail(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan",
+		})
+	}
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	idParam := c.Params("id")
+	complaintID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengaduan tidak valid",
+		})
+	}
+
+	comp, err := h.complaintUseCase.GetComplaintDetail(c.Context(), complaintID, callerID)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, complaint.ErrComplaintNotFound) {
+			status = fiber.StatusNotFound
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Detail pengaduan berhasil dimuat",
+		"data":    comp,
+	})
+}
+
+// GET /api/v1/complaints/photo/:filename
+// Protected endpoint: caller must be authenticated and own the complaint or have leadership role
+func (h *AppHandler) GetComplaintPhoto(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+	if callerID <= 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi diperlukan untuk mengakses foto pengaduan",
+		})
+	}
+
+	filename := filepath.Base(c.Params("filename"))
+	if filename == "" || filename == "." || filename == "/" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Nama file foto tidak valid",
+		})
+	}
+
+	filePath := filepath.Join("uploads", "complaints", filename)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Foto pengaduan tidak ditemukan",
+		})
+	}
+
+	// Verify authorization via complaint usecase or direct repository query
+	if h.complaintUseCase != nil {
+		_, err := h.complaintUseCase.VerifyPhotoAccess(c.Context(), filename, callerID, callerRole)
+		if err != nil {
+			status := fiber.StatusForbidden
+			if errors.Is(err, complaint.ErrComplaintNotFound) {
+				status = fiber.StatusNotFound
+			}
+			return c.Status(status).JSON(fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
+	} else if h.db != nil {
+		photoURLSuffix := "%" + filename
+		var ownerID int64
+		checkQuery := `SELECT user_id FROM complaints WHERE photo_url LIKE $1 LIMIT 1`
+		err := h.db.QueryRowContext(c.Context(), checkQuery, photoURLSuffix).Scan(&ownerID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"success": false,
+					"message": "Pengaduan terkait foto tidak ditemukan",
+				})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal memverifikasi izin foto",
+			})
+		}
+
+		isOwner := (callerID == ownerID)
+		rClean := strings.ToUpper(strings.TrimSpace(callerRole))
+		isLeadership := (rClean == string(entity.RoleAdmin) ||
+			rClean == string(entity.RoleChairperson) ||
+			rClean == string(entity.RoleViceChairperson) ||
+			rClean == string(entity.RoleTreasurer) ||
+			rClean == string(entity.RoleSecretary))
+
+		if !isOwner && !isLeadership {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"success": false,
+				"message": "Akses ditolak: Anda tidak memiliki izin mengakses foto pengaduan ini",
+			})
+		}
+	}
+
+	return c.SendFile(filePath)
+}
+
+// ----------------------------------------------------
+// US-5.4: PENGELOLAAN PENGADUAN, PENUGASAN, & KANBAN
+// ----------------------------------------------------
+
+// GET /api/v1/admin/complaints
+func (h *AppHandler) AdminListComplaints(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	filter := entity.AdminComplaintFilter{
+		Status:    strings.TrimSpace(c.Query("status")),
+		Category:  strings.TrimSpace(c.Query("category")),
+		Officer:   strings.TrimSpace(c.Query("officer")),
+		Search:    strings.TrimSpace(c.Query("search")),
+		StartDate: strings.TrimSpace(c.Query("start_date")),
+		EndDate:   strings.TrimSpace(c.Query("end_date")),
+		Page:      c.QueryInt("page", 1),
+		Limit:     c.QueryInt("limit", 10),
+	}
+
+	result, err := h.complaintUseCase.ListAdminComplaints(c.Context(), callerRole, filter)
+	if err != nil {
+		status := fiber.StatusInternalServerError
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Daftar pengaduan pengelola berhasil dimuat",
+		"data":    result.Complaints,
+		"meta": fiber.Map{
+			"page":        result.Page,
+			"limit":       result.Limit,
+			"total":       result.Total,
+			"total_pages": result.TotalPages,
+		},
+	})
+}
+
+// GET /api/v1/admin/complaints/kanban
+func (h *AppHandler) AdminGetKanbanComplaints(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	filter := entity.AdminComplaintFilter{
+		Category:  strings.TrimSpace(c.Query("category")),
+		Officer:   strings.TrimSpace(c.Query("officer")),
+		Search:    strings.TrimSpace(c.Query("search")),
+		StartDate: strings.TrimSpace(c.Query("start_date")),
+		EndDate:   strings.TrimSpace(c.Query("end_date")),
+	}
+
+	result, err := h.complaintUseCase.GetKanbanComplaints(c.Context(), callerRole, filter)
+	if err != nil {
+		status := fiber.StatusInternalServerError
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Data kanban pengaduan berhasil dimuat",
+		"data":    result,
+	})
+}
+
+// GET /api/v1/admin/complaints/:id
+func (h *AppHandler) AdminGetComplaintDetail(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengaduan tidak valid",
+		})
+	}
+
+	result, err := h.complaintUseCase.GetAdminComplaintDetail(c.Context(), callerRole, id)
+	if err != nil {
+		status := fiber.StatusInternalServerError
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, complaint.ErrComplaintNotFound) {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Detail pengaduan pengelola berhasil dimuat",
+		"data":    result,
+	})
+}
+
+// POST /api/v1/admin/complaints/:id/assign
+func (h *AppHandler) AdminAssignComplaint(c *fiber.Ctx) error {
+	callerID, _ := c.Locals("user_id").(int64)
+	callerRole, _ := c.Locals("role").(string)
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengaduan tidak valid",
+		})
+	}
+
+	var req entity.AssignComplaintRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Format request penugasan tidak valid",
+		})
+	}
+
+	result, err := h.complaintUseCase.AssignOfficer(c.Context(), callerID, callerRole, id, req)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, complaint.ErrComplaintNotFound) {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Petugas pengaduan berhasil ditugaskan",
+		"data":    result,
+	})
+}
+
+// PATCH /api/v1/admin/complaints/:id/status
+func (h *AppHandler) AdminUpdateComplaintStatus(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengaduan tidak valid",
+		})
+	}
+
+	var req entity.UpdateComplaintStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Format request status tidak valid",
+		})
+	}
+
+	comp, err := h.complaintUseCase.UpdateComplaintStatus(c.Context(), callerRole, id, req.Status)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, complaint.ErrComplaintNotFound) {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Status pengaduan berhasil diperbarui",
+		"data":    comp,
+	})
+}
+
+// GET /api/v1/admin/complaints/:id/assignments
+func (h *AppHandler) AdminGetComplaintAssignments(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ID pengaduan tidak valid",
+		})
+	}
+
+	assignments, err := h.complaintUseCase.GetAssignmentHistory(c.Context(), callerRole, id)
+	if err != nil {
+		status := fiber.StatusInternalServerError
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		} else if errors.Is(err, complaint.ErrComplaintNotFound) {
+			status = fiber.StatusNotFound
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Riwayat penugasan pengaduan berhasil dimuat",
+		"data":    assignments,
+	})
+}
+
+// GET /api/v1/admin/complaints/eligible-officers
+func (h *AppHandler) AdminGetEligibleOfficers(c *fiber.Ctx) error {
+	callerRole, _ := c.Locals("role").(string)
+
+	if h.complaintUseCase == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Complaint usecase belum dikonfigurasi",
+		})
+	}
+
+	officers, err := h.complaintUseCase.GetEligibleOfficers(c.Context(), callerRole)
+	if err != nil {
+		status := fiber.StatusInternalServerError
+		if errors.Is(err, complaint.ErrUnauthorizedAccess) {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	type officerDTO struct {
+		ID       int64  `json:"id"`
+		Name     string `json:"name"`
+		Role     string `json:"role"`
+		Phone    string `json:"phone"`
+		Status   string `json:"status"`
+	}
+
+	var dtoList []officerDTO
+	for _, o := range officers {
+		dtoList = append(dtoList, officerDTO{
+			ID:     o.ID,
+			Name:   o.Name,
+			Role:   o.RoleName,
+			Phone:  o.Phone,
+			Status: o.Status,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Daftar petugas yang memenuhi syarat berhasil dimuat",
+		"data":    dtoList,
+	})
+}
+
 
 
 

@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'file_saver_platform.dart' show FileSaverPlatform, ShareImageResult, ShareImageStatus;
+import 'file_saver_platform.dart' hide getFileSaver;
 import 'file_saver_platform.dart'
     if (dart.library.js_interop) 'file_saver_web.dart'
     if (dart.library.io) 'file_saver_io.dart';

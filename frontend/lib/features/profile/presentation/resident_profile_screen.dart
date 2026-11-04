@@ -65,35 +65,37 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Ubah Profil Saya',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 380,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Nama Lengkap',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: nameCtrl,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Nama Lengkap',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              const Text('Nomor WhatsApp / HP',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                const SizedBox(height: 14),
+                const Text('Nomor WhatsApp / HP',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
@@ -155,63 +157,65 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Tambah Anggota Keluarga',
               style: TextStyle(fontWeight: FontWeight.bold)),
-          content: SizedBox(
-            width: 380,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Nama Lengkap',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    hintText: 'Contoh: Siti Rahma',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Nama Lengkap',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: Siti Rahma',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                const Text('Hubungan Keluarga',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  value: relation,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 14),
+                  const Text('Hubungan Keluarga',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: relation,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'istri', child: Text('Istri')),
+                      DropdownMenuItem(value: 'suami', child: Text('Suami')),
+                      DropdownMenuItem(value: 'anak', child: Text('Anak')),
+                      DropdownMenuItem(
+                          value: 'orang_tua', child: Text('Orang Tua')),
+                      DropdownMenuItem(value: 'famili', child: Text('Famili')),
+                      DropdownMenuItem(value: 'lainnya', child: Text('Lainnya')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setDialogState(() => relation = val);
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'istri', child: Text('Istri')),
-                    DropdownMenuItem(value: 'suami', child: Text('Suami')),
-                    DropdownMenuItem(value: 'anak', child: Text('Anak')),
-                    DropdownMenuItem(
-                        value: 'orang_tua', child: Text('Orang Tua')),
-                    DropdownMenuItem(value: 'famili', child: Text('Famili')),
-                    DropdownMenuItem(value: 'lainnya', child: Text('Lainnya')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setDialogState(() => relation = val);
-                  },
-                ),
-                const SizedBox(height: 14),
-                const Text('Nomor HP (Opsional)',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: 'Contoh: 081234567890',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 14),
+                  const Text('Nomor HP (Opsional)',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: 081234567890',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -279,58 +283,60 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Daftarkan Kendaraan',
               style: TextStyle(fontWeight: FontWeight.bold)),
-          content: SizedBox(
-            width: 380,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Plat Nomor Kendaraan',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: plateCtrl,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: InputDecoration(
-                    hintText: 'Contoh: B 1234 ABC',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Plat Nomor Kendaraan',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: plateCtrl,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: B 1234 ABC',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                const Text('Jenis Kendaraan',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  value: vehicleType,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 14),
+                  const Text('Jenis Kendaraan',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: vehicleType,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'mobil', child: Text('Mobil')),
+                      DropdownMenuItem(value: 'motor', child: Text('Motor')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setDialogState(() => vehicleType = val);
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'mobil', child: Text('Mobil')),
-                    DropdownMenuItem(value: 'motor', child: Text('Motor')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setDialogState(() => vehicleType = val);
-                  },
-                ),
-                const SizedBox(height: 14),
-                const Text('Merk / Model & Warna (Opsional)',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: modelCtrl,
-                  decoration: InputDecoration(
-                    hintText: 'Contoh: Avanza Hitam, Vario Merah',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 14),
+                  const Text('Merk / Model & Warna (Opsional)',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: modelCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: Avanza Hitam, Vario Merah',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [

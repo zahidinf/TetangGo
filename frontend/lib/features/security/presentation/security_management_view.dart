@@ -308,45 +308,22 @@ class _SecurityManagementViewState extends State<SecurityManagementView> {
                 const SizedBox(height: 16),
               ],
 
-              // Header Bar
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Manajemen Petugas Keamanan (Satpam)',
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Kelola akun petugas satpam cluster dan penugasan lingkungan kerja pos satpam',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 13),
-                      ),
-                    ],
+              // Action Button
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: _showAddSecurityDialog,
+                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                  label: const Text('Tambah Satpam Baru'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _showAddSecurityDialog,
-                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                    label: const Text('+ Tambah Satpam Baru'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(height: 20),
 

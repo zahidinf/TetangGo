@@ -152,60 +152,37 @@ class _ResidentInvitationsScreenState extends State<ResidentInvitationsScreen> {
       builder: (context, state) {
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),
-          body: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Header Bar
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth >= 700;
+              return Padding(
+                padding: EdgeInsets.all(isDesktop ? 24.0 : 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Undang Tamu & Kurir',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
+                    // Action Button
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: _openCreateDialog,
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Buat Undangan Baru'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Terbitkan QR Code akses gerbang masuk cluster untuk tamu atau kurir',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _openCreateDialog,
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('Buat Undangan Baru'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                // Main Content
-                Expanded(
-                  child: Builder(
+                    // Main Content
+                    Expanded(
+                      child: Builder(
                     builder: (context) {
                       if (state is InvitationLoading) {
                         return const Center(child: CircularProgressIndicator());
@@ -292,6 +269,8 @@ class _ResidentInvitationsScreenState extends State<ResidentInvitationsScreen> {
                 ),
               ],
             ),
+              );
+            },
           ),
         );
       },
